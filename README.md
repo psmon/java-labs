@@ -5,7 +5,9 @@
 
 ## Spring BootWEB 기초
 
-- [프로젝트셋팅하기][./springweb/README.md]
+1. [프로젝트셋팅하기](./springweb/README.md)
+2. 
+
 
 ## 기초 섹션 준비중....
 - Swagger 셋팅
