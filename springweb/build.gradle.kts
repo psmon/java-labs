@@ -14,9 +14,26 @@ repositories {
 	maven { url = uri("https://repo.spring.io/snapshot") }
 }
 
+
 dependencies {
+	val scalaVersion = "2.13"
+	val akkaVersion = "2.7.0"
+
 	implementation("org.springframework.boot:spring-boot-starter-web")
+
+	// Akka Actors
+	implementation("com.typesafe.akka", "akka-bom_$scalaVersion", akkaVersion)
+	implementation("com.typesafe.akka", "akka-actor-typed_$scalaVersion", akkaVersion)
+
+	// Logging
+	implementation("ch.qos.logback", "logback-classic", "1.2.3")
+	implementation("com.typesafe.akka", "akka-slf4j_$scalaVersion", akkaVersion)
+
+	// Akka Actors TestKit
+	testImplementation("com.typesafe.akka", "akka-actor-testkit-typed_$scalaVersion", akkaVersion)
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
+
+
 }
 
 tasks.withType<Test> {

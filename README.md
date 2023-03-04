@@ -21,4 +21,5 @@
 - Spring Security(인증/JWT)
 - Spring Batch
 - Kafka
+- Akka - https://doc.akka.io/docs/akka/current/general/index.html
 - alpakka - 모든 스트림장치와 연결하기
