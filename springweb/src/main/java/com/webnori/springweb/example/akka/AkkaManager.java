@@ -2,9 +2,6 @@ package com.webnori.springweb.example.akka;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
-import lombok.Builder;
-import lombok.Getter;
-
 
 public final class AkkaManager {
 

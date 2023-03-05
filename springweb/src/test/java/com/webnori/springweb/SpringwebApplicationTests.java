@@ -8,6 +8,7 @@ class SpringwebApplicationTests {
 
 	@Test
 	void contextLoads() {
+		int a=9;
 	}
 
 }
