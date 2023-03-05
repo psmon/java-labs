@@ -1,7 +1,7 @@
 package com.webnori.springweb.example.restservice;
 
 import akka.actor.ActorRef;
-import com.webnori.springweb.AppConfiguration;
+import com.webnori.springweb.example.akka.AkkaManager;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -25,10 +25,6 @@ public class GreetingController {
     private static final String template = "Hello, %s!";
     private final AtomicLong counter = new AtomicLong();
 
-    @Autowired
-    private AppConfiguration appConfiguration;
-
-
     @Operation(summary = "Hello, Worold", description = "인사하기")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "OK", content =
@@ -41,12 +37,18 @@ public class GreetingController {
             @Parameter(name = "name", description = "이름", example = "헬로우")
     })
     @ResponseBody
-    @GetMapping("/api/greeting")
+    @GetMapping("/hello")
     public Greeting greeting(@RequestParam(value = "name", defaultValue = "World") String name) {
 
         String testMessage = String.format(template, name);
 
-        appConfiguration.actorSystem().actorSelection("/user/HelloWorld").tell(testMessage, ActorRef.noSender());
+        // Two ways to send messages to actors
+        // By Actor Address
+        AkkaManager.getInstance().getActorSystem().actorSelection("/user/HelloWorld").tell(testMessage +
+                " by ActorAddress", ActorRef.noSender());
+
+        // By ActorRef
+        AkkaManager.getInstance().getGreetActor().tell(testMessage +" by ActorRef", ActorRef.noSender());
 
         return new Greeting(counter.incrementAndGet(), testMessage);
     }

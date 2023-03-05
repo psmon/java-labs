@@ -11,8 +11,9 @@
 
 ## 유용한 단축키
 
-- 그래이들 디펜던시 업데이트 : Gradle Ctrl + Shift + O
+- 그레이들 디펜던시 업데이트 : Gradle Ctrl + Shift + O
 - 코드 Style : Ctel + Shift + Alt + L
+
 
 ## 기초 섹션 준비중....
 

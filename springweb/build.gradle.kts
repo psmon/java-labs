@@ -36,8 +36,7 @@ dependencies {
 
 	// Swagger
 	implementation("org.springdoc", "springdoc-openapi-ui","1.6.6")
-
-
+    
 }
 
 tasks.withType<Test> {
