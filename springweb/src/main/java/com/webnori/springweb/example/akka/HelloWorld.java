@@ -6,7 +6,7 @@ import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 
-// https://doc.akka.io/docs/akka/2.7.0/typed/actors.html
+// https://doc.akka.io/docs/akka/current/index-actors.html  - Classic Actor
 
 public class HelloWorld extends AbstractActor {
     private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);

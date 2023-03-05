@@ -10,7 +10,7 @@ import org.junit.Test;
 
 import java.time.Duration;
 
-
+// https://doc.akka.io/docs/akka/current/testing.html
 public class AkkaBasicTests extends AbstractJavaTest {
 
     static ActorSystem system;
@@ -18,6 +18,7 @@ public class AkkaBasicTests extends AbstractJavaTest {
     @BeforeClass
     public static void setup() {
         system = AkkaManager.getInstance().getActorSystem();
+        //system.logConfiguration();
     }
 
     @AfterClass
