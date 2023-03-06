@@ -22,18 +22,17 @@ public class HelloWorld extends AbstractActor {
     @Override
     public Receive createReceive() {
         return receiveBuilder().match(String.class, s -> {
-            log.info("Received String message: {}", s);
-
             // ForTest
             if (probe != null) {
 
+                if(isBlockForTest) Thread.sleep(50L);
+
                 if(s.equals("command:tobeslow")){
                     isBlockForTest = true;
+                }else {
+                    probe.tell("world", this.context().self());
+                    log.info("Received String message: {}", s);
                 }
-
-                if(isBlockForTest) Thread.sleep(500L);
-
-                probe.tell("world", this.context().self());
             }
 
         }).match(ActorRef.class, actorRef -> {

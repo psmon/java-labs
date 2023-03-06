@@ -10,18 +10,11 @@ public final class AkkaManager {
 
     private static AkkaManager INSTANCE;
 
-
+    @Getter
     private final ActorSystem actorSystem;
 
-    public ActorSystem getActorSystem(){
-        return actorSystem;
-    }
-
+    @Getter
     private final ActorRef greetActor;
-
-    public  ActorRef getGreetActor(){
-        return greetActor;
-    }
 
 
     private AkkaManager() {
