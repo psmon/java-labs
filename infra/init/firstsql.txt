@@ -1,9 +1,15 @@
-CREATE DATABASE myexample;
+CREATE DATABASE db_test;
 
-USE myexample;
+USE db_test;
 
-CREATE TABLE mytable (myfield VARCHAR(20));
+CREATE TABLE `tbl_member` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) DEFAULT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
-INSERT INTO mytable VALUES ('Hello'), ('Dolly');
+INSERT INTO tbl_member(name, email)
+VALUES('user1','use1@test.com'), ('user2','use1@test.com');
 
 GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'root' WITH GRANT OPTION;
