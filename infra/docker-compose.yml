@@ -1,0 +1,13 @@
+version: '3.5'
+
+services:
+  db:
+    image: mysql:5.7
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    ports:
+      - "13306:3306"
+    volumes:
+      - ./init/firstsql.txt:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
