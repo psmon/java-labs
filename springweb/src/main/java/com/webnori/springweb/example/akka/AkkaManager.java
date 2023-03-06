@@ -30,12 +30,15 @@ public final class AkkaManager {
         // load the normal config stack (system props,
         // then application.conf, then reference.conf)
         Config regularConfig = ConfigFactory.load();
+
+        Config testConfig = ConfigFactory.load("test.conf");
+
         // override regular stack with myConfig
-        Config combined = myConfig.withFallback(regularConfig);
+        Config combined = myConfig.withFallback(testConfig).withFallback(regularConfig);
         // put the result in between the overrides
         // (system props) and defaults again
         Config completeConfig = ConfigFactory.load(combined);
-        // completeConfig = regularConfig + myConfig;
+        // completeConfig = regularConfig + myConfig + testConfig;
 
         // Create Actor System
         actorSystem = ActorSystem.create("akka-spring-demo", completeConfig);
