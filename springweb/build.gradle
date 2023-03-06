@@ -31,8 +31,11 @@
         implementation 'org.springframework.boot:spring-boot-starter-validation:2.7.5'
 
         compileOnly 'org.projectlombok:lombok'
-
         annotationProcessor 'org.projectlombok:lombok'
+
+        //DB
+        implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+        implementation 'com.mysql:mysql-connector-j'
 
 
         //AKKA
