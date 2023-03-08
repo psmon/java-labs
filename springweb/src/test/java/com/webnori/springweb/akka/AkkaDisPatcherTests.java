@@ -1,8 +1,9 @@
-package com.webnori.springweb;
+package com.webnori.springweb.akka;
 
 import akka.actor.ActorRef;
 import akka.routing.RoundRobinPool;
 import akka.testkit.javadsl.TestKit;
+import com.webnori.springweb.akka.AbstractJavaTest;
 import com.webnori.springweb.example.akka.HelloWorld;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
@@ -13,7 +14,7 @@ import java.time.Duration;
 public class AkkaDisPatcherTests extends AbstractJavaTest {
 
     @Test
-    @DisplayName("Actor - HelloWorld Test")
+    @DisplayName("Actor - HelloWorld Dispacher Test")
     public void TestItManyByRouter() {
         new TestKit(system) {
             {

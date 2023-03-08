@@ -1,7 +1,8 @@
-package com.webnori.springweb;
+package com.webnori.springweb.akka;
 
 import akka.actor.ActorRef;
 import akka.testkit.javadsl.TestKit;
+import com.webnori.springweb.akka.AbstractJavaTest;
 import com.webnori.springweb.example.akka.AkkaManager;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
@@ -42,7 +43,7 @@ public class AkkaBasicTests extends AbstractJavaTest {
     }
 
     @Test
-    @DisplayName("Actor - HelloWorld Test")
+    @DisplayName("Actor - HelloWorld Tests")
     public void TestItMany() {
         new TestKit(system) {
             {

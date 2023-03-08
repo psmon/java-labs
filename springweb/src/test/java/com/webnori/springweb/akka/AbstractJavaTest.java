@@ -1,4 +1,4 @@
-package com.webnori.springweb;
+package com.webnori.springweb.akka;
 
 import akka.actor.ActorSystem;
 import akka.testkit.javadsl.TestKit;
