@@ -25,7 +25,6 @@
         def scalaVersion = '2.13'
         def akkaVersion = '2.7.0'
 
-
         implementation 'org.springframework.boot:spring-boot-starter-web'
         implementation 'org.springframework.boot:spring-boot-starter-aop:2.7.0'
         implementation 'org.springframework.boot:spring-boot-starter-validation:2.7.5'
@@ -39,7 +38,10 @@
 
 
         //AKKA
+        implementation platform("com.typesafe.akka:akka-bom_$scalaVersion:$akkaVersion")
         implementation "com.typesafe.akka:akka-actor_$scalaVersion:$akkaVersion"
+        implementation "com.typesafe.akka:akka-stream_$scalaVersion"
+
 
         //Logging
         implementation 'ch.qos.logback:logback-classic:1.2.3'
@@ -52,6 +54,7 @@
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
         testImplementation "org.scalatestplus:junit-4-12_$scalaVersion:3.3.0.0-SNAP2"
         testImplementation "com.typesafe.akka:akka-testkit_$scalaVersion:$akkaVersion"
+        testImplementation "com.typesafe.akka:akka-stream-testkit_$scalaVersion"
 
     }
 
