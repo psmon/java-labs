@@ -11,3 +11,10 @@ services:
       - ./init/firstsql.txt:/docker-entrypoint-initdb.d/init.sql
     environment:
       MYSQL_ROOT_PASSWORD: root
+
+  postgres:
+    image: postgres:9.6
+    ports:
+      - 15432:5432
+    environment:
+      - POSTGRES_PASSWORD=postgres
