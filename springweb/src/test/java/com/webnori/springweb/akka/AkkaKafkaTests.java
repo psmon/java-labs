@@ -23,7 +23,7 @@ public class AkkaKafkaTests extends AbstractJavaTest {
 
 
     @Test
-    @DisplayName("Actor - HelloWorld Test")
+    @DisplayName("KafkaProduce - 100개의 메시지생산이 처리완료")
     public void TestIt() {
         new TestKit(system) {
             {
