@@ -3,8 +3,9 @@ package com.webnori.springweb.akka;
 import akka.Done;
 import akka.NotUsed;
 import akka.actor.ActorRef;
-import akka.kafka.*;
-import akka.kafka.javadsl.Committer;
+import akka.kafka.ConsumerSettings;
+import akka.kafka.ProducerSettings;
+import akka.kafka.Subscriptions;
 import akka.kafka.javadsl.Consumer;
 import akka.kafka.javadsl.Producer;
 import akka.stream.javadsl.Sink;
@@ -14,6 +15,7 @@ import com.typesafe.config.Config;
 import com.webnori.springweb.example.akka.AkkaManager;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.Test;
@@ -83,11 +85,11 @@ public class AkkaKafkaTests extends AbstractJavaTest {
         return null;
     }
 
-    void debugKafkaMsg(String key, String value, ActorRef greet, String testKey) {
-        System.out.printf("pringKafka with Key-Value : %s-%s%n", key, value);
+    void debugKafkaMsg(String key, String value, ActorRef greet, String testKey, String consumerId) {
+        System.out.printf("[%s] pringKafka with Key-Value : %s-%s%n", consumerId, key, value);
 
         //테스트키 동일한것만 카운트 확인..(테스트마다 Kafka고유키 사용)
-        if(testKey.equals(key)) greet.tell("hello", null);
+        if (testKey.equals(key)) greet.tell("hello", null);
 
     }
 
@@ -130,7 +132,7 @@ public class AkkaKafkaTests extends AbstractJavaTest {
                                 consumerSettings,
                                 Subscriptions.topics(topic))
                         .to(Sink.foreach(msg ->
-                                debugKafkaMsg(msg.key(), msg.value(), greetActor, testKey))
+                                debugKafkaMsg(msg.key(), msg.value(), greetActor, testKey, "consumer1"))
                         )
                         .run(system);
 
@@ -160,6 +162,103 @@ public class AkkaKafkaTests extends AbstractJavaTest {
 
                             // Kafka 소비 메시지 확인(100)
                             for (int i = 0; i < testCount; i++) {
+                                probe.expectMsg(Duration.ofSeconds(5), "world");
+                            }
+
+                            return null;
+                        });
+            }
+        };
+    }
+
+    @Test
+    @DisplayName("TestKafkaProduceAndMultiConsume - 100개의 메시지생산을하고 100개의 메시지소비테스트 확인(파티션 2이용하여 2배 처리)")
+    public void TestKafkaProduceAndMultiConsume() {
+        new TestKit(system) {
+            {
+                final TestKit probe = new TestKit(system);
+                final ActorRef greetActor = AkkaManager.getInstance().getGreetActor();
+                final int testCount = 100;
+                final int partitionCount = 2;
+
+                final String testKey = java.util.UUID.randomUUID().toString();
+                final String testKafkaServer = "localhost:9092";
+                final String testGroup = "group1";
+
+                greetActor.tell(probe.getRef(), getRef());
+                expectMsg(Duration.ofSeconds(1), "done");
+
+                final Config producerConfig = system.settings().config().getConfig("akka.kafka.producer");
+                final ProducerSettings<String, String> producerSettings =
+                        ProducerSettings.create(producerConfig, new StringSerializer(), new StringSerializer())
+                                .withBootstrapServers(testKafkaServer);
+
+
+                final Config conSumeConfig = system.settings().config().getConfig("akka.kafka.consumer");
+                final ConsumerSettings<String, String> consumerSettings =
+                        ConsumerSettings.create(conSumeConfig, new StringDeserializer(), new StringDeserializer())
+                                .withBootstrapServers(testKafkaServer)
+                                .withGroupId(testGroup)
+                                .withProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true")
+                                .withProperty(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "3000")
+                                .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+
+
+                String topic = "test-1";
+
+                //Consumer Setup
+                var control =
+                        Consumer.plainSource(
+                                        consumerSettings,
+                                        Subscriptions.assignment(new TopicPartition(topic, 0)))
+                                .to(Sink.foreach(msg ->
+                                        debugKafkaMsg(msg.key(), msg.value(), greetActor, testKey, "consumer1"))
+                                )
+                                .run(system);
+
+                var control2 =
+                        Consumer.plainSource(
+                                        consumerSettings,
+                                        Subscriptions.assignment(new TopicPartition(topic, 1)))
+                                .to(Sink.foreach(msg ->
+                                        debugKafkaMsg(msg.key(), msg.value(), greetActor, testKey, "consumer2"))
+                                )
+                                .run(system);
+
+                //Producer Setup
+                CompletionStage<Done> done =
+                        Source.range(1, testCount)
+                                .map(number -> number.toString())
+                                .map(value -> new ProducerRecord<String, String>(topic,0, testKey, value))
+                                .runWith(Producer.plainSink(producerSettings), system);
+
+                CompletionStage<Done> done2 =
+                        Source.range(1, testCount)
+                                .map(number -> number.toString())
+                                .map(value -> new ProducerRecord<String, String>(topic,1, testKey, value))
+                                .runWith(Producer.plainSink(producerSettings), system);
+
+                //Producer Task Setup
+                Source<Done, NotUsed> source = Source.completionStage(done);
+                Source<Done, NotUsed> source2 = Source.completionStage(done2);
+
+                within(
+                        Duration.ofSeconds(10),
+                        () -> {
+
+                            Sink<Done, CompletionStage<Done>> sink = Sink.foreach(i ->
+                                    System.out.println("생산완료")
+                            );
+
+                            //For Clean Test - 3초후 메시지생성
+                            expectNoMessage(Duration.ofSeconds(3));
+
+                            // Kafka 생산시작
+                            source.runWith(sink, system);
+                            source2.runWith(sink, system);
+
+                            // Kafka 소비 메시지 확인 -
+                            for (int i = 0; i < testCount * partitionCount; i++) {
                                 probe.expectMsg(Duration.ofSeconds(5), "world");
                             }
 
