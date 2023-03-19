@@ -29,7 +29,7 @@ public class AkkaKafkaTests extends AbstractJavaTest {
 
 
     @Test
-    @DisplayName("KafkaProduce - 100개의 메시지생산이 처리완료")
+    @DisplayName("TestKafkaProduce - 100개의 메시지생산이 처리완료")
     public void TestKafkaProduce() {
         new TestKit(system) {
             {
@@ -92,7 +92,7 @@ public class AkkaKafkaTests extends AbstractJavaTest {
     }
 
     @Test
-    @DisplayName("KafkaProduce - 100개의 메시지생산을하고 100개의 메시지소비테스트 확인")
+    @DisplayName("TestKafkaProduceAndConsume - 100개의 메시지생산을하고 100개의 메시지소비테스트 확인")
     public void TestKafkaProduceAndConsume() {
         new TestKit(system) {
             {
