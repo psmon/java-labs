@@ -96,11 +96,12 @@ public class AkkaKafkaTests extends AbstractJavaTest {
     public void TestKafkaProduceAndConsume() {
         new TestKit(system) {
             {
-                int testCount = 100;
-                String testKey = java.util.UUID.randomUUID().toString();
-
                 final TestKit probe = new TestKit(system);
                 final ActorRef greetActor = AkkaManager.getInstance().getGreetActor();
+                final int testCount = 100;
+                final String testKey = java.util.UUID.randomUUID().toString();
+                final String testKafkaServer = "localhost:9092";
+                final String testGroup = "group1";
 
                 greetActor.tell(probe.getRef(), getRef());
                 expectMsg(Duration.ofSeconds(1), "done");
@@ -108,14 +109,14 @@ public class AkkaKafkaTests extends AbstractJavaTest {
                 final Config producerConfig = system.settings().config().getConfig("akka.kafka.producer");
                 final ProducerSettings<String, String> producerSettings =
                         ProducerSettings.create(producerConfig, new StringSerializer(), new StringSerializer())
-                                .withBootstrapServers("localhost:9092");
+                                .withBootstrapServers(testKafkaServer);
 
 
                 final Config conSumeConfig = system.settings().config().getConfig("akka.kafka.consumer");
                 final ConsumerSettings<String, String> consumerSettings =
                         ConsumerSettings.create(conSumeConfig, new StringDeserializer(), new StringDeserializer())
-                                .withBootstrapServers("localhost:9092")
-                                .withGroupId("group1")
+                                .withBootstrapServers(testKafkaServer)
+                                .withGroupId(testGroup)
                                 .withProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true")
                                 .withProperty(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "3000")
                                 .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -123,22 +124,7 @@ public class AkkaKafkaTests extends AbstractJavaTest {
 
                 String topic = "test-1";
 
-                //Consumer
-                final Config commitConfig = system.settings().config().getConfig("akka.kafka.committer");
-                CommitterSettings committerSettings = CommitterSettings.create(commitConfig);
-
-
-                /*
-                Consumer.DrainingControl<Done> control =
-                        Consumer.committableSource(consumerSettings, Subscriptions.topics(topic))
-                                .mapAsync(
-                                        1,
-                                        msg ->
-                                                business(msg.record().key(), msg.record().value())
-                                                        .<ConsumerMessage.Committable>thenApply(done -> msg.committableOffset()))
-                                .toMat(Committer.sink(committerSettings), Consumer::createDrainingControl)
-                                .run(system);*/
-
+                //Consumer Setup
                 Consumer
                         .plainSource(
                                 consumerSettings,
@@ -148,13 +134,14 @@ public class AkkaKafkaTests extends AbstractJavaTest {
                         )
                         .run(system);
 
-                //Producer
+                //Producer Setup
                 CompletionStage<Done> done =
                         Source.range(1, testCount)
                                 .map(number -> number.toString())
                                 .map(value -> new ProducerRecord<String, String>(topic, testKey, value))
                                 .runWith(Producer.plainSink(producerSettings), system);
 
+                //Producer Task Setup
                 Source<Done, NotUsed> source = Source.completionStage(done);
 
                 within(
