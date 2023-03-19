@@ -55,4 +55,4 @@
 - [AkkaBasicTests.java](AkkaBasicTests.java) : Akka 기본 메시지 전송
 - [AkkaDisPatcherTests.java](AkkaDisPatcherTests.java) : Dispatcher를 이용한 동시성처리 ( 멀티스레드 대응 )
 - [AkkaThrottleTests.java](AkkaThrottleTests.java) : 메시지 처리 속도제어 ( API호출제약및 생산속도 조절시 사용 )
-
+- [AkkaKafkaTests.java](AkkaKafkaTests.java) : Akka를 이용한 Kafka 활용 유닛테스트기
