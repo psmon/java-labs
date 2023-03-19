@@ -8,7 +8,9 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 32181
       ZOOKEEPER_TICK_TIME: 2000
-
+    labels:
+      io.rancher.scheduler.affinity:host_label: server=dev01
+      io.rancher.container.hostname_override: container_name
 
   kafka-1:
     image: confluentinc/cp-kafka:5.5.1
