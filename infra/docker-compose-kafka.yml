@@ -1,4 +1,4 @@
-version: '3.5'
+version: '2'
 
 services:
   zookeeper-1:
@@ -24,6 +24,9 @@ services:
       KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-1:29092,EXTERNAL://localhost:9092
       KAFKA_DEFAULT_REPLICATION_FACTOR: 3
       KAFKA_NUM_PARTITIONS: 3
+    labels:
+      io.rancher.scheduler.affinity:host_label: server=dev01
+      io.rancher.container.hostname_override: container_name
 
 
   kafka-2:
@@ -40,6 +43,9 @@ services:
       KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-2:29093,EXTERNAL://localhost:9093
       KAFKA_DEFAULT_REPLICATION_FACTOR: 3
       KAFKA_NUM_PARTITIONS: 3
+    labels:
+      io.rancher.scheduler.affinity:host_label: server=dev01
+      io.rancher.container.hostname_override: container_name
 
 
   kafka-3:
@@ -56,6 +62,9 @@ services:
       KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-3:29094,EXTERNAL://localhost:9094
       KAFKA_DEFAULT_REPLICATION_FACTOR: 3
       KAFKA_NUM_PARTITIONS: 3
+    labels:
+      io.rancher.scheduler.affinity:host_label: server=dev01
+      io.rancher.container.hostname_override: container_name
 
   kafka-ui:
     image: provectuslabs/kafka-ui
@@ -67,3 +76,6 @@ services:
       - KAFKA_CLUSTERS_0_NAME=local
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka-1:29092,kafka-2:29093,kafka-3:29094
       - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper-1:22181
+    labels:
+      io.rancher.scheduler.affinity:host_label: server=dev01
+      io.rancher.container.hostname_override: container_name
