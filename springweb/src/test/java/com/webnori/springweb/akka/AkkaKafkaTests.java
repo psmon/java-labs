@@ -14,17 +14,12 @@ import com.typesafe.config.Config;
 import com.webnori.springweb.example.akka.AkkaManager;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.common.Metric;
-import org.apache.kafka.common.MetricName;
-import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
 
 import java.time.Duration;
-import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 // https://doc.akka.io/docs/alpakka-kafka/current/producer.html
@@ -83,10 +78,17 @@ public class AkkaKafkaTests extends AbstractJavaTest {
         };
     }
 
-    CompletionStage<String> business(String key, String value)
-    {
-        System.out.println( String.format("business with Key-Value : %s-%s",key,value ));
+    CompletionStage<String> business(String key, String value) {
+        System.out.printf("business with Key-Value : %s-%s%n", key, value);
         return null;
+    }
+
+    void debugKafkaMsg(String key, String value, ActorRef greet, String testKey) {
+        System.out.printf("pringKafka with Key-Value : %s-%s%n", key, value);
+
+        //테스트키 동일한것만 카운트 확인..(테스트마다 Kafka고유키 사용)
+        if(testKey.equals(key)) greet.tell("hello", null);
+
     }
 
     @Test
@@ -94,6 +96,9 @@ public class AkkaKafkaTests extends AbstractJavaTest {
     public void TestKafkaProduceAndConsume() {
         new TestKit(system) {
             {
+                int testCount = 100;
+                String testKey = java.util.UUID.randomUUID().toString();
+
                 final TestKit probe = new TestKit(system);
                 final ActorRef greetActor = AkkaManager.getInstance().getGreetActor();
 
@@ -111,15 +116,19 @@ public class AkkaKafkaTests extends AbstractJavaTest {
                         ConsumerSettings.create(conSumeConfig, new StringDeserializer(), new StringDeserializer())
                                 .withBootstrapServers("localhost:9092")
                                 .withGroupId("group1")
+                                .withProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true")
+                                .withProperty(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "3000")
                                 .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
-                String topic = "test-1";
 
+                String topic = "test-1";
 
                 //Consumer
                 final Config commitConfig = system.settings().config().getConfig("akka.kafka.committer");
                 CommitterSettings committerSettings = CommitterSettings.create(commitConfig);
 
+
+                /*
                 Consumer.DrainingControl<Done> control =
                         Consumer.committableSource(consumerSettings, Subscriptions.topics(topic))
                                 .mapAsync(
@@ -128,14 +137,22 @@ public class AkkaKafkaTests extends AbstractJavaTest {
                                                 business(msg.record().key(), msg.record().value())
                                                         .<ConsumerMessage.Committable>thenApply(done -> msg.committableOffset()))
                                 .toMat(Committer.sink(committerSettings), Consumer::createDrainingControl)
-                                .run(system);
+                                .run(system);*/
 
+                Consumer
+                        .plainSource(
+                                consumerSettings,
+                                Subscriptions.topics(topic))
+                        .to(Sink.foreach(msg ->
+                                debugKafkaMsg(msg.key(), msg.value(), greetActor, testKey))
+                        )
+                        .run(system);
 
                 //Producer
                 CompletionStage<Done> done =
-                        Source.range(1, 100)
+                        Source.range(1, testCount)
                                 .map(number -> number.toString())
-                                .map(value -> new ProducerRecord<String, String>(topic,"test", value))
+                                .map(value -> new ProducerRecord<String, String>(topic, testKey, value))
                                 .runWith(Producer.plainSink(producerSettings), system);
 
                 Source<Done, NotUsed> source = Source.completionStage(done);
@@ -144,22 +161,20 @@ public class AkkaKafkaTests extends AbstractJavaTest {
                         Duration.ofSeconds(10),
                         () -> {
 
-                            // Will wait for the rest of the 3 seconds
-                            expectNoMessage(Duration.ofSeconds(3));
-
-                            // 작업이 완료되면 GreetActor에 Hello전송
                             Sink<Done, CompletionStage<Done>> sink = Sink.foreach(i ->
-                                    greetActor.tell("hello", getRef())
+                                    System.out.println("생산완료")
                             );
+
+                            //For Clean Test - 3초후 메시지생성
+                            expectNoMessage(Duration.ofSeconds(3));
 
                             // Kafka 생산시작
                             source.runWith(sink, system);
 
-                            // Kafka 생산 완료감지
-                            probe.expectMsg(Duration.ofSeconds(5), "world");
-
-                            // Will wait for the rest of the 3 seconds
-                            expectNoMessage(Duration.ofSeconds(5));
+                            // Kafka 소비 메시지 확인(100)
+                            for (int i = 0; i < testCount; i++) {
+                                probe.expectMsg(Duration.ofSeconds(5), "world");
+                            }
 
                             return null;
                         });
