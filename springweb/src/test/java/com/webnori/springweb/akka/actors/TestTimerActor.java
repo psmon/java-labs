@@ -1,32 +1,25 @@
-package com.webnori.springweb.example.akka;
+package com.webnori.springweb.akka.actors;
 
 
 import akka.actor.AbstractActorWithTimers;
-import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 
 import java.time.Duration;
 
-public class TimerActor extends AbstractActorWithTimers {
+public class TestTimerActor extends AbstractActorWithTimers {
 
     private static final Object TICK_KEY = "TickKey";
     private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
-    private final ActorRef helloActor;
 
-    public TimerActor() {
-
+    public TestTimerActor() {
         // OnlyOnce Timer - Start Timer
-        //getTimers().startSingleTimer(TICK_KEY, new FirstTick(), Duration.ofMillis(500));
-
-        // Create Child Actor
-        helloActor = context().actorOf(HelloWorld.Props(), "helloActor");
-
+        getTimers().startSingleTimer(TICK_KEY, new FirstTick(), Duration.ofMillis(500));
     }
 
     public static Props Props() {
-        return Props.create(TimerActor.class);
+        return Props.create(TestTimerActor.class);
     }
 
     @Override
@@ -42,7 +35,6 @@ public class TimerActor extends AbstractActorWithTimers {
                 .match(Tick.class, message -> {
                     // do something useful here
                     log.info("Tick");
-                    helloActor.tell("Hello~", self());
                 })
                 .build();
     }
