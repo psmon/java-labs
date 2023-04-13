@@ -6,8 +6,7 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ApplicationStartup
-        implements ApplicationListener<ApplicationReadyEvent> {
+public class ApplicationStartup implements ApplicationListener<ApplicationReadyEvent> {
 
     /**
      * This event is executed as late as conceivably possible to indicate that
@@ -15,10 +14,6 @@ public class ApplicationStartup
      */
     @Override
     public void onApplicationEvent(final ApplicationReadyEvent event) {
-
-
         AkkaManager.getInstance();
-
-        return;
     }
 }

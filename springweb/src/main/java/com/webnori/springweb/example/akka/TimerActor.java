@@ -6,25 +6,14 @@ import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import scala.Console;
 
-import javax.naming.Context;
 import java.time.Duration;
 
 public class TimerActor extends AbstractActorWithTimers {
 
+    private static final Object TICK_KEY = "TickKey";
     private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
-
     private final ActorRef helloActor;
-    private static Object TICK_KEY = "TickKey";
-    private static final class FirstTick {
-    }
-    private static final class Tick {
-    }
-
-    public static Props Props() {
-        return Props.create(TimerActor.class);
-    }
 
     public TimerActor() {
 
@@ -32,8 +21,12 @@ public class TimerActor extends AbstractActorWithTimers {
         getTimers().startSingleTimer(TICK_KEY, new FirstTick(), Duration.ofMillis(500));
 
         // Create Child Actor
-        helloActor = context().actorOf(HelloWorld.Props(),"helloActor");
+        helloActor = context().actorOf(HelloWorld.Props(), "helloActor");
 
+    }
+
+    public static Props Props() {
+        return Props.create(TimerActor.class);
     }
 
     @Override
@@ -52,5 +45,11 @@ public class TimerActor extends AbstractActorWithTimers {
                     helloActor.tell("Hello~", self());
                 })
                 .build();
+    }
+
+    private static final class FirstTick {
+    }
+
+    private static final class Tick {
     }
 }

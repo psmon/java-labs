@@ -56,16 +56,8 @@ public class GreetingController {
     }
 
     @Operation(summary = "Hello, Worold", description = "인사하기")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OK", content =
-            @Content(schema = @Schema(implementation = Greeting.class))),
-            @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-            @ApiResponse(responseCode = "404", description = "NOT FOUND"),
-            @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
-    })
-    @Parameters({
-            @Parameter(name = "name", description = "이름", example = "헬로우")
-    })
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = Greeting.class))), @ApiResponse(responseCode = "400", description = "BAD REQUEST"), @ApiResponse(responseCode = "404", description = "NOT FOUND"), @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")})
+    @Parameters({@Parameter(name = "name", description = "이름", example = "헬로우")})
     @ResponseBody
     @GetMapping("/hello")
     public Greeting greeting(@RequestParam(value = "name", defaultValue = "World") String name) {
