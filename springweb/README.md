@@ -52,6 +52,10 @@
 - GreetingController 참고해서 , /greeting2 API 작성해보기 
 
 
+###
+
+- 실행 : http://localhost:8099/swagger-ui/index.html
+
 ### Reference Documentation
 For further reference, please consider the following sections:
 
