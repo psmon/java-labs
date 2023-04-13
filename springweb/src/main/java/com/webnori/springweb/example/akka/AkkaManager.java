@@ -40,6 +40,10 @@ public final class AkkaManager {
         // Create Some Actor
         greetActor = actorSystem.actorOf(HelloWorld.Props().withDispatcher("my-dispatcher") , "HelloWorld");
 
+        actorSystem.actorOf(TimerActor.Props().withDispatcher("my-dispatcher") , "TimerActor");
+
+
+
     }
 
 
