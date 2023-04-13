@@ -1,6 +1,8 @@
 package com.webnori.springweb.example.restservice;
 
 import akka.actor.ActorRef;
+import akka.actor.ActorSelection;
+import akka.actor.ActorSystem;
 import com.webnori.springweb.example.akka.AkkaManager;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -10,20 +12,48 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+//TEST : http://localhost:8099/swagger-ui/index.html
+
 @RestController
 @Tag(name = "greeting", description = "test API")
 @RequestMapping("/api/greeting")
-@RequiredArgsConstructor
 public class GreetingController {
 
     private static final String template = "Hello, %s!";
     private final AtomicLong counter = new AtomicLong();
+
+    ActorSelection helloWorldActor;
+
+    ActorSelection helloWordChildActor;
+
+    ActorRef helloWordActor2;
+
+
+    GreetingController() {
+
+        ActorSystem actorSystem = AkkaManager.getInstance().getActorSystem();
+
+        // Two Way, Get Actor Ref~
+        // By Actor Address
+        // in create AkkaManager
+        //
+        // AkkSystem
+        //   -user
+        //    -HelloWorld
+        //    -TimerActor
+        //      -helloActor
+        helloWorldActor = actorSystem.actorSelection("/user/HelloWorld");
+
+        helloWordChildActor = actorSystem.actorSelection("/user/TimerActor/helloActor");
+
+        // By ActorRef
+        helloWordActor2 = AkkaManager.getInstance().getGreetActor();
+
+    }
 
     @Operation(summary = "Hello, Worold", description = "인사하기")
     @ApiResponses({
@@ -42,13 +72,9 @@ public class GreetingController {
 
         String testMessage = String.format(template, name);
 
-        // Two ways to send messages to actors
-        // By Actor Address
-        AkkaManager.getInstance().getActorSystem().actorSelection("/user/HelloWorld").tell(testMessage +
-                " by ActorAddress", ActorRef.noSender());
+        helloWorldActor.tell(testMessage + " by ActorAddress", ActorRef.noSender());
 
-        // By ActorRef
-        AkkaManager.getInstance().getGreetActor().tell(testMessage +" by ActorRef", ActorRef.noSender());
+        helloWordActor2.tell(testMessage + " by ActorAddress", ActorRef.noSender());
 
         return new Greeting(counter.incrementAndGet(), testMessage);
     }

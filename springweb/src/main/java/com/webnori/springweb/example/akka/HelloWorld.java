@@ -13,7 +13,7 @@ public class HelloWorld extends AbstractActor {
 
     private ActorRef probe;
 
-    private  boolean isBlockForTest = false;
+    private boolean isBlockForTest = false;
 
     public static Props Props() {
         return Props.create(HelloWorld.class);
@@ -25,14 +25,16 @@ public class HelloWorld extends AbstractActor {
             // ForTest
             if (probe != null) {
 
-                if(isBlockForTest) Thread.sleep(50L);
+                if (isBlockForTest) Thread.sleep(50L);
 
-                if(s.equals("command:tobeslow")){
+                if (s.equals("command:tobeslow")) {
                     isBlockForTest = true;
-                }else {
+                } else {
                     probe.tell("world", this.context().self());
                     log.info("Received String message: {}", s);
                 }
+            } else {
+                log.info("Received String message: {}", s);
             }
 
         }).match(ActorRef.class, actorRef -> {
