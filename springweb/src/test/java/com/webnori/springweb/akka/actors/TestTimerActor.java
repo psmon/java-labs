@@ -25,6 +25,9 @@ public class TestTimerActor extends AbstractActorWithTimers {
     @Override
     public Receive createReceive() {
         return receiveBuilder()
+                .match(String.class, message -> {
+                    log.info(message);
+                })
                 .match(FirstTick.class, message -> {
                     // do something useful here
                     log.info("First Tick");

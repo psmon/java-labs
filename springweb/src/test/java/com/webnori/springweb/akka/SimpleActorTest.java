@@ -28,6 +28,10 @@ public class SimpleActorTest extends AbstractJavaTest {
     @Test
     @DisplayName("Actor - HelloWorld Test")
     public void HelloWorld(){
+
+        // https://doc.akka.io/docs/akka/current/actors.html#creating-actors
+        // 기능 : 액터모델을 생성하고 메시지를 전송합니다.
+
         new TestKit(system) {
             {
                 ActorRef greetActor = system.actorOf(GreetingActor.Props(), "greetActor");
@@ -40,6 +44,10 @@ public class SimpleActorTest extends AbstractJavaTest {
     @Test
     @DisplayName("Actor - ThrottlerTest Test")
     public  void ThrottlerTest(){
+
+        //https://doc.akka.io/docs/akka/current/stream/stream-flows-and-basics.html
+        // 기능 : 속도제어장치를 액터 앞단에 달아서, TPS를 제어할수 있습니다.
+
         new TestKit(system) {
             {
                 final Materializer materializer = ActorMaterializer.create(system);
@@ -73,9 +81,13 @@ public class SimpleActorTest extends AbstractJavaTest {
     @Test
     @DisplayName("Actor - RoundRobinTest Test")
     public void RoundRobinTest(){
+
+        // https://doc.akka.io/docs/akka/current/routing.html
+        // 실시간으로 발생하는 이벤트를 분배기를 통해 동시에 실행할수 있습니다.
+        // 멀티스레드에 대응하며 분산처리된 액터단위로 순차성은 보장되지 않습니다.
+
         new TestKit(system) {
             {
-                // https://doc.akka.io/docs/akka/current/routing.html
                 system.actorOf(GreetingActor.Props(),"w1");
                 system.actorOf(GreetingActor.Props(),"w2");
                 system.actorOf(GreetingActor.Props(),"w3");
@@ -94,9 +106,17 @@ public class SimpleActorTest extends AbstractJavaTest {
     @Test
     @DisplayName("Actor - TimerActor Test")
     public void TimerActor(){
+
+        // https://doc.akka.io/docs/akka/current/actors.html#timers-scheduled-messages
+        // 기능 : Actor에 반복작동하는 스케줄러기능을 탑재할수 있습니다.
+        // 스케줄러를 탑재하면서 메시지 전송도 가능합니다.
+
         new TestKit(system) {
             {
                 ActorRef greetActor = system.actorOf(TestTimerActor.Props(), "timerActor");
+
+                greetActor.tell("Hello~ World........", ActorRef.noSender());
+
                 expectNoMessage(Duration.ofSeconds(10));
             }
         };
@@ -105,6 +125,10 @@ public class SimpleActorTest extends AbstractJavaTest {
     @Test
     @DisplayName("Actor - SafeBatchActor Test")
     public void SafeBatchActor(){
+
+        // ThrottlerTest(초당제한) + TimerActor(초당처리)를 조합하여 스마트한 고성능 준실시간성 벌크처리를 작성할수 있습니다.
+        // 심플한 코드로 FSMBatch 처리기와 같은 기능을 만들수 있습니다.
+
         new TestKit(system) {
             {
                 final Materializer materializer = ActorMaterializer.create(system);
