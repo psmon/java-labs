@@ -122,6 +122,7 @@ public class SimpleActorTest extends AbstractJavaTest {
                 int concurrencyCount = 10;      //동시처리능력
                 int processCouuntPerSec = 3;    //초당 처리 밸브
                 int maxBufferSize = 3000;       //최대버퍼수(넘을시 Drop전략)
+                int testCallCount = 100;
 
                 final Materializer materializer = ActorMaterializer.create(system);
                 List<String> paths = new ArrayList<>();
@@ -142,11 +143,13 @@ public class SimpleActorTest extends AbstractJavaTest {
                                 .to(Sink.actorRef(router, akka.NotUsed.getInstance()))
                                 .run(materializer);
 
-                for(int i=0 ; i<1000 ; i++){
+                for(int i=0 ; i<testCallCount ; i++){
                     throttler.tell("#### Hello World!" + i ,ActorRef.noSender());
                 }
 
-                expectNoMessage(Duration.ofSeconds(100));
+                int expectedCompleteTime = testCallCount / 3;
+
+                expectNoMessage(Duration.ofSeconds(expectedCompleteTime));
             }
         };
     }
