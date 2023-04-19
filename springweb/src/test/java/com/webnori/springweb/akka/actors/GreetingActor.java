@@ -6,8 +6,10 @@ import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import com.webnori.springweb.akka.actors.models.FakeSlowMode;
 
 import javax.naming.Context;
+import java.util.Random;
 
 public class GreetingActor extends AbstractActor {
 
@@ -17,12 +19,33 @@ public class GreetingActor extends AbstractActor {
         return Props.create(GreetingActor.class);
     }
 
+    public static Props Props(String dispatcher) {
+        return Props.create(GreetingActor.class).withDispatcher(dispatcher);
+    }
+
+    private boolean isSlowMode = false;
+
+    private Random rand = new Random();
+
     @Override
     public Receive createReceive() {
         return receiveBuilder()
+        .match(FakeSlowMode.class, message -> {
+            isSlowMode = true;
+            log.info("Switch SlowMode:{}", self().path(), isSlowMode);
+        })
         .match(String.class, s -> {
-            log.info("{}:Received String message: {}", self().path(), s);
+
+            int sleepSec = 0;
+            if(isSlowMode){
+                // 0.5 + 랜덤 1초
+                sleepSec = rand.nextInt(1000) + 500;
+                Thread.sleep(sleepSec);
+            }
+            log.info("{}:Completed String message: {} - Delay:{}", self().path(), s, sleepSec);
+
         })
         .matchAny(o -> log.info("received unknown message")).build();
     }
+
 }

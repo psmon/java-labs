@@ -2,6 +2,7 @@ package com.webnori.springweb.akka;
 
 import akka.actor.ActorRef;
 import akka.routing.RoundRobinGroup;
+import akka.routing.RoundRobinPool;
 import akka.stream.ActorMaterializer;
 import akka.stream.Materializer;
 import akka.stream.OverflowStrategy;
@@ -12,16 +13,20 @@ import akka.testkit.javadsl.TestKit;
 import com.webnori.springweb.akka.actors.GreetingActor;
 import com.webnori.springweb.akka.actors.SafeBatchActor;
 import com.webnori.springweb.akka.actors.TestTimerActor;
+import com.webnori.springweb.akka.actors.models.FakeSlowMode;
 import com.webnori.springweb.example.akka.AkkaManager;
+import com.webnori.springweb.example.akka.HelloWorld;
 import com.webnori.springweb.example.akka.TimerActor;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
 import scala.concurrent.duration.FiniteDuration;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
 
 public class SimpleActorTest extends AbstractJavaTest {
 
@@ -88,17 +93,60 @@ public class SimpleActorTest extends AbstractJavaTest {
 
         new TestKit(system) {
             {
-                system.actorOf(GreetingActor.Props(),"w1");
-                system.actorOf(GreetingActor.Props(),"w2");
-                system.actorOf(GreetingActor.Props(),"w3");
+                ActorRef w1 = system.actorOf(GreetingActor.Props(),"w1");
+                ActorRef w2 = system.actorOf(GreetingActor.Props(),"w2");
+                ActorRef w3 = system.actorOf(GreetingActor.Props(),"w3");
 
-                List<String> paths = Arrays.asList("/user/w1", "/user/w2", "/user/w3");
+                List<String> paths = Arrays.asList("akka:1.1.1.1/user/w1", "/user/w2", "/user/w3");
                 ActorRef router = system.actorOf(new RoundRobinGroup(paths).props(), "router");
 
                 for(int i=0 ; i<100 ; i++){
                     router.tell("#### Hello World!" + i ,ActorRef.noSender());
                 }
                 expectNoMessage(Duration.ofSeconds(3));
+            }
+        };
+    }
+
+    @Test
+    @DisplayName("Actor - RoundRobinThrottleTest Test")
+    public void RoundRobinThrottleTest(){
+
+        // https://doc.akka.io/docs/akka/current/routing.html
+        // 실시간으로 발생하는 이벤트를 분배기를 통해 동시에 실행할수 있습니다.
+        // 멀티스레드에 대응하며 분산처리된 액터단위로 순차성은 보장되지 않습니다.
+
+        new TestKit(system) {
+            {
+                final Materializer materializer = ActorMaterializer.create(system);
+                int concurrencyCount = 10;
+
+                List<String> paths = new ArrayList<>();
+
+                for(int i=0; i<concurrencyCount ; i++){
+                    String pathName = "w" + i+1;
+                    ActorRef work = system.actorOf(GreetingActor.Props("my-dispatcher-test1"),pathName);
+                    work.tell(new FakeSlowMode(), ActorRef.noSender());
+                    paths.add("/user/" + pathName);
+                }
+
+                ActorRef router = system.actorOf(new RoundRobinGroup(paths).props(), "router");
+
+                int processCouuntPerSec = 3;
+                int maxBufferSize = 3000;
+
+                final ActorRef throttler =
+                        Source.actorRef(maxBufferSize, OverflowStrategy.dropNew())
+                                .throttle(processCouuntPerSec, FiniteDuration.create(1, TimeUnit.SECONDS),
+                                        processCouuntPerSec, (ThrottleMode) ThrottleMode.shaping())
+                                .to(Sink.actorRef(router, akka.NotUsed.getInstance()))
+                                .run(materializer);
+
+                for(int i=0 ; i<1000 ; i++){
+                    router.tell("#### Hello World!" + i ,ActorRef.noSender());
+                }
+
+                expectNoMessage(Duration.ofSeconds(100));
             }
         };
     }
