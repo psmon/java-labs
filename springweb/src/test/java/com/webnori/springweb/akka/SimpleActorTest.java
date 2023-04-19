@@ -112,9 +112,9 @@ public class SimpleActorTest extends AbstractJavaTest {
     @DisplayName("Actor - RoundRobinThrottleTest Test")
     public void RoundRobinThrottleTest(){
 
-        // https://doc.akka.io/docs/akka/current/routing.html
-        // 실시간으로 발생하는 이벤트를 분배기를 통해 동시에 실행할수 있습니다.
-        // 멀티스레드에 대응하며 분산처리된 액터단위로 순차성은 보장되지 않습니다.
+        // 동시성 처리 문제
+        // 스레드 3개 작동된다고 TPS3으로 작동되는것이 아닙니다.
+        // 각 스레드는 대기가 있을수 있기때문입니다. 생산명령을 3으로 조절하고, 처리 스레드는 N개가 있어야 3TPS처리가 가능합니다.
 
         new TestKit(system) {
             {
