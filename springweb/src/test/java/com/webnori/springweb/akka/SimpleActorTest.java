@@ -112,28 +112,28 @@ public class SimpleActorTest extends AbstractJavaTest {
     @DisplayName("Actor - RoundRobinThrottleTest Test")
     public void RoundRobinThrottleTest(){
 
-        // 동시성 처리 문제
-        // 스레드 3개 작동된다고 TPS3으로 작동되는것이 아닙니다.
-        // 각 스레드는 대기가 있을수 있기때문입니다. 생산명령을 3으로 조절하고, 처리 스레드는 N개가 있어야 3TPS처리가 가능합니다.
+        // 동시성 병렬처리 문제
+        // 스레드 3개 작동된다고 TPS3으로 작동되는것이 아니며 각 스레드는 대기가 있을수 있기때문입니다.
+        // 생산명령을 3으로 조절하고, 처리 스레드는 N개가 있어야 3TPS처리에 가깝게 처리할수 있습니다.
 
         new TestKit(system) {
             {
-                final Materializer materializer = ActorMaterializer.create(system);
-                int concurrencyCount = 10;
+                //Given
+                int concurrencyCount = 10;      //동시처리능력
+                int processCouuntPerSec = 3;    //초당 처리 밸브
+                int maxBufferSize = 3000;       //최대버퍼수(넘을시 Drop전략)
 
+                final Materializer materializer = ActorMaterializer.create(system);
                 List<String> paths = new ArrayList<>();
 
                 for(int i=0; i<concurrencyCount ; i++){
-                    String pathName = "w" + i+1;
+                    String pathName = "w" + (i+1);
                     ActorRef work = system.actorOf(GreetingActor.Props("my-dispatcher-test1"),pathName);
                     work.tell(new FakeSlowMode(), ActorRef.noSender());
                     paths.add("/user/" + pathName);
                 }
 
                 ActorRef router = system.actorOf(new RoundRobinGroup(paths).props(), "router");
-
-                int processCouuntPerSec = 3;
-                int maxBufferSize = 3000;
 
                 final ActorRef throttler =
                         Source.actorRef(maxBufferSize, OverflowStrategy.dropNew())
@@ -143,7 +143,7 @@ public class SimpleActorTest extends AbstractJavaTest {
                                 .run(materializer);
 
                 for(int i=0 ; i<1000 ; i++){
-                    router.tell("#### Hello World!" + i ,ActorRef.noSender());
+                    throttler.tell("#### Hello World!" + i ,ActorRef.noSender());
                 }
 
                 expectNoMessage(Duration.ofSeconds(100));
