@@ -1,5 +1,10 @@
 # JAVA-LABS
 
+Spring Boot을 통해 JAVA를 연구하고 , 자바진영의 다양한 오픈스택들을 실험하고 학습하는 프로젝트입니다.
+
+활용되는 OpenStack들은 모두 도커로 구동하며, 샘플코드라 할지라도 로컬에서 목업이 아닌 로컬인프라를 통한 
+테스트가능한 코드작성을 지원합니다. 
+
 ## 사용툴
 
 - https://www.jetbrains.com/ko-kr/idea/download
@@ -14,20 +19,10 @@
 - 그레이들 디펜던시 업데이트 : Gradle Ctrl + Shift + O
 - 코드 Style : Ctel + Shift + Alt + L
 
+## 이 프로젝트에 셋팅된 기술 Stacks
 
-## 기초 섹션 준비중....
-
-- Swagger 셋팅
-- DB 연동(JPA/Mybatis)
-- Swagger 셋팅
+- Api With Swagger
+- DB 연결 Mysql8
 - Spring Boot Docker화
-- Spring With React -분리된 서버/프론트가 하나처럼 작동하는 모던웹구조
-
-## 고급섹션 준비중....
-
-- Redis
-- Spring Security(인증/JWT)
-- Spring Batch
-- Kafka
-- Akka - https://doc.akka.io/docs/akka/current/general/index.html
-- alpakka - 모든 스트림장치와 연결하기
+- AKKA
+- 

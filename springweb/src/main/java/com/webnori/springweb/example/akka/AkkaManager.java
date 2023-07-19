@@ -2,8 +2,11 @@ package com.webnori.springweb.example.akka;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
+import akka.actor.Props;
+import akka.routing.RoundRobinPool;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import javafx.concurrent.Worker;
 import lombok.Getter;
 
 public final class AkkaManager {
@@ -15,6 +18,9 @@ public final class AkkaManager {
 
     @Getter
     private final ActorRef greetActor;
+
+    @Getter
+    private final ActorRef routerActor;
 
 
     private AkkaManager() {
@@ -38,9 +44,16 @@ public final class AkkaManager {
         //actorSystem.logConfiguration();
 
         // Create Some Actor
-        greetActor = actorSystem.actorOf(HelloWorld.Props().withDispatcher("my-dispatcher") , "HelloWorld");
+        greetActor = actorSystem.actorOf(HelloWorld.Props()
+                .withDispatcher("my-dispatcher"), "HelloWorld");
 
-        actorSystem.actorOf(TimerActor.Props(),"TimerActor");
+
+        // Create Router Actor
+        routerActor = actorSystem.actorOf(new RoundRobinPool(5)
+                .props(HelloWorld.Props()), "roundRobinPool");
+
+        actorSystem.actorOf(TimerActor.Props()
+                .withDispatcher("my-blocking-dispatcher"),"TimerActor");
 
     }
 

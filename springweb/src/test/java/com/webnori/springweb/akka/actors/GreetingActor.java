@@ -2,13 +2,11 @@ package com.webnori.springweb.akka.actors;
 
 
 import akka.actor.AbstractActor;
-import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import com.webnori.springweb.akka.actors.models.FakeSlowMode;
+import com.webnori.springweb.example.akka.models.FakeSlowMode;
 
-import javax.naming.Context;
 import java.util.Random;
 
 public class GreetingActor extends AbstractActor {

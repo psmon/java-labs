@@ -5,6 +5,7 @@ import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import com.webnori.springweb.example.akka.models.FakeSlowMode;
 
 // https://doc.akka.io/docs/akka/current/index-actors.html  - Classic Actor
 
@@ -21,26 +22,26 @@ public class HelloWorld extends AbstractActor {
 
     @Override
     public Receive createReceive() {
-        return receiveBuilder().match(String.class, s -> {
-            // ForTest
+        return receiveBuilder()
+        .match(ActorRef.class, actorRef -> {
+            this.probe = actorRef;
+            getSender().tell("done", getSelf());
+        })
+        .match(FakeSlowMode.class, message -> {
+            isBlockForTest = true;
+            log.info("Switch SlowMode:{}", self().path(), isBlockForTest);
+        })
+        .match(String.class, s -> {
+            if (isBlockForTest) Thread.sleep(3000L);
             if (probe != null) {
-
-                if (isBlockForTest) Thread.sleep(50L);
-
-                if (s.equals("command:tobeslow")) {
-                    isBlockForTest = true;
-                } else {
-                    probe.tell("world", this.context().self());
-                    log.info("Received String message: {}", s);
-                }
+                probe.tell("world", this.context().self());
+                log.info("Received String message: {}", s);
             } else {
                 log.info("Received String message: {}", s);
             }
-
-        }).match(ActorRef.class, actorRef -> {
-            this.probe = actorRef;
-            getSender().tell("done", getSelf());
-        }).matchAny(o -> log.info("received unknown message")).build();
+        })
+        .matchAny(o -> log.info("received unknown message"))
+        .build();
     }
 
 }

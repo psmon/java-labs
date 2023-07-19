@@ -36,8 +36,8 @@
         implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
         implementation 'com.mysql:mysql-connector-j'
 
-        runtimeOnly 'com.h2database:h2'
-
+        runtimeOnly 'com.h2database:h2:2.1.214'
+        runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
 
         //AKKA
         implementation platform("com.typesafe.akka:akka-bom_$scalaVersion:$akkaVersion")
