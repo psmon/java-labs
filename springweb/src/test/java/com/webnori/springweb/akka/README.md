@@ -48,6 +48,35 @@
         throttler1.tell("hello1", getRef()); 
     }
 
+## Kafka
+
+Alpakka를 이용하여 ReactiveStream(AkkaStream)하게 Kafka를 제어할수 있습니다.
+
+유닛테스트를 통해  Kafka의 생상-소비 이벤트스트림에 발생한 데이터를 검사할수있는것은 보너스입니다. 
+
+```
+#AkkaKaftaTest.java
+
+var consumer1 = Consumer.plainSource(
+                consumerSettings,
+                Subscriptions.assignment(new TopicPartition(topic, 0)))
+        .to(Sink.foreach(msg ->
+                debugKafkaMsg(msg.key(), msg.value(), greetActor, testKey, "consumer1"))
+        )
+        .run(system);
+
+.............        
+        
+// Kafka 생산시작
+source.runWith(sink, system);
+source2.runWith(sink, system);
+
+// Kafka 소비 메시지 확인 -
+for (int i = 0; i < testCount * partitionCount; i++) {
+    probe.expectMsg(Duration.ofSeconds(5), "world");
+}        
+```
+
 ## 테스트 코드
 
 실제 동작하는 테스트코드를 참고하여, AKKA의 기능을 이해할수 있습니다.
