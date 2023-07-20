@@ -50,12 +50,43 @@
 
 ## Kafka
 
-Alpakka를 이용하여 ReactiveStream(AkkaStream)하게 Kafka를 제어할수 있습니다.
+Alpakka를 이용하여 ReactiveStream(AkkaStream)하게 Kafka에 발생하는 데이터의 흐름을 제어할수 있으며
+
+Kafka가 제공하는 기능을 이용하여 다양한 전략에 맞게 사용할수 있는 Consumer 유틸을 제공합니다.
+
+- plainSource
+- plainExternalSource
+- committableSource
+- committableExternalSource
+- commitWithMetadataSource
+- sourceWithOffsetContext
+- atMostOnceSource
+- plainPartitionedSource
+- plainPartitionedManualOffsetSource
+- committablePartitionedSource
+- committablePartitionedManualOffsetSource
+- commitWithMetadataPartitionedSource
+
+Trasaction이 지원되는 Consumers
+- Transactional.source
+- Transactional.sourceWithOffsetContext
+
+
+[MoreInfo](https://doc.akka.io/docs/alpakka-kafka/current/consumer.html)
+
 
 유닛테스트를 통해  Kafka의 생상-소비 이벤트스트림에 발생한 데이터를 검사할수있는것은 보너스입니다. 
 
 ```
 #AkkaKaftaTest.java
+
+final ConsumerSettings<String, String> consumerSettings =
+        ConsumerSettings.create(conSumeConfig, new StringDeserializer(), new StringDeserializer())
+                .withBootstrapServers(testKafkaServer)
+                .withGroupId(testGroup)
+                .withProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true")
+                .withProperty(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "3000")
+                .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");                
 
 var consumer1 = Consumer.plainSource(
                 consumerSettings,
