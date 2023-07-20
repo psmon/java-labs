@@ -2,7 +2,10 @@
 
 ### Spring Boot Starter
 
-이 프로젝트의 시작 템플릿
+이 프로젝트의 시작 템플릿으로 이미 작성된 프로젝트를 로드하는법을 아는것도 중요하지만
+
+더 중요한것은 Empty상태에서 의존모듈을 추가하면서 직접 작동되고 빌드되는 프로젝트를 구성할줄 아는것입니다.
+
 
 ![텍스트](./doc/start.png)
 
@@ -42,7 +45,34 @@
      :: Spring Boot ::       (v2.7.7-SNAPSHOT)
 
 - IDE의 Build/RUN을 통해서실행
-- Gradle TAB의 GRADLE TASK를 통해서도 수행가능
+- Gradle Tab의 GRADLE TASK를 통해서도 수행가능
+
+### Gradle 주요명령어
+
+빌드툴로 Gradle또는 Maven및 SBT등 다양한 툴을 선택할수 있습니다.
+빌드툴 채택은 CI/CD와도 연결되기 때문에 팀에 단일화 선택하는것이 좋으며
+채택이 되었다고하면 자신의 코드를 빌드&실행&디버그를 하는것은 중요하기 때문에
+빌드툴에서 지원하는 기능은 중요합니다.
+
+조금더 숙련된 개발자라고 하면, 빌드타임시 유닛테스트를 포함 디펜던시 최적화 빌드시간및 빌드사이즈 최적화도 고민하게 됩니다.
+
+#### 빌드
+- grade build -x test : 단위테스트 건너띄고 빌드
+- gradle -Dspring.profiles.active=dev build : 특정 프로필로 빌드하기
+
+#### 실행
+- gradle bootRun : 실행
+- ./gradlew build && java -jar ./gate/build/libs/gate-spring-0.0.1-SNAPSHOT.jar : 실행2
+- gradle -Dspring.profiles.active=dev bootRun : 프로필적용 실행
+
+#### 테스트&유틸
+- gradle test : 단위 테스트
+- gradle :subproject:test : 특정 하위 프로젝트 단위 테스트만 수행
+- gradle test --tests *VerificationRepositoryTest* : 특정케이스만 수행
+- gradle :subproject:test --tests *VerificationRepositoryTest* : 특정하위 테스트 케이스만 돌리기
+- gradle -q dependencies : 디펜던시 확인
+- gradle -q dependencies subproject:dependencies : 특정프로젝트 하위 디펜던시 확인
+
 
 ### 연습과제
 

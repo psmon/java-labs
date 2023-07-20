@@ -11,13 +11,15 @@ Spring Boot을 통해 JAVA를 연구하고 , 자바진영의 다양한 오픈스
 
 ## Spring BootWEB 기초
 
-1. [프로젝트셋팅하기](./springweb/README.md)
-2.
+- [프로젝트셋팅하기](./springweb/README.md)
+
+## 
+
 
 ## 유용한 단축키
 
-- 그레이들 디펜던시 업데이트 : Gradle Ctrl + Shift + O
-- 코드 Style : Ctel + Shift + Alt + L
+- 그레이들 디펜던시 업데이트 : Ctrl + Shift + O
+- 코드 Style : Ctrl + Shift + Alt + L
 
 ## 이 프로젝트에 셋팅된 기술 Stacks
 

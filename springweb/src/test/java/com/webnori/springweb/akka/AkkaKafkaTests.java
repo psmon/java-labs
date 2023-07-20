@@ -35,11 +35,15 @@ public class AkkaKafkaTests extends AbstractJavaTest {
     public void TestKafkaProduce() {
         new TestKit(system) {
             {
+                // initialization
+
                 final TestKit probe = new TestKit(system);
                 final ActorRef greetActor = AkkaManager.getInstance().getGreetActor();
 
                 greetActor.tell(probe.getRef(), getRef());
                 expectMsg(Duration.ofSeconds(1), "done");
+
+                // config
 
                 final Config config = system.settings().config().getConfig("akka.kafka.producer");
                 final ProducerSettings<String, String> producerSettings =
@@ -48,19 +52,27 @@ public class AkkaKafkaTests extends AbstractJavaTest {
 
                 String topic = "test-1";
 
+                int topicCount = 100;
+
+                // Producer Flow (데이터 생상)
+
                 CompletionStage<Done> done =
-                        Source.range(1, 100)
+                        Source.range(1, topicCount)
                                 .map(number -> number.toString())
                                 .map(value -> new ProducerRecord<String, String>(topic, value))
                                 .runWith(Producer.plainSink(producerSettings), system);
 
                 Source<Done, NotUsed> source = Source.completionStage(done);
 
+
+                // Test
+
                 within(
                         Duration.ofSeconds(10),
                         () -> {
 
-                            // 작업이 완료되면 GreetActor에 Hello전송
+                            // 생산작업이 완료되면 GreetActor에 Hello전송
+                            // Hello수신시 관찰자(작업완료)에게는 world 전송
                             Sink<Done, CompletionStage<Done>> sink = Sink.foreach(i ->
                                     greetActor.tell("hello", getRef())
                             );
@@ -68,7 +80,7 @@ public class AkkaKafkaTests extends AbstractJavaTest {
                             // Kafka 생산시작
                             source.runWith(sink, system);
 
-                            // Kafka 생산 완료감지
+                            // Kafka 생산완료검사
                             probe.expectMsg(Duration.ofSeconds(5), "world");
 
                             // Will wait for the rest of the 3 seconds
@@ -86,7 +98,7 @@ public class AkkaKafkaTests extends AbstractJavaTest {
     }
 
     void debugKafkaMsg(String key, String value, ActorRef greet, String testKey, String consumerId) {
-        System.out.printf("[%s] pringKafka with Key-Value : %s-%s%n", consumerId, key, value);
+        System.out.printf("[%s] Kafka with Key-Value : %s-%s%n", consumerId, key, value);
 
         //테스트키 동일한것만 카운트 확인..(테스트마다 Kafka고유키 사용)
         if (testKey.equals(key)) greet.tell("hello", null);
@@ -98,6 +110,8 @@ public class AkkaKafkaTests extends AbstractJavaTest {
     public void TestKafkaProduceAndConsume() {
         new TestKit(system) {
             {
+                // initialization
+
                 final TestKit probe = new TestKit(system);
                 final ActorRef greetActor = AkkaManager.getInstance().getGreetActor();
                 final int testCount = 100;
@@ -108,11 +122,14 @@ public class AkkaKafkaTests extends AbstractJavaTest {
                 greetActor.tell(probe.getRef(), getRef());
                 expectMsg(Duration.ofSeconds(1), "done");
 
+                // producerConfig
+
                 final Config producerConfig = system.settings().config().getConfig("akka.kafka.producer");
                 final ProducerSettings<String, String> producerSettings =
                         ProducerSettings.create(producerConfig, new StringSerializer(), new StringSerializer())
                                 .withBootstrapServers(testKafkaServer);
 
+                // conSumeConfig
 
                 final Config conSumeConfig = system.settings().config().getConfig("akka.kafka.consumer");
                 final ConsumerSettings<String, String> consumerSettings =
@@ -126,7 +143,7 @@ public class AkkaKafkaTests extends AbstractJavaTest {
 
                 String topic = "test-1";
 
-                //Consumer Setup
+                //Producer Flow (데이터 생상)
                 Consumer
                         .plainSource(
                                 consumerSettings,
@@ -136,14 +153,13 @@ public class AkkaKafkaTests extends AbstractJavaTest {
                         )
                         .run(system);
 
-                //Producer Setup
+                //Producer Flow
                 CompletionStage<Done> done =
                         Source.range(1, testCount)
                                 .map(number -> number.toString())
                                 .map(value -> new ProducerRecord<String, String>(topic, testKey, value))
                                 .runWith(Producer.plainSink(producerSettings), system);
 
-                //Producer Task Setup
                 Source<Done, NotUsed> source = Source.completionStage(done);
 
                 within(
@@ -172,7 +188,7 @@ public class AkkaKafkaTests extends AbstractJavaTest {
     }
 
     @Test
-    @DisplayName("TestKafkaProduceAndMultiConsume - 100개의 메시지생산을하고 100개의 메시지소비테스트 확인(파티션 2이용하여 2배 처리)")
+    @DisplayName("TestKafkaProduceAndMultiConsume - 고정파티션전략 : 소비파티션2 이용하여 2배속 생산)")
     public void TestKafkaProduceAndMultiConsume() {
         new TestKit(system) {
             {
