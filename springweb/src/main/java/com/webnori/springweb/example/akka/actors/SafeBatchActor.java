@@ -1,4 +1,4 @@
-package com.webnori.springweb.akka.actors;
+package com.webnori.springweb.example.akka.actors;
 
 
 import akka.actor.AbstractActorWithTimers;
@@ -8,7 +8,6 @@ import akka.event.LoggingAdapter;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.List;
 
 public class SafeBatchActor extends AbstractActorWithTimers {
 

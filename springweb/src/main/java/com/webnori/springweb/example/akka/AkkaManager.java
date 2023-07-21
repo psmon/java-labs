@@ -2,13 +2,17 @@ package com.webnori.springweb.example.akka;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
-import akka.actor.Props;
 import akka.routing.RoundRobinPool;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import javafx.concurrent.Worker;
+import com.webnori.springweb.example.akka.actors.HelloWorld;
+import com.webnori.springweb.example.akka.actors.ParentActor;
+import com.webnori.springweb.example.akka.actors.TimerActor;
 import lombok.Getter;
 
+// 클래스의 목적 :
+// Actor를 생성을 정의하고 구조화하는 목적
+// DI보다는 Hierarchy 구조적으로 액터를 구성합니다.
 public final class AkkaManager {
 
     private static AkkaManager INSTANCE;
@@ -21,7 +25,6 @@ public final class AkkaManager {
 
     @Getter
     private final ActorRef routerActor;
-
 
     private AkkaManager() {
 
@@ -54,6 +57,7 @@ public final class AkkaManager {
 
         actorSystem.actorOf(TimerActor.Props()
                 .withDispatcher("my-blocking-dispatcher"),"TimerActor");
+
 
     }
 

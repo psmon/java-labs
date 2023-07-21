@@ -13,7 +13,9 @@ Spring Boot을 통해 JAVA를 연구하고 , 자바진영의 다양한 오픈스
 
 - [프로젝트셋팅하기](./springweb/README.md)
 
-## 
+## AKKA
+
+- [AKKA 이용샘플](./springweb/src/test/java/com/webnori/springweb/akka/README.md)
 
 
 ## 유용한 단축키
@@ -21,10 +23,10 @@ Spring Boot을 통해 JAVA를 연구하고 , 자바진영의 다양한 오픈스
 - 그레이들 디펜던시 업데이트 : Ctrl + Shift + O
 - 코드 Style : Ctrl + Shift + Alt + L
 
-## 이 프로젝트에 셋팅된 기술 Stacks
-
-- Api With Swagger
-- DB 연결 Mysql8
-- Spring Boot Docker화
-- AKKA
+## 활용 예정 Stacks
+ 
+- Persitence With (Mysql8,Nosql,ElasticSearch...)
+- Docker with Spring BOOT
+- Swagger API DOC with SpringBoot
+- AKKA with Spring BOOT
 - 

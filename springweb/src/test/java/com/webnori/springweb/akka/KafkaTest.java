@@ -27,7 +27,7 @@ import java.util.concurrent.CompletionStage;
 // https://doc.akka.io/docs/alpakka-kafka/current/producer.html
 // http://localhost:8989/
 
-public class KafkaTests extends AbstractJavaTest {
+public class KafkaTest extends AbstractJavaTest {
 
     private int consumeCnt1 =0;
 

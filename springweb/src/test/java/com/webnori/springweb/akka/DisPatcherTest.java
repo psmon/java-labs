@@ -3,14 +3,20 @@ package com.webnori.springweb.akka;
 import akka.actor.ActorRef;
 import akka.routing.RoundRobinPool;
 import akka.testkit.javadsl.TestKit;
-import com.webnori.springweb.example.akka.HelloWorld;
+import com.webnori.springweb.example.akka.actors.HelloWorld;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
 
 import java.time.Duration;
 
-// https://doc.akka.io/docs/akka/current/testing.html
-public class DisPatcherTests extends AbstractJavaTest {
+
+/*#######################################################
+    TestClass : DisPatcherTest
+    목표 : 액터의 스케쥴을 관장하는 Dispatcher를 테스트하고 학습합니다.
+    참고 링크 : https://doc.akka.io/docs/akka/current/testing.html
+#########################################################*/
+
+public class DisPatcherTest extends AbstractJavaTest {
 
     @Test
     @DisplayName("Actor - HelloWorld Dispacher Test")

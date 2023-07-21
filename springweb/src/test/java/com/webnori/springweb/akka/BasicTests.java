@@ -8,7 +8,13 @@ import org.junit.jupiter.api.DisplayName;
 
 import java.time.Duration;
 
-// https://doc.akka.io/docs/akka/current/testing.html
+
+/*#######################################################
+    TestClass : BasicTests
+    목표 : 액터의 기본메시지 전송을 확인하고, 이벤트를 유닛테스트화 하는방법을 학습합니다.
+    참고 링크 : https://doc.akka.io/docs/akka/current/testing.html
+#########################################################*/
+
 public class BasicTests extends AbstractJavaTest {
 
 

@@ -9,7 +9,7 @@ import akka.stream.ThrottleMode;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
 import akka.testkit.javadsl.TestKit;
-import com.webnori.springweb.example.akka.HelloWorld;
+import com.webnori.springweb.example.akka.actors.HelloWorld;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
 import scala.concurrent.duration.FiniteDuration;
@@ -18,7 +18,7 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 // https://doc.akka.io/docs/akka/current/testing.html
-public class ThrottleTests extends AbstractJavaTest {
+public class ThrottleTest extends AbstractJavaTest {
 
     @Test
     @DisplayName("Actor - HelloWorld Test")

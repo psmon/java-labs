@@ -18,7 +18,6 @@ abstract class AbstractJavaTest extends JUnitSuite {
     @BeforeClass
     public static void setup() {
         system = AkkaManager.getInstance().getActorSystem();
-        //system.logConfiguration();
     }
 
     @AfterClass

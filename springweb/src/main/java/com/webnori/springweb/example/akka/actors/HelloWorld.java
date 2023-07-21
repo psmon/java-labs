@@ -1,4 +1,4 @@
-package com.webnori.springweb.example.akka;
+package com.webnori.springweb.example.akka.actors;
 
 import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
