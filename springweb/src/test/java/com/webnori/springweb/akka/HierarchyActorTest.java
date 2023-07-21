@@ -2,21 +2,15 @@ package com.webnori.springweb.akka;
 
 /*#######################################################
     TestClass : HierarchyActorTest
-    목표 : 액터를 계층(부모-자식)구조를 테스트화하고 학습합니다.
+    목표 : 액터 계층(부모-자식)구조를 테스트화하고 학습합니다.
 #########################################################*/
 
 
 import akka.actor.ActorRef;
-import akka.routing.RoundRobinPool;
 import akka.testkit.javadsl.TestKit;
-import com.webnori.springweb.example.akka.AkkaManager;
-import com.webnori.springweb.example.akka.actors.HelloWorld;
 import com.webnori.springweb.example.akka.actors.ParentActor;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
-
-import java.time.Duration;
 
 public class HierarchyActorTest extends AbstractJavaTest {
 
