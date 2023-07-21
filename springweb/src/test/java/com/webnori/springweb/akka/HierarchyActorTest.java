@@ -55,6 +55,15 @@ public class HierarchyActorTest extends AbstractJavaTest {
             parentActor.tell(ParentActor.CMD_SOME_WORK, ActorRef.noSender());
             parentActor.tell(ParentActor.CMD_SOME_WORK, ActorRef.noSender());
 
+
+            /*
+            작동하는 로깅으로도 작업이 분배되는지 확인할수 있습니다. ( 자식액터의 이름을 표시 )
+
+[INFO ] [2023-07-21 15:48:39,050] [akka-spring-demo-akka.actor.default-dispatcher-8] [[w2] ChildActor InMessage : CMD_SOME_WORK]
+[INFO ] [2023-07-21 15:48:39,053] [akka-spring-demo-akka.actor.default-dispatcher-8] [[w1] ChildActor InMessage : CMD_SOME_WORK]
+[INFO ] [2023-07-21 15:48:39,053] [akka-spring-demo-akka.actor.default-dispatcher-8] [[w3] ChildActor InMessage : CMD_SOME_WORK]
+             */
+
             // 자식액터의 Job이 완료됨을 관찰자를 통해 검사합니다.
             probe.expectMsg(ParentActor.CMD_SOME_WORK_COMPLETED);
             probe.expectMsg(ParentActor.CMD_SOME_WORK_COMPLETED);
