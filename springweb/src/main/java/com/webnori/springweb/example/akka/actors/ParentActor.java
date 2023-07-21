@@ -19,6 +19,8 @@ public class ParentActor extends AbstractActor {
     // 이벤트에 다양한 메타정보를 담는경우Class(Object) 로 관리되는것이 권장됩니다.
     public static String CMD_CREATE_CHILDS = "CMD_CREATE_CHILDS";
     public static String CMD_SOME_WORK = "CMD_SOME_WORK";
+
+    public static String CMD_MESSAGE_REPLY = "CMD_MESSAGE_REPLY";
     public static String CMD_SOME_WORK_COMPLETED = "CMD_SOME_WORK_COMPLETED";
 
     private boolean firstInit;
@@ -67,6 +69,10 @@ public class ParentActor extends AbstractActor {
                         testProbeActor.tell(CMD_SOME_WORK_COMPLETED, ActorRef.noSender());
                     }
 
+                })
+                .match(String.class, s -> s.equals(CMD_MESSAGE_REPLY) , s -> {
+                    // 전송자가 아닌 지저장(forwad)에게 메시지를 전송합니다.
+                    sender().forward(CMD_MESSAGE_REPLY, getContext());
                 })
                 .match(ActorRef.class, actorRef -> {
                     // UnitTest를 위한 참조자 액터 셋팅

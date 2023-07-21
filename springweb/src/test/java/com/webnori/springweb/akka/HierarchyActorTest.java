@@ -72,4 +72,19 @@ public class HierarchyActorTest extends AbstractJavaTest {
         }};
     }
 
+    @Test
+    @DisplayName("EventForwardTest")
+    public void EventForwardTest(){
+        new TestKit(system){{
+
+            TestKit forwardActor = new TestKit(system);
+            // ActorRef를 지정하여 전송합니다.
+            // 전송자(sender)가 메시지를 받을수 있는 액터가 아닐시 활용될수 있습니다.
+            parentActor.tell(ParentActor.CMD_MESSAGE_REPLY, forwardActor.getRef());
+
+            // forawrd를 통해, 메시지를 돌려받을수 있는지 확인합니다.
+            forwardActor.expectMsg(ParentActor.CMD_MESSAGE_REPLY);
+        }};
+    }
+
 }
