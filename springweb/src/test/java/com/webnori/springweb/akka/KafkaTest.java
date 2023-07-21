@@ -24,8 +24,14 @@ import org.junit.jupiter.api.DisplayName;
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
 
-// https://doc.akka.io/docs/alpakka-kafka/current/producer.html
+// 
 // http://localhost:8989/
+
+/**
+ * TestClass : KafkaTest
+ * 목표 : Akka의 Stream을 이용해 카프카를 리액티스 스트림하게 이용
+ * 참고 링크 : https://doc.akka.io/docs/alpakka-kafka/current/producer.html
+ */
 
 public class KafkaTest extends AbstractJavaTest {
 

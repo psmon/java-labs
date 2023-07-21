@@ -1,9 +1,9 @@
 package com.webnori.springweb.akka;
 
-/*#######################################################
-    TestClass : HierarchyActorTest
-    목표 : 액터 계층(부모-자식)구조를 테스트화하고 학습합니다.
-#########################################################*/
+/**
+ * TestClass : HierarchyActorTest
+ * 목표 : 액터 계층(부모-자식)구조를 테스트화하고 학습합니다.
+ */
 
 
 import akka.actor.ActorRef;

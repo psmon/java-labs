@@ -17,7 +17,12 @@ import scala.concurrent.duration.FiniteDuration;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
-// https://doc.akka.io/docs/akka/current/testing.html
+
+/**
+ * TestClass : ThrottleTest
+ * 목표 : Throttle을 이용하는 TPS를 제어샘플
+ * 참고 링크 :
+ */
 public class ThrottleTest extends AbstractJavaTest {
 
     @Test

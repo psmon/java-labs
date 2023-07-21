@@ -23,6 +23,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * TestClass : SimpleActorTest
+ * 목표 : 몇가지 유용한 액트 샘플
+ * 참고 링크 :
+ */
 
 public class SimpleActorTest extends AbstractJavaTest {
 

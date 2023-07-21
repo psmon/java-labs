@@ -10,11 +10,11 @@ import org.junit.jupiter.api.DisplayName;
 import java.time.Duration;
 
 
-/*#######################################################
-    TestClass : DisPatcherTest
-    목표 : 액터의 스케쥴을 관장하는 Dispatcher를 테스트하고 학습합니다.
-    참고 링크 : https://doc.akka.io/docs/akka/current/testing.html
-#########################################################*/
+/**
+ * TestClass : DisPatcherTest
+ * 목표 : 액터의 스케쥴을 관장하는 Dispatcher를 테스트하고 학습합니다.
+ * 참고 링크 : https://doc.akka.io/docs/akka/current/testing.html
+ */
 
 public class DisPatcherTest extends AbstractJavaTest {
 
