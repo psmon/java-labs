@@ -18,7 +18,7 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 // https://doc.akka.io/docs/akka/current/testing.html
-public class AkkaThrottleTests extends AbstractJavaTest {
+public class ThrottleTests extends AbstractJavaTest {
 
     @Test
     @DisplayName("Actor - HelloWorld Test")

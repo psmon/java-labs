@@ -2,7 +2,6 @@ package com.webnori.springweb.akka;
 
 import akka.actor.ActorRef;
 import akka.testkit.javadsl.TestKit;
-import com.webnori.springweb.akka.AbstractJavaTest;
 import com.webnori.springweb.example.akka.AkkaManager;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
@@ -10,7 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import java.time.Duration;
 
 // https://doc.akka.io/docs/akka/current/testing.html
-public class AkkaBasicTests extends AbstractJavaTest {
+public class BasicTests extends AbstractJavaTest {
 
 
     @Test

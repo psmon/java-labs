@@ -3,7 +3,6 @@ package com.webnori.springweb.akka;
 import akka.actor.ActorRef;
 import akka.routing.RoundRobinPool;
 import akka.testkit.javadsl.TestKit;
-import com.webnori.springweb.akka.AbstractJavaTest;
 import com.webnori.springweb.example.akka.HelloWorld;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
@@ -11,7 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import java.time.Duration;
 
 // https://doc.akka.io/docs/akka/current/testing.html
-public class AkkaDisPatcherTests extends AbstractJavaTest {
+public class DisPatcherTests extends AbstractJavaTest {
 
     @Test
     @DisplayName("Actor - HelloWorld Dispacher Test")

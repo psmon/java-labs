@@ -4,7 +4,6 @@ import akka.Done;
 import akka.NotUsed;
 import akka.actor.ActorRef;
 import akka.kafka.ConsumerSettings;
-import akka.kafka.KafkaConsumerActor;
 import akka.kafka.ProducerSettings;
 import akka.kafka.Subscriptions;
 import akka.kafka.javadsl.Consumer;
@@ -23,13 +22,12 @@ import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
 
 import java.time.Duration;
-import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 // https://doc.akka.io/docs/alpakka-kafka/current/producer.html
 // http://localhost:8989/
 
-public class AkkaKafkaTests extends AbstractJavaTest {
+public class KafkaTests extends AbstractJavaTest {
 
     private int consumeCnt1 =0;
 

@@ -112,7 +112,7 @@ for (int i = 0; i < testCount * partitionCount; i++) {
 
 실제 동작하는 테스트코드를 참고하여, AKKA의 기능을 이해할수 있습니다.
 
-- [AkkaBasicTests.java](AkkaBasicTests.java) : Akka 기본 메시지 전송
-- [AkkaDisPatcherTests.java](AkkaDisPatcherTests.java) : Dispatcher를 이용한 동시성처리 ( 멀티스레드 대응 )
-- [AkkaThrottleTests.java](AkkaThrottleTests.java) : 메시지 처리 속도제어 ( API호출제약및 생산속도 조절시 사용 )
-- [AkkaKafkaTests.java](AkkaKafkaTests.java) : Akka를 이용한 Kafka 활용 유닛테스트기
+- [AkkaBasicTests.java](BasicTests.java) : Akka 기본 메시지 전송
+- [AkkaDisPatcherTests.java](DisPatcherTests.java) : Dispatcher를 이용한 동시성처리 ( 멀티스레드 대응 )
+- [AkkaThrottleTests.java](ThrottleTests.java) : 메시지 처리 속도제어 ( API호출제약및 생산속도 조절시 사용 )
+- [AkkaKafkaTests.java](KafkaTests.java) : Akka(+Alpakka)를 이용한 Kafka 활용 유닛테스트기
