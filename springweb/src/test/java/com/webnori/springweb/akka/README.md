@@ -16,7 +16,7 @@
 
 ## Dispacher
 
-![dispacher]("https://raw.githubusercontent.com/psmon/java-labs/master/springweb/doc/dispacher.png")
+![dispacher](../../../../../../../doc/dispacher.png)
 
 하나의 액터는 순차성을 보장합니다. 순차성이 아닌 병렬동시처리가 필요할시  멀티스레드 프로그래밍을 할 필요는 없지만
 풀을 구성하고 스레드 옵션을 줄수가 있습니다. 이러한 액터의 실행계획은 Dispatcher가 관리하게됩니다.
@@ -56,8 +56,7 @@
 
 
 Reactive Stream에서의 Backpressure도 스트림처리에서 생산과 소비의 속도가 다르기때문에 이러한 장치가 실세계에 존재하는 유체(물,기름)의 흐름을 제어하는 실장치와 닮아있으며
-처리결과 모니터링과 연결되어 흐름의 속도를  throttle를 이용하여 조절할수가 있씁니다.
-
+그림에서 표현되는 압력측정기의 경우 시스템에서는 트래픽모니터링이 있어야함을 의미하고 조절기(throttle)를 이용하여 흐름의 속도를 컨트롤할수가 있습니다.
 
     # 초당하나를 처리하고, 1000개의 버퍼가 쌓였을때는 드롭을 하는 조절기 샘플
     int processCouuntPerSec = 3; 
@@ -76,6 +75,8 @@ Reactive Stream에서의 Backpressure도 스트림처리에서 생산과 소비�
     }
 
 ## Alpakka with Kafka
+
+![stream](../../../../../../../doc/alpakka.png)
 
 Alpakka는 Kafka를 포함 리액티브 스트림의 인터페이스를 준수하여 다양한 외부 스택과 AkkaStream에 연결할수 있는
 Akka에 파생된 서브툴킷으로 Reactive Stream을 준수합니다.
@@ -155,3 +156,4 @@ JAVA/.NET 동일한 컨셉으로 이용할수 있습니다.
 - [AkkaUnitTest-NET](https://getakka.net/articles/actors/testing-actor-systems.html)
 - [AkkaStream-Backpressure](https://blog.rockthejvm.com/akka-streams-backpressure/)
 - [Alpakka](https://doc.akka.io/docs/alpakka/current/index.html)
+- [AKKA 소식을 다루는 FaceBook(Kr) 채널](https://www.facebook.com/groups/akkalabs)
