@@ -141,19 +141,19 @@ for (int i = 0; i < testCount * partitionCount; i++) {
 
 유닛테스트를 통해 코드작동을 이해할수 있으며 실제 작동되는 유넷테스트 코드 수행을통해 AKKA에서 제공되는 기능을 학습하고 실험할수 있습니다.
 
-- [AbstractJavaTest.java](AbstractJavaTest.java]) : 우하한 종료(GraceFulDown)를 지원하는 Base추상Test객체 
+- [AbstractJavaTest.java](AbstractJavaTest.java) : 우하한 종료(GraceFulDown)를 지원하는 Base추상Test객체 
 - [AkkaBasicTests.java](BasicTest.java) : Akka 기본 메시지 전송
 - [AkkaDisPatcherTests.java](DisPatcherTest.java) : Dispatcher를 이용한 동시성처리 ( 멀티스레드 대응 )
 - [AkkaThrottleTests.java](ThrottleTest.java) : 메시지 처리 속도제어 ( API호출제약및 생산속도 조절시 사용 )
 - [AkkaKafkaTests.java](KafkaTest.java) : Akka(+Alpakka)를 이용한 Kafka 활용 유닛테스트기
-- [Reliable Message Delivery](https://getakka.net/articles/actors/reliable-delivery.html) : 메시지 전송을 보장하기위한 전략( at motst once)
 
 ## 참고링크
 
-JAVA/.NET 동일한 컨셉으로 이용할수 있습니다.  
+JAVA/.NET 동일이론으로 활용할수 있습니다.    
 
 - [AkkaUnitTest-JAVA](https://doc.akka.io/docs/akka/current/testing.html)
 - [AkkaUnitTest-NET](https://getakka.net/articles/actors/testing-actor-systems.html)
+- [Reliable Message Delivery](https://getakka.net/articles/actors/reliable-delivery.html) : 메시지 전송을 보장하기위한 전략( at motst once)
 - [AkkaStream-Backpressure](https://blog.rockthejvm.com/akka-streams-backpressure/)
 - [Alpakka](https://doc.akka.io/docs/alpakka/current/index.html)
 - [AKKA 소식을 다루는 FaceBook(Kr) 채널](https://www.facebook.com/groups/akkalabs)
