@@ -143,6 +143,8 @@ for (int i = 0; i < testCount * partitionCount; i++) {
 
 - [AbstractJavaTest.java](AbstractJavaTest.java) : 우하한 종료(GraceFulDown)를 지원하는 Base추상Test객체 
 - [AkkaBasicTests.java](BasicTest.java) : Akka 기본 메시지 전송
+- [HierarchyActorTest.java](HierarchyActorTest.java) : 구조적(부모/자식)으로 액터를 구성해봅니다.
+- [SimpleActorTest.java](SimpleActorTest.java) : 라우터/상태관리등 몇가지 유용한 액터툴을 살펴봅니다. 
 - [AkkaDisPatcherTests.java](DisPatcherTest.java) : Dispatcher를 이용한 동시성처리 ( 멀티스레드 대응 )
 - [AkkaThrottleTests.java](ThrottleTest.java) : 메시지 처리 속도제어 ( API호출제약및 생산속도 조절시 사용 )
 - [AkkaKafkaTests.java](KafkaTest.java) : Akka(+Alpakka)를 이용한 Kafka 활용 유닛테스트기
