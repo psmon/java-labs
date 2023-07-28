@@ -2,9 +2,7 @@
 
 ## Akka TestToolKit 컨셉
 
-![AkkaUnitTest]("https://raw.githubusercontent.com/psmon/java-labs/master/springweb/doc/akkatest.png")
-
-
+![AkkaUnitTest](../../../../../../../doc/akkatest.png)
 
 전통적 유닛테스트에서는 함수호출의 결과값을 기다려야하는 동기적 검사 위주로 작성되지만
 이벤트 메시징 큐기반으로 작성된 모듈기반에서는 이러한 테스트 방식을 채택한다고 하면
@@ -45,21 +43,23 @@
 
 ## Throttler Actor
 
-![stream]("springweb/doc/stream.png")
+![stream](../../../../../../../doc/stream.png)
+-그림 : 속도제어기를 이해하기위한 실세계 존재하는 유체흐름 제어장치
 
-메시지 처리속도를 늦출필요가 있을때 AkkaStream API에서 제공하는 throttle 을 이용할수 있습니다.
+메시지 처리속도를 제어할 필요가 있을때 AkkaStream에서 제공하는 기능중 일부인 throttle장치를 이용할수 있습니다.
 속도 제어기를 기존 액터와 연결하여 액터에게 보낼 메시지 처리량을 조절할수가 있으며 서비스 코드는 성능관심사를 분리할수 있습니다.
 
-> 서비스작동 코드 내에서 Sleep을 사용하여 속도를 조절하는 방법은 분산환경포함 단일구동 환경에서도 전체성능을 떨어트릴수 있습니다.
+> :warning: 서비스작동 코드 내에서 **Sleep** 을 사용하여 속도를 조절하는 방법은 분산환경포함 단일구동 환경에서도 전체성능을 떨어트릴수 있습니다.  
 
 물의 흐름(strem)은 데이터의 흐름과도 유사하며 실시간성 이벤트를 처리에서 표현하는 IT용어도 Stream이라고 표현하며
 안정적인 흐름 수압조절 장치에 사용하는 감압밸브와 같은 배압장치 설계를 할수도 있습니다.
 
-스트림처리에서 생산과 소비의 속도가 다르기때문에 이러한 장치가 실세계에 존재하는 유체(물,기름)의 흐름을 제어하는 실장치에서 아이디어를 따왔으며 
 
-Reactive Stream에서는 이러한것을 Backpressure 정의를 합니다.  
+Reactive Stream에서의 Backpressure도 스트림처리에서 생산과 소비의 속도가 다르기때문에 이러한 장치가 실세계에 존재하는 유체(물,기름)의 흐름을 제어하는 실장치와 닮아있으며
+처리결과 모니터링과 연결되어 흐름의 속도를  throttle를 이용하여 조절할수가 있씁니다.
 
 
+    # 초당하나를 처리하고, 1000개의 버퍼가 쌓였을때는 드롭을 하는 조절기 샘플
     int processCouuntPerSec = 3; 
 
     # throttler1 -> greetActor : 조절기를 앞단에 달아서 처리량을 조절할수 있습니다.
@@ -75,11 +75,13 @@ Reactive Stream에서는 이러한것을 Backpressure 정의를 합니다.
         throttler1.tell("hello1", getRef()); 
     }
 
-## Kafka
+## Alpakka with Kafka
 
-Alpakka를 이용하여 ReactiveStream(AkkaStream)하게 Kafka에 발생하는 데이터의 흐름을 제어할수 있으며
+Alpakka는 Kafka를 포함 리액티브 스트림의 인터페이스를 준수하여 다양한 외부 스택과 AkkaStream에 연결할수 있는
+Akka에 파생된 서브툴킷으로 Reactive Stream을 준수합니다.
 
-Kafka가 제공하는 기능을 이용하여 다양한 전략에 맞게 사용할수 있는 Consumer 유틸을 제공합니다.
+Alpakka-Kafka는 Kafka가 제공하는 다양한 메시지 고성능 전송성전략을 Akka에서 이용할수 있게 다양한 Producer/Consumer유틸을 제공합니다.
+
 
 - plainSource
 - plainExternalSource
@@ -143,10 +145,13 @@ for (int i = 0; i < testCount * partitionCount; i++) {
 - [AkkaDisPatcherTests.java](DisPatcherTest.java) : Dispatcher를 이용한 동시성처리 ( 멀티스레드 대응 )
 - [AkkaThrottleTests.java](ThrottleTest.java) : 메시지 처리 속도제어 ( API호출제약및 생산속도 조절시 사용 )
 - [AkkaKafkaTests.java](KafkaTest.java) : Akka(+Alpakka)를 이용한 Kafka 활용 유닛테스트기
+- [Reliable Message Delivery](https://getakka.net/articles/actors/reliable-delivery.html) : 메시지 전송을 보장하기위한 전략( at motst once)
 
 ## 참고링크
 
-JAVA/.NET 동일한 컨셉으로 이용할수 있습니다.   
+JAVA/.NET 동일한 컨셉으로 이용할수 있습니다.  
 
 - [AkkaUnitTest-JAVA](https://doc.akka.io/docs/akka/current/testing.html)
 - [AkkaUnitTest-NET](https://getakka.net/articles/actors/testing-actor-systems.html)
+- [AkkaStream-Backpressure](https://blog.rockthejvm.com/akka-streams-backpressure/)
+- [Alpakka](https://doc.akka.io/docs/alpakka/current/index.html)
