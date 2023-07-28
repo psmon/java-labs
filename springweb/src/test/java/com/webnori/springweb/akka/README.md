@@ -2,7 +2,7 @@
 
 ## Akka TestToolKit 컨셉
 
-![AkkaUnitTest]("springweb/doc/akkatest.png")
+![AkkaUnitTest]("../../../../../../../doc/akkatest.png")
 
 전통적 유닛테스트에서는 함수호출의 결과값을 기다려야하는 동기적 검사 위주로 작성되지만
 이벤트 메시징 큐기반으로 작성된 모듈기반에서는 이러한 테스트 방식을 채택한다고 하면
@@ -16,7 +16,7 @@
 
 ## Dispacher
 
-![dispacher]("springweb/doc/dispacher.png")
+![dispacher]("../../../../../../../doc/dispacher.png")
 
 하나의 액터는 순차성을 보장합니다. 순차성이 아닌 병렬동시처리가 필요할시  멀티스레드 프로그래밍을 할 필요는 없지만
 풀을 구성하고 스레드 옵션을 줄수가 있습니다. 이러한 액터의 실행계획은 Dispatcher가 관리하게됩니다.
