@@ -1,6 +1,6 @@
     plugins {
         id 'java'
-        id 'org.springframework.boot' version '2.7.8-SNAPSHOT'
+        id 'org.springframework.boot' version '2.7.11'
         id 'io.spring.dependency-management' version '1.0.15.RELEASE'
     }
 
@@ -16,8 +16,6 @@
 
     repositories {
         mavenCentral()
-        maven { url 'https://repo.spring.io/milestone' }
-        maven { url 'https://repo.spring.io/snapshot' }
     }
 
     dependencies {
@@ -42,8 +40,13 @@
         //AKKA
         implementation platform("com.typesafe.akka:akka-bom_$scalaVersion:$akkaVersion")
         implementation "com.typesafe.akka:akka-actor_$scalaVersion:$akkaVersion"
+
+        //AKKA Stream
         implementation "com.typesafe.akka:akka-stream_$scalaVersion"
         implementation "com.typesafe.akka:akka-stream-kafka_$scalaVersion:4.0.0"
+
+        //AKKA Cluster
+        implementation "com.typesafe.akka:akka-cluster_$scalaVersion:$akkaVersion"
 
         //Logging
         implementation 'ch.qos.logback:logback-classic:1.2.3'

@@ -21,18 +21,30 @@
 <img src="https://github.com/schooldevops/kafka-tutorials-with-kido/raw/main/imgs/kafka-ui-02.png" />
 
 ```
-    # 구동하기    
-    
-    ## 기본(DB)
-    docker-compose up -d
-    
-    ## Kafka
-    docker-compose -f docker-compose-kafka.yml up -d
-    
-    ## Elk
-    docker-compose -f docker-compose-elk.yml up -d        
+# 각 OpenStack별로 구동하기    
 
-    #내리기
-    docker-compose -f docker-compose-elk.yml down    
-    docker-compose -f docker-compose-kafka.yml down    
-    docker-compose down
+## 기본(DB)
+
+docker-compose -f docker-compose-mysql.yml up -d
+
+## Kafka
+
+docker-compose -f docker-compose-kafka.yml up -d
+
+## Elk
+
+docker-compose -f docker-compose-elk.yml up -d        
+
+
+
+# Down
+
+docker-compose -f docker-compose-elk.yml down    
+
+docker-compose -f docker-compose-kafka.yml down
+
+docker-compose -f docker-compose-mysql.yml down
+
+
+
+```
