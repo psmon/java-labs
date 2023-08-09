@@ -41,12 +41,18 @@
         implementation platform("com.typesafe.akka:akka-bom_$scalaVersion:$akkaVersion")
         implementation "com.typesafe.akka:akka-actor_$scalaVersion:$akkaVersion"
 
+        //Akka Jackson
+        implementation "com.typesafe.akka:akka-serialization-jackson_$scalaVersion"
+
         //AKKA Stream
         implementation "com.typesafe.akka:akka-stream_$scalaVersion"
         implementation "com.typesafe.akka:akka-stream-kafka_$scalaVersion:4.0.0"
 
         //AKKA Cluster
         implementation "com.typesafe.akka:akka-cluster_$scalaVersion:$akkaVersion"
+
+        //AKKA Cluster Metrics Extension
+        implementation "com.typesafe.akka:akka-cluster-metrics_$scalaVersion"
 
         //Logging
         implementation 'ch.qos.logback:logback-classic:1.2.3'
