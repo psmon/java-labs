@@ -2,24 +2,24 @@ package com.webnori.springweb.example.akka;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
+import akka.actor.Props;
 import akka.routing.RoundRobinPool;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.webnori.springweb.example.akka.actors.HelloWorld;
 import com.webnori.springweb.example.akka.actors.TimerActor;
+import com.webnori.springweb.example.akka.actors.cluster.ClusterListener;
 import lombok.Getter;
 
+import java.io.IOException;
+
 // 클래스 목적 :
-// Actor시스템을 생성하고, 액터관리 Spring 디펜던시가 없이 Low코드로 구현
-// Spring Bean활용시 다음 링크 참조 : https://www.baeldung.com/akka-with-spring
+// Actor시스템을 생성하고, 액터관리 Spring 디펜던시 없이 로우코드로 구현
+// Spring Bean 활용시 참조 : https://www.baeldung.com/akka-with-spring
 public final class AkkaManager {
-    private String hostname;
+    private String akkaConfig;
 
     private String role;
-
-    private String port;
-
-    private String seedNodes;
 
     private static AkkaManager INSTANCE;
 
@@ -36,59 +36,41 @@ public final class AkkaManager {
         return string == null || string.isEmpty();
     }
 
-    private AkkaManager() {
+    private  ActorSystem serverStart(String sysName,String clusterConfig,String role)  {
 
-        hostname = System.getenv("akka.hostname");
-        role = System.getenv("akka.role");
-        port = System.getenv("akka.port");
-        seedNodes = System.getenv("akka.seed-nodes");
-
-        Boolean isStandAlone = isEmptyString(System.getenv("akka.hostname")) ||
-                isEmptyString(System.getenv("akka.role")) || isEmptyString(System.getenv("akka.port")) ||
-                isEmptyString(System.getenv("akka.seed-nodes"));
-
-        String minConfig = String.format("akka.remote.artery.canonical.hostname = \"%s\" \n " +
-        "akka.remote.artery.canonical.port = %s \n" +
-        "akka.cluster.roles = [%s] \n " +
-        "akka.cluster.seed-nodes = %s \n ", hostname,port,role,seedNodes);
-
-        final Config clusterConfig = ConfigFactory.parseString(
-                minConfig).withFallback(
-                ConfigFactory.load("application"));
-
-
-        Config myConfig = ConfigFactory.parseString("something=byCode");
-        // load the normal config stack (system props,
-        // then application.conf, then reference.conf)
         Config regularConfig = ConfigFactory.load();
-
-        Config testConfig = ConfigFactory.load("test.conf");
 
         Config combined;
 
-        if(isStandAlone){
-            combined = myConfig
-                    .withFallback(testConfig)
+        Boolean isCluster = !isEmptyString(clusterConfig) || !isEmptyString(role);
+
+        if(isCluster){
+            final Config newConfig = ConfigFactory.parseString(
+                    String.format("akka.cluster.roles = [%s]",role)).withFallback(
+                    ConfigFactory.load(clusterConfig));
+            combined = newConfig
+                    .withFallback(regularConfig);
+        }else{
+            final Config newConfig = ConfigFactory.parseString(
+                    String.format("akka.cluster.roles = [%s]","seed")).withFallback(
+                    ConfigFactory.load("cluster"));
+            combined = newConfig
                     .withFallback(regularConfig);
         }
-        else{
-            combined = myConfig
-                    .withFallback(testConfig)
-                    .withFallback(clusterConfig)
-                    .withFallback(regularConfig);
-        }
 
+        ActorSystem serverSystem = ActorSystem.create(sysName, combined );
+        serverSystem.actorOf(Props.create(ClusterListener.class), "clusterListener");
+        return serverSystem;
+    }
 
-        // put the result in between the overrides
-        // (system props) and defaults again
-        Config completeConfig = ConfigFactory.load(combined);
-        // completeConfig = regularConfig(file) + clusterConfig(env) + testConfig;
+    private AkkaManager()  {
 
-        // Create Actor System
-        actorSystem = ActorSystem.create("akka-spring-demo", completeConfig);
-        //actorSystem.logConfiguration();
+        akkaConfig = System.getenv("akka.cluster-config");
+        role = System.getenv("akka.role");
 
+        actorSystem = serverStart("ClusterSystem", akkaConfig, role);
 
+        InitActor();
     }
 
     private void InitActor(){
@@ -105,8 +87,7 @@ public final class AkkaManager {
 
     }
 
-
-    public static AkkaManager getInstance() {
+    public static AkkaManager getInstance()  {
         if (INSTANCE == null) {
             INSTANCE = new AkkaManager();
         }

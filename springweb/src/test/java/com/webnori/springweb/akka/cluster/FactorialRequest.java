@@ -1,6 +1,6 @@
 package com.webnori.springweb.akka.cluster;
 
-import java.io.Serializable;
+import com.webnori.springweb.example.akka.actors.cluster.MySerializable;
 
 public class FactorialRequest implements MySerializable {
     private static final long serialVersionUID = 1L;

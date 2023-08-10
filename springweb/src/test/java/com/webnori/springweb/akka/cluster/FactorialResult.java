@@ -1,6 +1,7 @@
 package com.webnori.springweb.akka.cluster;
 
-import java.io.Serializable;
+import com.webnori.springweb.example.akka.actors.cluster.MySerializable;
+
 import java.math.BigInteger;
 
 public class FactorialResult implements MySerializable {
