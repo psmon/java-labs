@@ -1,13 +1,14 @@
 package com.webnori.springweb.akka.cluster;
 
-import java.util.concurrent.TimeUnit;
-import scala.concurrent.duration.Duration;
+import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.ReceiveTimeout;
-import akka.actor.AbstractActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.routing.FromConfig;
+import scala.concurrent.duration.Duration;
+
+import java.util.concurrent.TimeUnit;
 
 public class FactorialFrontend extends AbstractActor {
     final int upToN;
@@ -34,7 +35,7 @@ public class FactorialFrontend extends AbstractActor {
     @Override
     public Receive createReceive() {
         return receiveBuilder()
-                .match(FactorialRequest.class, request->{
+                .match(FactorialRequest.class, request -> {
                     int upToN = request.upToN;
                     log.info("Starting batch of factorials up to [{}]", upToN);
                     for (Integer n = 1; n <= upToN; n++) {
@@ -51,7 +52,7 @@ public class FactorialFrontend extends AbstractActor {
                             getContext().stop(self());
 
                         //forward to probe
-                        probe.tell(result,ActorRef.noSender());
+                        probe.tell(result, ActorRef.noSender());
                     }
                 })
                 .match(ReceiveTimeout.class, message -> {

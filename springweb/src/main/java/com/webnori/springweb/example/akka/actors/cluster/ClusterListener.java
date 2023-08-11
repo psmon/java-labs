@@ -17,8 +17,7 @@ public class ClusterListener extends AbstractActor {
     //subscribe to cluster changes
     @Override
     public void preStart() {
-        cluster.subscribe(self(), ClusterEvent.initialStateAsEvents(),
-                MemberEvent.class, UnreachableMember.class);
+        cluster.subscribe(self(), ClusterEvent.initialStateAsEvents(), MemberEvent.class, UnreachableMember.class);
     }
 
     //re-subscribe when restart
@@ -29,19 +28,14 @@ public class ClusterListener extends AbstractActor {
 
     @Override
     public Receive createReceive() {
-        return receiveBuilder()
-                .match(MemberUp.class, mUp -> {
-                    log.info("Member is Up: {}", mUp.member());
-                })
-                .match(UnreachableMember.class, mUnreachable -> {
-                    log.info("Member detected as unreachable: {}", mUnreachable.member());
-                })
-                .match(MemberRemoved.class, mRemoved -> {
-                    log.info("Member is Removed: {}", mRemoved.member());
-                })
-                .match(MemberEvent.class, message -> {
-                    // ignore
-                })
-                .build();
+        return receiveBuilder().match(MemberUp.class, mUp -> {
+            log.info("Member is Up: {}", mUp.member());
+        }).match(UnreachableMember.class, mUnreachable -> {
+            log.info("Member detected as unreachable: {}", mUnreachable.member());
+        }).match(MemberRemoved.class, mRemoved -> {
+            log.info("Member is Removed: {}", mRemoved.member());
+        }).match(MemberEvent.class, message -> {
+            // ignore
+        }).build();
     }
 }

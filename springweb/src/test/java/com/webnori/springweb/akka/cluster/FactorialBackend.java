@@ -1,9 +1,10 @@
 package com.webnori.springweb.akka.cluster;
 
+import akka.actor.AbstractActor;
+
 import java.math.BigInteger;
 import java.util.concurrent.CompletableFuture;
 
-import akka.actor.AbstractActor;
 import static akka.pattern.PatternsCS.pipe;
 
 public class FactorialBackend extends AbstractActor {
