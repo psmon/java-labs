@@ -10,7 +10,7 @@ import scala.concurrent.duration.Duration;
 
 import java.util.concurrent.TimeUnit;
 
-public class FactorialFrontend extends AbstractActor {
+public class FactorialClient extends AbstractActor {
     final int upToN;
     final boolean repeat;
 
@@ -21,7 +21,7 @@ public class FactorialFrontend extends AbstractActor {
 
     ActorRef probe;
 
-    public FactorialFrontend(int upToN, boolean repeat) {
+    public FactorialClient(int upToN, boolean repeat) {
         this.upToN = upToN;
         this.repeat = repeat;
     }

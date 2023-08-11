@@ -68,7 +68,7 @@ public class FactorialTest {
         final int upToN = 200;
 
         final Config config = ConfigFactory.parseString(
-                "akka.cluster.roles = [frontend]").withFallback(
+                "akka.cluster.roles = [client]").withFallback(
                 ConfigFactory.load("factorial"));
 
         final ActorSystem system = ActorSystem.create("ClusterSystem", config);
@@ -80,8 +80,8 @@ public class FactorialTest {
                 Cluster.get(system).registerOnMemberUp(new Runnable() {
                     @Override
                     public void run() {
-                        ActorRef frontActor = system.actorOf(Props.create(FactorialFrontend.class, upToN, false),
-                                "factorialFrontend");
+                        ActorRef frontActor = system.actorOf(Props.create(FactorialClient.class, upToN, false),
+                                "factorialClient");
                         frontActor.tell(new FactorialRequest(upToN), probe);
                     }
                 });
