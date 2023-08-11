@@ -1,4 +1,4 @@
-package com.webnori.springweb.akka.cluster;
+package com.webnori.springweb.akka.cluster.Factorial;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
@@ -20,9 +20,9 @@ import java.time.Duration;
 
 
 @SpringBootTest
-public class ClusterClientTest {
+public class FactorialTest {
 
-    private static Logger logger = LoggerFactory.getLogger(ClusterClientTest.class);
+    private static Logger logger = LoggerFactory.getLogger(FactorialTest.class);
     private static ActorSystem clusterSystem1;
     private static ActorSystem clusterSystem2;
     private static ActorSystem clusterSystem3;
@@ -63,7 +63,7 @@ public class ClusterClientTest {
     }
 
     @Test
-    public void clientTest() {
+    public void clusterTest() {
         logger.info("========= client start =========");
         final int upToN = 200;
 

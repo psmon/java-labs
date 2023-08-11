@@ -1,4 +1,4 @@
-package com.webnori.springweb.akka.cluster;
+package com.webnori.springweb.akka.cluster.Factorial;
 
 import com.webnori.springweb.example.akka.actors.cluster.MySerializable;
 
