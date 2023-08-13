@@ -1,8 +1,9 @@
-package com.webnori.springweb.akka;
+package com.webnori.springweb.akka.intro;
 
 import akka.actor.ActorRef;
 import akka.routing.RoundRobinPool;
 import akka.testkit.javadsl.TestKit;
+import com.webnori.springweb.akka.AbstractJavaTest;
 import com.webnori.springweb.example.akka.actors.HelloWorld;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;

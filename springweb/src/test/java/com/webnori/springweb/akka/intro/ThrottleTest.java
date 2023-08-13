@@ -1,4 +1,4 @@
-package com.webnori.springweb.akka;
+package com.webnori.springweb.akka.intro;
 
 import akka.actor.ActorRef;
 import akka.routing.RoundRobinPool;
@@ -9,6 +9,7 @@ import akka.stream.ThrottleMode;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
 import akka.testkit.javadsl.TestKit;
+import com.webnori.springweb.akka.AbstractJavaTest;
 import com.webnori.springweb.example.akka.actors.HelloWorld;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;

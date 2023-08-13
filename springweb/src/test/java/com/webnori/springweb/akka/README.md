@@ -141,14 +141,10 @@ for (int i = 0; i < testCount * partitionCount; i++) {
 
 유닛테스트를 통해 코드작동을 이해할수 있으며 실제 작동되는 유넷테스트 코드 수행을통해 AKKA에서 제공되는 기능을 학습하고 실험할수 있습니다.
 
-- [AbstractJavaTest.java](AbstractJavaTest.java) : 우하한 종료(GraceFulDown)를 지원하는 Base추상Test객체 
-- [AkkaBasicTests.java](BasicTest.java) : Akka 기본 메시지 전송
-- [HierarchyActorTest.java](HierarchyActorTest.java) : 구조적(부모/자식)으로 액터를 구성해봅니다.
-- [SimpleActorTest.java](SimpleActorTest.java) : 라우터/상태관리등 몇가지 유용한 액터툴을 살펴봅니다. 
-- [AkkaDisPatcherTests.java](DisPatcherTest.java) : Dispatcher를 이용한 동시성처리 ( 멀티스레드 대응 )
-- [AkkaThrottleTests.java](ThrottleTest.java) : 메시지 처리 속도제어 ( API호출제약및 생산속도 조절시 사용 )
-- [AkkaKafkaTests.java](KafkaTest.java) : Akka(+Alpakka)를 이용한 Kafka 활용 유닛테스트기
-- [FactorialTest.java](./cluster/Factorial/FactorialTest.java) : Cluster Test - Factorial 분산처리샘플
+- [Intro](./intro) : 액터 메시지를 단일노드에서 이용하는 방법 
+- [Intro](./router) : 액터메시지를 라우터로 분기하는 방법
+- [Intro](./kafka) : Kafka를 AkkaStream과 연결하는방법
+- [Intro](./cluster) : Cluster를 구성하고 네트워크 분산처리 하는방법 
 
 ## 참고링크
 

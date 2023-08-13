@@ -1,4 +1,4 @@
-package com.webnori.springweb.akka;
+package com.webnori.springweb.akka.intro;
 
 /**
  * TestClass : HierarchyActorTest
@@ -8,6 +8,7 @@ package com.webnori.springweb.akka;
 
 import akka.actor.ActorRef;
 import akka.testkit.javadsl.TestKit;
+import com.webnori.springweb.akka.AbstractJavaTest;
 import com.webnori.springweb.example.akka.actors.ParentActor;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;

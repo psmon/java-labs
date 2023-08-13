@@ -1,4 +1,4 @@
-package com.webnori.springweb.akka.cluster.Factorial;
+package com.webnori.springweb.akka.cluster.factorial;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;

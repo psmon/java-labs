@@ -1,4 +1,4 @@
-package com.webnori.springweb.akka;
+package com.webnori.springweb.akka.kafka;
 
 import akka.Done;
 import akka.NotUsed;
@@ -12,6 +12,7 @@ import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
 import akka.testkit.javadsl.TestKit;
 import com.typesafe.config.Config;
+import com.webnori.springweb.akka.AbstractJavaTest;
 import com.webnori.springweb.example.akka.AkkaManager;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -39,6 +40,8 @@ public class KafkaTest extends AbstractJavaTest {
 
     private int consumeCnt2 =0;
 
+    String testTopicName = "test-1";
+
     @Test
     @DisplayName("TestKafkaProduce")
     public void TestKafkaProduce() {
@@ -61,8 +64,6 @@ public class KafkaTest extends AbstractJavaTest {
                         ProducerSettings.create(config, new StringSerializer(), new StringSerializer())
                                 .withBootstrapServers("localhost:9092");
 
-                String topic = "test-1";
-
                 int topicCount = 100;
 
                 // Producer Flow (데이터 생상)
@@ -70,7 +71,7 @@ public class KafkaTest extends AbstractJavaTest {
                 CompletionStage<Done> done =
                         Source.range(1, topicCount)
                                 .map(number -> number.toString())
-                                .map(value -> new ProducerRecord<String, String>(topic, value))
+                                .map(value -> new ProducerRecord<String, String>(testTopicName, value))
                                 .runWith(Producer.plainSink(producerSettings), system);
 
                 Source<Done, NotUsed> source = Source.completionStage(done);
@@ -138,7 +139,6 @@ public class KafkaTest extends AbstractJavaTest {
                 final String testKey = java.util.UUID.randomUUID().toString();
                 final String testKafkaServer = "localhost:9092";
                 final String testGroup = "group1";
-                String topic = "test-1";
 
                 greetActor.tell(probe.getRef(), getRef());
                 expectMsg(Duration.ofSeconds(1), "done");
@@ -165,7 +165,7 @@ public class KafkaTest extends AbstractJavaTest {
                 Consumer
                         .plainSource(
                                 consumerSettings,
-                                Subscriptions.topics(topic))
+                                Subscriptions.topics(testTopicName))
                         .to(Sink.foreach(msg ->
                                 debugKafkaMsg(msg.key(), msg.value(), greetActor, testKey, "consumer1"))
                         )
@@ -175,7 +175,7 @@ public class KafkaTest extends AbstractJavaTest {
                 CompletionStage<Done> done =
                         Source.range(1, testCount)
                                 .map(number -> number.toString())
-                                .map(value -> new ProducerRecord<String, String>(topic, testKey, value))
+                                .map(value -> new ProducerRecord<String, String>(testTopicName, testKey, value))
                                 .runWith(Producer.plainSink(producerSettings), system);
 
                 Source<Done, NotUsed> source = Source.completionStage(done);
@@ -220,7 +220,6 @@ public class KafkaTest extends AbstractJavaTest {
                 final String testKey = java.util.UUID.randomUUID().toString();
                 final String testKafkaServer = "localhost:9092";
                 final String testGroup = "group1";
-                String topic = "test-1";
 
                 greetActor.tell(probe.getRef(), getRef());
                 expectMsg(Duration.ofSeconds(1), "done");
@@ -245,7 +244,7 @@ public class KafkaTest extends AbstractJavaTest {
                 var control =
                         Consumer.plainSource(
                                         consumerSettings,
-                                        Subscriptions.assignment(new TopicPartition(topic, 0)))
+                                        Subscriptions.assignment(new TopicPartition(testTopicName, 0)))
                                 .to(Sink.foreach(msg ->
                                         debugKafkaMsg(msg.key(), msg.value(), greetActor, testKey, "consumer1"))
                                 )
@@ -254,7 +253,7 @@ public class KafkaTest extends AbstractJavaTest {
                 var control2 =
                         Consumer.plainSource(
                                         consumerSettings,
-                                        Subscriptions.assignment(new TopicPartition(topic, 1)))
+                                        Subscriptions.assignment(new TopicPartition(testTopicName, 1)))
                                 .to(Sink.foreach(msg ->
                                         debugKafkaMsg(msg.key(), msg.value(), greetActor, testKey, "consumer2"))
                                 )
@@ -264,13 +263,13 @@ public class KafkaTest extends AbstractJavaTest {
                 CompletionStage<Done> done =
                         Source.range(1, testCount)
                                 .map(number -> number.toString())
-                                .map(value -> new ProducerRecord<String, String>(topic,0, testKey, value))
+                                .map(value -> new ProducerRecord<String, String>(testTopicName,0, testKey, value))
                                 .runWith(Producer.plainSink(producerSettings), system);
 
                 CompletionStage<Done> done2 =
                         Source.range(1, testCount)
                                 .map(number -> number.toString())
-                                .map(value -> new ProducerRecord<String, String>(topic,1, testKey, value))
+                                .map(value -> new ProducerRecord<String, String>(testTopicName,1, testKey, value))
                                 .runWith(Producer.plainSink(producerSettings), system);
 
                 //Producer Task Setup
@@ -318,7 +317,6 @@ public class KafkaTest extends AbstractJavaTest {
                 final String testKey = java.util.UUID.randomUUID().toString();
                 final String testKafkaServer = "localhost:9092";
                 final String testGroup = "group1";
-                String topic = "test-1";
 
                 consumeCnt1 = 0;
                 consumeCnt2 = 0;
@@ -345,7 +343,7 @@ public class KafkaTest extends AbstractJavaTest {
                 var consumer1 = Consumer
                         .plainSource(
                                 consumerSettings,
-                                Subscriptions.topics(topic))
+                                Subscriptions.topics(testTopicName))
                         .to(Sink.foreach(msg ->
                                 debugKafkaMsg(msg.key(), msg.value(), greetActor, testKey, "consumer1"))
                         )
@@ -354,7 +352,7 @@ public class KafkaTest extends AbstractJavaTest {
                 var consumer2 = Consumer
                         .plainSource(
                                 consumerSettings,
-                                Subscriptions.topics(topic))
+                                Subscriptions.topics(testTopicName))
                         .to(Sink.foreach(msg ->
                                 debugKafkaMsg(msg.key(), msg.value(), greetActor, testKey, "consumer2"))
                         )
@@ -364,19 +362,19 @@ public class KafkaTest extends AbstractJavaTest {
                 CompletionStage<Done> done =
                         Source.range(1, testCount)
                                 .map(number -> number.toString())
-                                .map(value -> new ProducerRecord<String, String>(topic,0, testKey, value))
+                                .map(value -> new ProducerRecord<String, String>(testTopicName,0, testKey, value))
                                 .runWith(Producer.plainSink(producerSettings), system);
 
                 CompletionStage<Done> done2 =
                         Source.range(1, testCount)
                                 .map(number -> number.toString())
-                                .map(value -> new ProducerRecord<String, String>(topic,1, testKey, value))
+                                .map(value -> new ProducerRecord<String, String>(testTopicName,1, testKey, value))
                                 .runWith(Producer.plainSink(producerSettings), system);
 
                 CompletionStage<Done> done3 =
                         Source.range(1, testCount)
                                 .map(number -> number.toString())
-                                .map(value -> new ProducerRecord<String, String>(topic,1, testKey, value))
+                                .map(value -> new ProducerRecord<String, String>(testTopicName,1, testKey, value))
                                 .runWith(Producer.plainSink(producerSettings), system);
 
                 //Producer Task Setup

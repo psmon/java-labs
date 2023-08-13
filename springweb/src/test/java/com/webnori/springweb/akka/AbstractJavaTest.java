@@ -12,9 +12,9 @@ import org.scalatestplus.junit.JUnitSuite;
  * Base class for all runnable example tests written in Java
  *
  */
-abstract class AbstractJavaTest extends JUnitSuite {
+public abstract class AbstractJavaTest extends JUnitSuite {
 
-    static ActorSystem system;
+    public static ActorSystem system;
 
     @BeforeClass
     public static void setup() {
