@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.io.IOException;
 import java.time.Duration;
 
 
@@ -29,7 +28,7 @@ public class FactorialTest {
 
     private int maxServerUptime = 20;
 
-    private static ActorSystem serverStart(String sysName, String config, String role) throws IOException {
+    private static ActorSystem serverStart(String sysName, String config, String role) {
         final Config newConfig = ConfigFactory.parseString(
                 String.format("akka.cluster.roles = [%s]", role)).withFallback(
                 ConfigFactory.load(config));
@@ -40,7 +39,7 @@ public class FactorialTest {
     }
 
     @BeforeClass
-    public static void setup() throws IOException {
+    public static void setup() {
         // Seed
         clusterSystem1 = serverStart("ClusterSystem", "server", "seed");
 

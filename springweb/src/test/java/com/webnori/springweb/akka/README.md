@@ -141,10 +141,10 @@ for (int i = 0; i < testCount * partitionCount; i++) {
 
 유닛테스트를 통해 코드작동을 이해할수 있으며 실제 작동되는 유넷테스트 코드 수행을통해 AKKA에서 제공되는 기능을 학습하고 실험할수 있습니다.
 
-- [Intro](./intro) : 액터 메시지를 단일노드에서 이용하는 방법 
-- [Intro](./router) : 액터메시지를 라우터로 분기하는 방법
-- [Intro](./kafka) : Kafka를 AkkaStream과 연결하는방법
-- [Intro](./cluster) : Cluster를 구성하고 네트워크 분산처리 하는방법 
+- [Intro](./intro) : 액터메시지를 단일노드에서 이용하는 방법
+- [Router](./router) : 액터메시지를 라우터로 분기하는 방법
+- [Kafka](./kafka) : Kafka를 AkkaStream과 연결하는방법
+- [Cluster](./cluster) : Cluster를 구성하고 네트워크 분산처리 하는방법 
 
 ## 참고링크
 
