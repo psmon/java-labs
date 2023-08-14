@@ -103,6 +103,4 @@ public class BasicRoutingTest {
     public void SmallestMailBoxRoutingTest(){
         RouterByNameTest("router5");
     }
-
-
 }

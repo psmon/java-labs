@@ -1,5 +1,7 @@
 # Router
 
+Test코드를 통해 AKKA제공 다양한 라우팅 코드를 학습합니다.
+
 ## Pool VS GROUP
 
 - Pool(풀) : 라우터는 라우트를 하위 액터로 생성하고 종료되면 라우터에서 제거합니다.
@@ -16,4 +18,7 @@
 - tail-chopping
 - consistent-hashing
 
-AKKA에서 지원하는 라우터 작동모델을 테스트코드로 모두 순차구현예정입니다.
+## Test Doc
+
+- https://wiki.webnori.com/display/AKKA/RoutingTest
+- 
