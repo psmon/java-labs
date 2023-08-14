@@ -1,18 +1,10 @@
-package com.webnori.springweb.akka.router.roundrobin;
+package com.webnori.springweb.akka.router.routing.actor;
 
 import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
-import akka.actor.Terminated;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import akka.routing.ActorRefRoutee;
-import akka.routing.RoundRobinRoutingLogic;
-import akka.routing.Routee;
-import akka.routing.Router;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class WorkerActor extends AbstractActor {
 
@@ -25,13 +17,23 @@ public class WorkerActor extends AbstractActor {
     public WorkerActor(ActorRef probe){
         _probe = probe;
     }
+
+    private int messageCount = 0;
+
     @Override
     public Receive createReceive() {
         return receiveBuilder()
                 .match(
                         WorkMessage.class,
                         message -> {
-                            log.info("[{}] ChildActor InMessage : {}", self().path().name(), message);
+                            String pathName = self().path().name();
+                            messageCount++;
+                            log.info("[{}] ChildActor InMessage : {} - {}", pathName, message, messageCount);
+                            // Routee가 a일때 임의 지연
+                            if(pathName.equals("$a")){
+                                log.info("SomeBlocking - 300ms");
+                                Thread.sleep(300);
+                            }
                             _probe.tell("completed", ActorRef.noSender());
                         })
                 .build();

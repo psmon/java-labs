@@ -1,4 +1,4 @@
-package com.webnori.springweb.akka.router.roundrobin;
+package com.webnori.springweb.akka.router.routing.actor;
 
 import com.webnori.springweb.example.akka.actors.cluster.MySerializable;
 
