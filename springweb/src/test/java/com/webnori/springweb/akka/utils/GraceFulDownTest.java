@@ -46,24 +46,26 @@ public class GraceFulDownTest {
     public static void bootDown() {
 
         logger.info("========= try graceful down =========");
-
-        CoordinatedShutdown.get(actorSystem).addTask(
-                CoordinatedShutdown.PhaseBeforeServiceUnbind(), "someTaskName",
-                () -> {
-                    return akka.pattern.Patterns.ask(appActor, "stop", Duration.ofSeconds(15))
-                            .thenApply(reply -> Done.getInstance());
-                });
+        int reTry = 5;
+        for(int i=0 ; i<reTry ; i++){
+            CoordinatedShutdown.get(actorSystem).addTask(
+                    CoordinatedShutdown.PhaseBeforeServiceUnbind(), "someTaskName",
+                    () -> {
+                        return akka.pattern.Patterns.ask(appActor, "stop", Duration.ofSeconds(1))
+                                .thenApply(reply -> Done.getInstance());
+                    });
+        }
 
     }
 
     @Test
-    public void GraceArOKTest(){
+    public void GraceArOKTest() throws InterruptedException {
         appActor.tell("completed", ActorRef.noSender());
     }
 
     @Test
-    public void GraceNotOKTest(){
-        appActor.tell("xxxxx", ActorRef.noSender());
+    public void GraceNotOKTest() throws InterruptedException {
+        appActor.tell("xxxxxxxx", ActorRef.noSender());
     }
 
 
