@@ -7,8 +7,6 @@ import akka.actor.ActorSystem;
 import akka.actor.CoordinatedShutdown;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import com.webnori.springweb.akka.router.routing.BasicRoutingTest;
-import com.webnori.springweb.example.akka.actors.HelloWorld;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -46,8 +44,8 @@ public class GraceFulDownTest {
     public static void bootDown() {
 
         logger.info("========= try graceful down =========");
-        int reTry = 5;
-        for(int i=0 ; i<reTry ; i++){
+        int retryCount = 5;
+        for (int i = 0; i < retryCount; i++) {
             CoordinatedShutdown.get(actorSystem).addTask(
                     CoordinatedShutdown.PhaseBeforeServiceUnbind(), "someTaskName",
                     () -> {
