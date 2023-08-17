@@ -17,8 +17,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.time.Duration;
 
 @SpringBootTest
-public class GraceFulDownTest {
-    private static Logger logger = LoggerFactory.getLogger(GraceFulDownTest.class);
+public class CoordinatedShutdownTest {
+    private static Logger logger = LoggerFactory.getLogger(CoordinatedShutdownTest.class);
 
     private static ActorSystem actorSystem;
 
