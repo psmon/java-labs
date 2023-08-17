@@ -37,7 +37,7 @@ public class GraceFulDownTest {
     public static void bootUp() {
         actorSystem = serverStart("ClusterSystem", "router-test", "seed");
         logger.info("========= sever loaded =========");
-        appActor = actorSystem.actorOf(WorkStatsActor.Props(), "APPActor");
+        appActor = actorSystem.actorOf(WorkStatusActor.Props(), "APPActor");
     }
 
     @AfterClass
@@ -47,7 +47,7 @@ public class GraceFulDownTest {
         int retryCount = 5;
         for (int i = 0; i < retryCount; i++) {
             CoordinatedShutdown.get(actorSystem).addTask(
-                    CoordinatedShutdown.PhaseBeforeServiceUnbind(), "someTaskName",
+                    CoordinatedShutdown.PhaseBeforeServiceUnbind(), "WorkCheckTask",
                     () -> {
                         return akka.pattern.Patterns.ask(appActor, "stop", Duration.ofSeconds(1))
                                 .thenApply(reply -> Done.getInstance());

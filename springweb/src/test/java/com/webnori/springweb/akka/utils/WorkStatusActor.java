@@ -7,17 +7,17 @@ import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 
-public class WorkStatsActor extends AbstractActor {
+public class WorkStatusActor extends AbstractActor {
 
     private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
-    private boolean isAtLeastOnceLog;
+    private boolean isGraceFulShoutDown;
 
     private int remainWork;
 
     private int errorCount;
 
     public static Props Props() {
-        return Props.create(WorkStatsActor.class);
+        return Props.create(WorkStatusActor.class);
     }
 
     @Override
@@ -27,28 +27,27 @@ public class WorkStatsActor extends AbstractActor {
                         String.class,
                         message -> {
 
-                            switch (message){
-                                case "stop":{
+                            switch (message) {
+                                case "stop": {
                                     if (remainWork == 0) {
                                         sender().tell(Done.getInstance(), ActorRef.noSender());
-
-                                        if(!isAtLeastOnceLog){
-                                            log.info("=== Grace Ful Down === Works:{},Errors:{}",remainWork,errorCount);
+                                        if (!isGraceFulShoutDown) {
+                                            log.info("=== GraceFul ShoutDown === RemainWorks:{},Errors:{}", remainWork, errorCount);
                                         }
-                                        isAtLeastOnceLog = true;
+                                        isGraceFulShoutDown = true;
                                     }
                                 }
                                 break;
-                                case "increse":{
+                                case "increse": {
                                     remainWork++;
                                 }
                                 break;
-                                case "decrese":{
-                                    if(remainWork>0)  remainWork--;
+                                case "decrese": {
+                                    if (remainWork > 0) remainWork--;
                                 }
                                 break;
-                                case "decrese-exception":{
-                                    if(remainWork>0)  remainWork--;
+                                case "decrese-exception": {
+                                    if (remainWork > 0) remainWork--;
                                     errorCount++;
                                 }
                                 break;
