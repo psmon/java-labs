@@ -42,17 +42,17 @@
         implementation "com.typesafe.akka:akka-actor_$scalaVersion:$akkaVersion"
 
         //Akka Jackson
-        implementation "com.typesafe.akka:akka-serialization-jackson_$scalaVersion"
+        implementation "com.typesafe.akka:akka-serialization-jackson_$scalaVersion:$akkaVersion"
 
         //AKKA Stream
-        implementation "com.typesafe.akka:akka-stream_$scalaVersion"
+        implementation "com.typesafe.akka:akka-stream_$scalaVersion:$akkaVersion"
         implementation "com.typesafe.akka:akka-stream-kafka_$scalaVersion:4.0.0"
 
         //AKKA Cluster
         implementation "com.typesafe.akka:akka-cluster_$scalaVersion:$akkaVersion"
 
         //AKKA Cluster Metrics Extension
-        implementation "com.typesafe.akka:akka-cluster-metrics_$scalaVersion"
+        implementation "com.typesafe.akka:akka-cluster-metrics_$scalaVersion:$akkaVersion"
 
         //Logging
         implementation 'ch.qos.logback:logback-classic:1.2.3'
@@ -65,7 +65,7 @@
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
         testImplementation "org.scalatestplus:junit-4-12_$scalaVersion:3.3.0.0-SNAP2"
         testImplementation "com.typesafe.akka:akka-testkit_$scalaVersion:$akkaVersion"
-        testImplementation "com.typesafe.akka:akka-stream-testkit_$scalaVersion"
+        testImplementation "com.typesafe.akka:akka-stream-testkit_$scalaVersion:$akkaVersion"
         testImplementation "com.typesafe.akka:akka-stream-kafka-testkit_$scalaVersion:4.0.0"
 
     }

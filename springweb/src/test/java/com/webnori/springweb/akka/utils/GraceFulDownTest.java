@@ -37,7 +37,7 @@ public class GraceFulDownTest {
     public static void bootUp() {
         actorSystem = serverStart("ClusterSystem", "router-test", "seed");
         logger.info("========= sever loaded =========");
-        appActor = actorSystem.actorOf(AppActor.Props(), "APPActor");
+        appActor = actorSystem.actorOf(WorkStatsActor.Props(), "APPActor");
     }
 
     @AfterClass
@@ -58,12 +58,15 @@ public class GraceFulDownTest {
 
     @Test
     public void GraceArOKTest() throws InterruptedException {
-        appActor.tell("completed", ActorRef.noSender());
+        appActor.tell("increse", ActorRef.noSender());
+        appActor.tell("increse", ActorRef.noSender());
+        appActor.tell("decrese", ActorRef.noSender());
+        appActor.tell("decrese-exception", ActorRef.noSender());
     }
 
     @Test
     public void GraceNotOKTest() throws InterruptedException {
-        appActor.tell("xxxxxxxx", ActorRef.noSender());
+        appActor.tell("increse", ActorRef.noSender());
     }
 
 
