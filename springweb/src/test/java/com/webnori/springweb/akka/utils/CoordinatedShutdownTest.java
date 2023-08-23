@@ -7,6 +7,7 @@ import akka.actor.ActorSystem;
 import akka.actor.CoordinatedShutdown;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.webnori.springweb.akka.utils.actor.WorkStatusActor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -53,7 +54,6 @@ public class CoordinatedShutdownTest {
                                 .thenApply(reply -> Done.getInstance());
                     });
         }
-
     }
 
     @Test
@@ -68,6 +68,4 @@ public class CoordinatedShutdownTest {
     public void GraceNotOKTest() throws InterruptedException {
         appActor.tell("increse", ActorRef.noSender());
     }
-
-
 }
