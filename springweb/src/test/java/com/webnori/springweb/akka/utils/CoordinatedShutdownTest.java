@@ -17,6 +17,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.Duration;
 
+/**
+ * TestClass : CoordinatedShutdownTest
+ * 목표 : 메시징이 작동중인 어플리케이션에서 안전한종료를 위한 기능을 살펴봅니다.
+ * 참고 링크 : https://doc.akka.io/docs/akka/current/coordinated-shutdown.html
+ */
+
 @SpringBootTest
 public class CoordinatedShutdownTest {
     private static Logger logger = LoggerFactory.getLogger(CoordinatedShutdownTest.class);

@@ -1,10 +1,5 @@
 package com.webnori.springweb.akka.intro;
 
-/**
- * TestClass : HierarchyActorTest
- * 목표 : 액터 계층(부모-자식)구조를 테스트화하고 학습합니다.
- */
-
 
 import akka.actor.ActorRef;
 import akka.testkit.javadsl.TestKit;
@@ -13,17 +8,21 @@ import com.webnori.springweb.example.akka.actors.ParentActor;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
 
+/**
+ * TestClass : HierarchyActorTest
+ * 목표 : 액터의 계층(Hierarchy) 구조로 학습합니다.
+ * 참고 링크 : https://doc.akka.io/docs/akka/current/typed/guide/tutorial_1.html
+ */
 public class HierarchyActorTest extends AbstractJavaTest {
 
+    public ActorRef parentActor;
     private TestKit probe;
 
-    public ActorRef parentActor;
-
-    public HierarchyActorTest(){
+    public HierarchyActorTest() {
         setupDI();
     }
 
-    public  void setupDI() {
+    public void setupDI() {
 
         // 액터의 생성방법을 설명하며
         // 어플리케이션 초기화때 미리 생성할수 있습니다.
@@ -40,8 +39,8 @@ public class HierarchyActorTest extends AbstractJavaTest {
 
     @Test
     @DisplayName("Round Robbin Test")
-    public void EventFlowParentTOChildTest(){
-        new TestKit(system){{
+    public void EventFlowParentTOChildTest() {
+        new TestKit(system) {{
             // 이벤트검사를 위한 관찰자를 셋업합니다.
             parentActor.tell(probe.getRef(), getRef());
 
@@ -69,8 +68,8 @@ public class HierarchyActorTest extends AbstractJavaTest {
 
     @Test
     @DisplayName("EventForwardTest")
-    public void EventForwardTest(){
-        new TestKit(system){{
+    public void EventForwardTest() {
+        new TestKit(system) {{
 
             TestKit forwardActor = new TestKit(system);
             // ActorRef를 지정하여 전송합니다.

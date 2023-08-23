@@ -7,6 +7,7 @@ import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 
+
 public class WorkStatusActor extends AbstractActor {
 
     private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
@@ -54,5 +55,10 @@ public class WorkStatusActor extends AbstractActor {
                             }
                         })
                 .build();
+    }
+
+    @Override
+    public void postStop() {
+        log.info("WorkStatusActor Stop - remainWork:{}", remainWork);
     }
 }

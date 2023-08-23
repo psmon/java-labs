@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * TestClass : ThrottleTest
  * 목표 : Throttle을 이용하는 TPS를 제어샘플
- * 참고 링크 :
+ * 참고 링크 : https://doc.akka.io/docs/akka/current/stream/stream-flows-and-basics.html
  */
 public class ThrottleTest extends AbstractJavaTest {
 

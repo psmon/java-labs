@@ -26,8 +26,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * TestClass : SimpleActorTest
- * 목표 : 몇가지 유용한 액트 샘플
- * 참고 링크 :
+ * 목표 : 몇가지 유용한 액터샘플을 통해 액터의 기능을 살펴봅니다.
+ * 참고 링크 : https://wiki.webnori.com/display/AKKA
  */
 
 public class SimpleActorTest extends AbstractJavaTest {

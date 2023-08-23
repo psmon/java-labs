@@ -39,4 +39,10 @@ public class LifeCycleTestActor extends AbstractActor {
                 })
                 .build();
     }
+
+    @Override
+    public void postStop() {
+        log.info("LifeCycleTestActor Stop - workCountForTest:{}", workCountForTest);
+        probe.tell("cancel", ActorRef.noSender());
+    }
 }

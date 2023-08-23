@@ -2,6 +2,7 @@ package com.webnori.springweb.akka.utils;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
+import akka.actor.Kill;
 import akka.actor.PoisonPill;
 import akka.testkit.javadsl.TestKit;
 import com.typesafe.config.Config;
@@ -18,6 +19,11 @@ import java.time.Duration;
 
 import static org.junit.Assert.assertEquals;
 
+/**
+ * TestClass : ActorLifeCycleTest
+ * 목표 : 액터의 라이플사이클에대해 학습합니다.
+ * 참고 링크 : https://doc.akka.io/docs/akka/current/actors.html#stopping-actors
+ */
 @SpringBootTest
 public class ActorLifeCycleTest {
 
@@ -49,10 +55,9 @@ public class ActorLifeCycleTest {
     }
 
     @Test
-    public void PoisonPillTest() {
+    public void ActorPoisonPillTest() {
 
         // Poison메시지는 현재까지 적재된 메시지만 처리하고~ 액터를 중단시킵니다.
-        //
         var testActor = actorSystem.actorOf(LifeCycleTestActor.Props(), "testActor");
 
         new TestKit(actorSystem) {
@@ -86,4 +91,43 @@ public class ActorLifeCycleTest {
             }
         };
     }
+
+    @Test
+    public void ActorStopTest() {
+
+        // stop은 대기중인 메시지를 고려하지 않고 즉각 중단시킵니다.
+        var testActor = actorSystem.actorOf(LifeCycleTestActor.Props(), "testActor");
+
+        new TestKit(actorSystem) {
+            {
+                final TestKit probe = new TestKit(actorSystem);
+
+                testActor.tell(probe.getRef(), getRef());
+
+                for (int i = 0; i < 10; i++) {
+                    testActor.tell("someWork", ActorRef.noSender());
+                }
+
+                actorSystem.stop(testActor);
+
+                within(Duration.ofSeconds(10), () -> {
+
+                    // more 1
+                    testActor.tell("someWork", ActorRef.noSender());
+
+                    // check that the probe we injected earlier got the msg
+                    probe.expectMsg(Duration.ofSeconds(10), "cancel");
+
+                    // Will wait for the rest of the 3 seconds
+                    probe.expectNoMessage();
+
+                    assertEquals(true, LifeCycleTestActor.workCountForTest < 10);
+
+                    return null;
+                });
+
+            }
+        };
+    }
+
 }
