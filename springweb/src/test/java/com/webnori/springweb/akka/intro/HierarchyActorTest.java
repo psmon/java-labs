@@ -2,45 +2,65 @@ package com.webnori.springweb.akka.intro;
 
 
 import akka.actor.ActorRef;
+import akka.actor.ActorSystem;
 import akka.testkit.javadsl.TestKit;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import com.webnori.springweb.akka.AbstractJavaTest;
+import com.webnori.springweb.akka.router.routing.BasicRoutingTest;
 import com.webnori.springweb.example.akka.actors.ParentActor;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * TestClass : HierarchyActorTest
  * 목표 : 액터의 계층(Hierarchy) 구조로 학습합니다.
  * 참고 링크 : https://doc.akka.io/docs/akka/current/typed/guide/tutorial_1.html
  */
-public class HierarchyActorTest extends AbstractJavaTest {
+public class HierarchyActorTest {
+
+    private static Logger logger = LoggerFactory.getLogger(HierarchyActorTest.class);
+
+    private static ActorSystem actorSystem;
 
     public ActorRef parentActor;
     private TestKit probe;
 
-    public HierarchyActorTest() {
-        setupDI();
+    private static ActorSystem serverStart(String sysName, String config, String role) {
+        final Config newConfig = ConfigFactory.parseString(
+                String.format("akka.cluster.roles = [%s]", role)).withFallback(
+                ConfigFactory.load(config));
+
+        ActorSystem serverSystem = ActorSystem.create(sysName, newConfig);
+        return serverSystem;
     }
 
-    public void setupDI() {
-
-        // 액터의 생성방법을 설명하며
-        // 어플리케이션 초기화때 미리 생성할수 있습니다.
-        probe = new TestKit(system);
-
-        // 부모액터 생성
-        parentActor = system.actorOf(ParentActor.Props());
-
-        // 자식생성 COMMAND : 생성자 Params을 통해 생성도 가능하지만
-        // 자식 Object 생성책임을 부모가 지며 의존없는 구조전략때 활용할수 있습니다.
-        parentActor.tell(ParentActor.CMD_CREATE_CHILDS, ActorRef.noSender());
-
+    @BeforeClass
+    public static void setup() {
+        // Seed
+        actorSystem = serverStart("ClusterSystem", "test", "seed");
+        logger.info("========= sever loaded =========");
     }
 
     @Test
     @DisplayName("Round Robbin Test")
     public void EventFlowParentTOChildTest() {
-        new TestKit(system) {{
+        new TestKit(actorSystem) {{
+
+            // 액터의 생성방법을 설명하며
+            // 어플리케이션 초기화때 미리 생성할수 있습니다.
+            probe = new TestKit(actorSystem);
+
+            // 부모액터 생성
+            parentActor = actorSystem.actorOf(ParentActor.Props());
+
+            // 자식생성 COMMAND : 생성자 Params을 통해 생성도 가능하지만
+            // 자식 Object 생성책임을 부모가 지며 의존없는 구조전략때 활용할수 있습니다.
+            parentActor.tell(ParentActor.CMD_CREATE_CHILDS, ActorRef.noSender());
+
             // 이벤트검사를 위한 관찰자를 셋업합니다.
             parentActor.tell(probe.getRef(), getRef());
 
@@ -69,9 +89,9 @@ public class HierarchyActorTest extends AbstractJavaTest {
     @Test
     @DisplayName("EventForwardTest")
     public void EventForwardTest() {
-        new TestKit(system) {{
+        new TestKit(actorSystem) {{
 
-            TestKit forwardActor = new TestKit(system);
+            TestKit forwardActor = new TestKit(actorSystem);
             // ActorRef를 지정하여 전송합니다.
             // 전송자(sender)가 메시지를 받을수 있는 액터가 아닐시 활용될수 있습니다.
             parentActor.tell(ParentActor.CMD_MESSAGE_REPLY, forwardActor.getRef());

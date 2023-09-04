@@ -2,6 +2,7 @@
         id 'java'
         id 'org.springframework.boot' version '2.7.11'
         id 'io.spring.dependency-management' version '1.0.15.RELEASE'
+        id 'me.champeau.jmh' version '0.6.8'
     }
 
     group = 'com.webnori'
@@ -67,7 +68,8 @@
         testImplementation "com.typesafe.akka:akka-testkit_$scalaVersion:$akkaVersion"
         testImplementation "com.typesafe.akka:akka-stream-testkit_$scalaVersion:$akkaVersion"
         testImplementation "com.typesafe.akka:akka-stream-kafka-testkit_$scalaVersion:4.0.0"
-
+        testImplementation "org.openjdk.jmh:jmh-core:1.36"
+        testImplementation "org.openjdk.jmh:jmh-generator-annprocess:1.36"
     }
 
     tasks.named('test') {
