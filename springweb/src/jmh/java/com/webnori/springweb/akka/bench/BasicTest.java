@@ -6,12 +6,9 @@ import akka.testkit.javadsl.TestKit;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.webnori.springweb.example.akka.actors.HelloWorld;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.jupiter.api.DisplayName;
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
@@ -22,8 +19,6 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertTrue;
-
 
 /**
  * TestClass : BasicTest
@@ -31,14 +26,21 @@ import static org.junit.Assert.assertTrue;
  * 참고 링크 : https://doc.akka.io/docs/akka/current/testing.html
  */
 
+@State(Scope.Thread)
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.SECONDS)
 public class BasicTest {
 
+    @State(Scope.Thread)
+    public static class MyState {
+        public int count = 0;
+    }
+
     private static final Logger logger = LoggerFactory.getLogger(BasicTest.class);
-
-    private static ActorSystem actorSystem;
     private static final String hello = "not another hello world";
+    private ActorSystem actorSystem;
 
-    private static ActorSystem serverStart(String sysName, String config, String role) {
+    private ActorSystem serverStart(String sysName, String config, String role) {
         final Config newConfig = ConfigFactory.parseString(
                 String.format("akka.cluster.roles = [%s]", role)).withFallback(
                 ConfigFactory.load(config));
@@ -47,21 +49,27 @@ public class BasicTest {
         return serverSystem;
     }
 
-    @BeforeClass
-    public static void setup() {
+    @Setup(Level.Trial)
+    public void init() {
+        logger.info("========= sever loaded =========");
         // Seed
         actorSystem = serverStart("ClusterSystem", "test", "seed");
-        logger.info("========= sever loaded =========");
     }
 
+    @TearDown(Level.Trial)
+    public void tearDown() {
+        TestKit.shutdownActorSystem(actorSystem);
+    }
 
-    @Test
-    @DisplayName("Actor - HelloWorld Tests")
-    public void TestItMany() {
+    @Benchmark
+    @BenchmarkMode(Mode.All)
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    public void HelloWorldTest(Blackhole blackhole, MyState state) {
+
         new TestKit(actorSystem) {
             {
                 final TestKit probe = new TestKit(actorSystem);
-                final ActorRef greetActor = actorSystem.actorOf(HelloWorld.Props(), "HelloWorld2");
+                final ActorRef greetActor = actorSystem.actorOf(HelloWorld.Props());
 
                 greetActor.tell(probe.getRef(), getRef());
                 expectMsg(Duration.ofSeconds(1), "done");
@@ -79,24 +87,29 @@ public class BasicTest {
                             for (int i = 0; i < testCount; i++) {
                                 // check that the probe we injected earlier got the msg
                                 probe.expectMsg(Duration.ofSeconds(1), "world");
+                                state.count++;
                             }
 
+                            blackhole.consume(testCount);
 
                             return null;
                         });
             }
         };
+
+        logger.info("count : {}", state.count);
+
     }
 
     @Test
     public void runBenchmarks() throws Exception {
         Options options = new OptionsBuilder()
-                .include(this.getClass().getName() + ".bench_s*")
+                .include(this.getClass().getName() + ".*")
                 .mode(Mode.AverageTime)
                 .warmupTime(TimeValue.seconds(1))
                 .warmupIterations(6)
                 .threads(1)
-                .measurementIterations(6)
+                .measurementIterations(3)
                 .forks(1)
                 .shouldFailOnError(true)
                 .shouldDoGC(true)
@@ -104,31 +117,4 @@ public class BasicTest {
 
         new Runner(options).run();
     }
-
-    @Benchmark
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public void bench_stringsWithoutStringBuilder() throws Exception {
-        String hellos = "";
-        for (int i = 0; i < 1000; i++) {
-            hellos += hello;
-            if (i != 999) {
-                hellos += "\n";
-            }
-        }
-        assertTrue(hellos.startsWith((hello + "\n")));
-    }
-
-    @Benchmark
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public void bench_stringsWithStringBuilder() throws Exception {
-        StringBuilder hellosBuilder = new StringBuilder();
-        for (int i = 0; i < 1000; i++) {
-            hellosBuilder.append(hello);
-            if (i != 999) {
-                hellosBuilder.append("\n");
-            }
-        }
-        assertTrue(hellosBuilder.toString().startsWith((hello + "\n")));
-    }
-
 }

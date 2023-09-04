@@ -35,9 +35,9 @@ public class HelloWorld extends AbstractActor {
             if (isBlockForTest) Thread.sleep(3000L);
             if (probe != null) {
                 probe.tell("world", this.context().self());
-                log.info("Received String message: {}", s);
+                //log.info("Received String message: {}", s);
             } else {
-                log.info("Received String message: {}", s);
+                //log.info("Received String message: {}", s);
             }
         })
         .matchAny(o -> log.info("received unknown message"))

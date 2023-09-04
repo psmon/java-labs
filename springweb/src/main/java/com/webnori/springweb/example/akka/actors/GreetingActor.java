@@ -40,7 +40,7 @@ public class GreetingActor extends AbstractActor {
                 sleepSec = rand.nextInt(1000) + 500;
                 Thread.sleep(sleepSec);
             }
-            log.info("{}:Completed String message: {} - Delay:{}", self().path(), s, sleepSec);
+            //log.info("{}:Completed String message: {} - Delay:{}", self().path(), s, sleepSec);
 
         })
         .matchAny(o -> log.info("received unknown message")).build();
