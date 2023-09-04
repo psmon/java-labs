@@ -70,6 +70,7 @@
         testImplementation "com.typesafe.akka:akka-stream-kafka-testkit_$scalaVersion:4.0.0"
         testImplementation "org.openjdk.jmh:jmh-core:1.36"
         testImplementation "org.openjdk.jmh:jmh-generator-annprocess:1.36"
+        jmhAnnotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.36'
     }
 
     tasks.named('test') {

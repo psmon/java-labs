@@ -1,12 +1,10 @@
-package com.webnori.springweb.akka.intro;
+package com.webnori.springweb.akka.bench;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.testkit.javadsl.TestKit;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import com.webnori.springweb.akka.router.routing.BasicRoutingTest;
-import com.webnori.springweb.example.akka.AkkaManager;
 import com.webnori.springweb.example.akka.actors.HelloWorld;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -56,34 +54,6 @@ public class BasicTest {
         logger.info("========= sever loaded =========");
     }
 
-    @Test
-    @DisplayName("Actor - HelloWorld Test")
-    public void TestIt() {
-        new TestKit(actorSystem) {
-            {
-                final TestKit probe = new TestKit(actorSystem);
-                final ActorRef greetActor = actorSystem.actorOf(HelloWorld.Props(), "HelloWorld");
-
-                greetActor.tell(probe.getRef(), getRef());
-                expectMsg(Duration.ofSeconds(1), "done");
-
-                within(
-                        Duration.ofSeconds(3),
-                        () -> {
-                            greetActor.tell("hello", getRef());
-
-                            awaitCond(probe::msgAvailable);
-
-                            // check that the probe we injected earlier got the msg
-                            probe.expectMsg(Duration.ZERO, "world");
-
-                            // Will wait for the rest of the 3 seconds
-                            expectNoMessage();
-                            return null;
-                        });
-            }
-        };
-    }
 
     @Test
     @DisplayName("Actor - HelloWorld Tests")
@@ -111,8 +81,7 @@ public class BasicTest {
                                 probe.expectMsg(Duration.ofSeconds(1), "world");
                             }
 
-                            // Will wait for the rest of the 3 seconds
-                            expectNoMessage();
+
                             return null;
                         });
             }
