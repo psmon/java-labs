@@ -121,20 +121,44 @@ public void runBenchmarks() throws Exception {
 
     new Runner(options).run();
     }
+
+// Mode.AverageTime : 1회평균 작동시간으로 표시됩니다. 1회 응답시간의 표시가 중요한경우 이용할수 있습니다.
+// Mode.Throughput : 측정초기준 몇회가 작동되었냐가 표시됩니다. 초당처리(TPS)능력 표현이 중요할때 이용할수 있습니다.
+    
 ```
 
-함수당 호출수가 아닌 도메인관점에서 의미있는 처리량인경우 
-테스트 라이프사이클을 고려 ( 전체테스트별 / 하위테스트별 ) 커스텀측정을 설계할수도 있습니다.
-여기서는 전체메시지 수신검사량(1088000)에 이용되었으며 로그를 통해 리포팅이 됩니다.
+함수당 호출수가 아닌 작동하는 도메인내에서 의미있가 있는  처리량인경우  테스트 라이프사이클을 고려 ( 전체테스트별 / 하위테스트별 ) 
+커스텀측정을 설계할수도 있습니다.  
+JMH는 호출량기반 성능측정을 시도하지만 , 시스템 성능시스템에 일반적으로 사용하는  매트릭스 기반측정이 필요한경우 활용할수 있습니다.
+
+성능에 이용되는 값이 호출이아닌 특정값인경우 Blackhole을 이용할수도 있습니다.
 ```
+// 테스트에 특정한 상태값 변화를 측정할때 이용
 @State(Scope.Thread)
 public static class MyState {
     public int count = 0;
 }
 
+@Benchmark
+@BenchmarkMode(Mode.All)
+@OutputTimeUnit(TimeUnit.MINUTES)
+public void HelloWorldTest(Blackhole blackhole, MyState state) {
+
+  int testEventCount = 1000;
+  .........................
+// 한번작동할시 반복되는 특정수치기반으로 측정할시
+// TODO : 해당수치가 작동되지 않아 업데이트중에 있습니다. (호출수기반으로만 리포팅됨)   
+  blackhole.consume(testEventCount);
+  logger.info("count : {}", state.count);
+
+}
+
 //테스트중 수행결과
 [INFO ] [2023-09-06 15:56:20,489] [com.webnori.springweb.akka.bench.BasicTest.HelloWorldTest-jmh-worker-1] [count : 1088000]
 ```
+
+다양한 측정전략을 사용할때 활용할수 있는 샘플코드 모음입니다.
+- https://github.com/Valloric/jmh-playground/tree/master/src/jmh/java/org/openjdk/jmh/samples
 
 
 여기서 작성된 샘플은 AKKATestToolkit과 함께 성능측정이 시도되었으며
@@ -142,4 +166,5 @@ AKKA와 상관없이 JMH에 대한 자세한 기술자료는  다음링크를 �
 
 - https://www.baeldung.com/java-microbenchmark-harness
 - https://medium.com/@truongbui95/jmh-java-microbenchmark-harness-tests-in-java-applications-f607f00f536d
-- 
+- https://ysjee141.github.io/blog/quality/java-benchmark/
+- https://wiki.webnori.com/display/AKKA/UnitTest+with+NBench - 닷넷버전도 준비가 되어있습니다.

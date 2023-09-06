@@ -6,6 +6,7 @@ import akka.testkit.javadsl.TestKit;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.webnori.springweb.example.akka.actors.HelloWorld;
+import javafx.concurrent.Worker;
 import org.junit.Test;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
@@ -28,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 @State(Scope.Thread)
 @BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.MINUTES)
+@OutputTimeUnit(TimeUnit.SECONDS)
 public class BasicTest {
 
     @State(Scope.Thread)
@@ -36,8 +37,13 @@ public class BasicTest {
         public int count = 0;
     }
 
+    private int[][] matrix;
+
     private static final Logger logger = LoggerFactory.getLogger(BasicTest.class);
     private static final String hello = "not another hello world";
+
+    private Blackhole blackhole;
+
     private ActorSystem actorSystem;
 
     private ActorSystem serverStart(String sysName, String config, String role) {
@@ -50,8 +56,10 @@ public class BasicTest {
     }
 
     @Setup(Level.Trial)
-    public void init() {
+    public void init(final Blackhole _blackhole) {
         logger.info("========= sever loaded =========");
+
+        blackhole = _blackhole;
         // Seed
         actorSystem = serverStart("ClusterSystem", "test", "seed");
     }
@@ -61,10 +69,14 @@ public class BasicTest {
         TestKit.shutdownActorSystem(actorSystem);
     }
 
+
+
     @Benchmark
     @BenchmarkMode(Mode.All)
-    @OutputTimeUnit(TimeUnit.MINUTES)
-    public void HelloWorldTest(Blackhole blackhole, MyState state) {
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    public int HelloWorldTest(MyState state) {
+
+        int testEventCount = 1000;
 
         new TestKit(actorSystem) {
             {
@@ -78,19 +90,15 @@ public class BasicTest {
                         Duration.ofSeconds(3),
                         () -> {
 
-                            int testCount = 1000;
-
-                            for (int i = 0; i < testCount; i++) {
+                            for (int i = 0; i < testEventCount; i++) {
                                 greetActor.tell("hello", getRef());
                             }
 
-                            for (int i = 0; i < testCount; i++) {
+                            for (int i = 0; i < testEventCount; i++) {
                                 // check that the probe we injected earlier got the msg
                                 probe.expectMsg(Duration.ofSeconds(1), "world");
                                 state.count++;
                             }
-
-                            blackhole.consume(testCount);
 
                             return null;
                         });
@@ -98,18 +106,21 @@ public class BasicTest {
         };
 
         logger.info("count : {}", state.count);
+        blackhole.consume(testEventCount);
+        return testEventCount;
 
     }
+
 
     @Test
     public void runBenchmarks() throws Exception {
         Options options = new OptionsBuilder()
                 .include(this.getClass().getName() + ".*")
-                .mode(Mode.AverageTime)
+                .mode(Mode.Throughput)
                 .warmupTime(TimeValue.seconds(1))
                 .warmupIterations(6)
                 .threads(1)
-                .measurementIterations(3)
+                .measurementIterations(1)
                 .forks(1)
                 .shouldFailOnError(true)
                 .shouldDoGC(true)
