@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 
 @State(Scope.Thread)
 @BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.SECONDS)
+@OutputTimeUnit(TimeUnit.MINUTES)
 public class BasicTest {
 
     @State(Scope.Thread)
@@ -63,7 +63,7 @@ public class BasicTest {
 
     @Benchmark
     @BenchmarkMode(Mode.All)
-    @OutputTimeUnit(TimeUnit.SECONDS)
+    @OutputTimeUnit(TimeUnit.MINUTES)
     public void HelloWorldTest(Blackhole blackhole, MyState state) {
 
         new TestKit(actorSystem) {

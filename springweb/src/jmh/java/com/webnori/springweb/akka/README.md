@@ -1,159 +1,145 @@
-# AKKA(JAVA) Unit TEST
-
-## Akka TestToolKit 컨셉
-
-![AkkaUnitTest](../../../../../../../doc/akkatest.png)
-
-전통적 유닛테스트에서는 함수호출의 결과값을 기다려야하는 동기적 검사 위주로 작성되지만
-이벤트 메시징 큐기반으로 작성된 모듈기반에서는 이러한 테스트 방식을 채택한다고 하면
-작동중인 코드를 중단한후 검사해야하지만
-
-액터의 특성을 이용 관찰자를 연결하여 관찰자의 메시지 검사를 통해 서비스 액터의 블락킹없이 유닛 테스트를 수행할수 있습니다.
-
-    # hello 이벤트를 받으면, world를 반환하는 액터의 유닛검사 방법
-    greetActor.tell("hello", getRef());
-    probe.expectMsg(Duration.ofSeconds(100), "world");
-
-## Dispacher
-
-![dispacher](../../../../../../../doc/dispacher.png)
-
-하나의 액터는 순차성을 보장합니다. 순차성이 아닌 병렬동시처리가 필요할시  멀티스레드 프로그래밍을 할 필요는 없지만
-풀을 구성하고 스레드 옵션을 줄수가 있습니다. 이러한 액터의 실행계획은 Dispatcher가 관리하게됩니다.
+# AKKA(JAVA) Microbenchmark
+ 
+유닛테스트의 경우 로직을 검증하고 의미있는 검증 커버리지를 높이는것에 의미가 있다고하면
+성능테스트의 경우 작성한 로직또는 이용하고 있는 로직의 성능이 충분한가? 가장 작은단위의 성능을 측정하고 개선시도할수 있습니다.
 
 
-코드로도 정의 가능하지만 이러한 튜닝옵션을 AKKA작동 환경파일을 통해 코딩없이 실행계획 작동방식을 조정할수 있습니다.
+## 프로젝트 구성
 
+유닛테스트의 경우 의미 있는 코드검증의 커버리지를 높이는것에 의미가 있다고하면
+성능(BenchMark)측정의 경우 우리가 작성한 코드 또는 이용하는코드의 로직이 성능에 문제 없는가? 의 관점에서 작성이됩니다.
 
-    #test.conf 파일에 정의 되었습니다.
-    my-dispatcher-test1 { 
-        type = Dispatcher 
-        executor = "fork-join-executor" 
-        fork-join-executor { 
-            parallelism-min = 2 
-            parallelism-factor = 2.0 
-            parallelism-max = 50
+다음과 같이 성능측정을 위한 코드관리 레이어가 분리됩니다.
+
+- src
+  - main : 서비스 작동코드 
+  - test : 유닛테스트 코드
+  - jmh : 성능측정코드
+
+## Akka TestKit
+
+Akka의 기본 테스트 툴킷에서는 아래와같이  10초이내에 1000개의 메시지가 유실없이 모두 수신되어야한다란 
+동기테스트 방식이 아닌 비동기적 메시지 수신테스트를 작성하고 이용할수 있습니다.
+
+```
+new TestKit(actorSystem) {
+{
+    
+    within(
+    Duration.ofSeconds(10),
+    () -> {
+
+        int testCount = 1000;
+
+        for (int i = 0; i < testCount; i++) {
+            greetActor.tell("hello", getRef());
         }
-        throughput = 5
-    }
 
-    # 코드 이용부분에서 실행
-    final ActorRef greetActor = system.actorOf(new RoundRobinPool(poolCount).props(HelloWorld.Props()
-            .withDispatcher("my-dispatcher-test1")), "router2");
+        for (int i = 0; i < testCount; i++) {            
+            probe.expectMsg(Duration.ofSeconds(1), "world");
+        }        
+        // Will wait for the rest of the 3 seconds
+        expectNoMessage();
+        return null;
+    });
+}};
+```
 
-## Throttler Actor
+AKKA의 액터모델을 전면채택하는경우 APM시스템과 연동되어 디테일한 성능측정을 할수 있습니다.
+여기서는 액터모델을 전면채택하지 않더라도 이벤트처리를 채택한 로직에서
+로컬에서 마이크로한 벤치마크를 시도할수 있는 방법을 정리하고 소개합니다. 
 
-![stream](../../../../../../../doc/stream.png)
--그림 : 속도제어기를 이해하기위한 실세계 존재하는 유체흐름 제어장치
+기본 검증 유닛테스트및 통합적인 APM기반 측정
+- https://github.com/psmon/java-labs/blob/master/springweb/src/test/java/com/webnori/springweb/akka/README.md
+- https://www.datadoghq.com/blog/engineering/how-we-optimized-our-akka-application-using-datadogs-continuous-profiler/
 
-메시지 처리속도를 제어할 필요가 있을때 AkkaStream에서 제공하는 기능중 일부인 throttle장치를 이용할수 있습니다.
-속도 제어기를 기존 액터와 연결하여 액터에게 보낼 메시지 처리량을 조절할수가 있으며 서비스 코드는 성능관심사를 분리할수 있습니다.
+## BenchMark
 
-> :warning: 서비스작동 코드 내에서 **Sleep** 을 사용하여 속도를 조절하는 방법은 분산환경포함 단일구동 환경에서도 전체성능을 떨어트릴수 있습니다.  
+벤치마크의 개념은 약간 다릅니다. 이것이 수십회 또는 수백회 작동했을때 최소/평균/최대를 측정하고
+초당처리능력이 아무리 높아도 1분만에 메모리가 풀이나는 로직이면 성능이 좋다라고 할수 없습니다.
+지속적으로 작동할수 있는가? 도 중요한 성능측정의 요소이며~ GC측정툴도 포함되어 있습니다.
+개선을 시도했을때 측정이되어야지 이것이 개선되었는지 아닌지를 알수 있으며
 
-물의 흐름(strem)은 데이터의 흐름과도 유사하며 실시간성 이벤트를 처리에서 표현하는 IT용어도 Stream이라고 표현하며
-안정적인 흐름 수압조절 장치에 사용하는 감압밸브와 같은 배압장치 설계를 할수도 있습니다.
+유닛테스트 탐색기와 결합함으로 지속적으로 로컬에서 작동시켜볼수 있습니다.
+시스템이 통합되고 나서 측정하는방식이 아닌, 코드작성중 성능튜닝을 지속적으로 할수있는것에 의미가 있습니다.
 
+다음은 유닛테스트 기반으로 성능측정 리포팅된 예시입니다. 
 
-Reactive Stream에서의 Backpressure도 스트림처리에서 생산과 소비의 속도가 다르기때문에 이러한 장치가 실세계에 존재하는 유체(물,기름)의 흐름을 제어하는 실장치와 닮아있으며
-그림에서 표현되는 압력측정기의 경우 시스템에서는 트래픽모니터링이 있어야함을 의미하고 조절기(throttle)를 이용하여 흐름의 속도를 컨트롤할수가 있습니다.
-
-    # 초당하나를 처리하고, 1000개의 버퍼가 쌓였을때는 드롭을 하는 조절기 샘플
-    int processCouuntPerSec = 3; 
-
-    # throttler1 -> greetActor : 조절기를 앞단에 달아서 처리량을 조절할수 있습니다.
-    final ActorRef throttler1 =
-            Source.actorRef(1000, OverflowStrategy.dropNew())
-                    .throttle(processCouuntPerSec, FiniteDuration.create(1, TimeUnit.SECONDS),
-                            processCouuntPerSec, (ThrottleMode) ThrottleMode.shaping())
-                    .to(Sink.actorRef(greetActor, akka.NotUsed.getInstance()))
-                    .run(materializer);
-
-    int testCount = 50;
-    for (int i = 0; i < testCount; i++) {
-        throttler1.tell("hello1", getRef()); 
-    }
-
-## Alpakka with Kafka
-
-![stream](../../../../../../../doc/alpakka.png)
-
-Alpakka는 Kafka를 포함 리액티브 스트림의 인터페이스를 준수하여 다양한 외부 스택과 AkkaStream에 연결할수 있는
-Akka에 파생된 서브툴킷으로 Reactive Stream을 준수합니다.
-
-Alpakka-Kafka는 Kafka가 제공하는 다양한 메시지 고성능 전송성전략을 Akka에서 이용할수 있게 다양한 Producer/Consumer유틸을 제공합니다.
-
-
-- plainSource
-- plainExternalSource
-- committableSource
-- committableExternalSource
-- commitWithMetadataSource
-- sourceWithOffsetContext
-- atMostOnceSource
-- plainPartitionedSource
-- plainPartitionedManualOffsetSource
-- committablePartitionedSource
-- committablePartitionedManualOffsetSource
-- commitWithMetadataPartitionedSource
-
-Trasaction이 지원되는 Consumers
-- Transactional.source
-- Transactional.sourceWithOffsetContext
-
-유닛테스트를 통해  Kafka의 생상-소비를 포함 Kafka가 제공하는 파티션 분산메시징을 이용하고 검사할수 있습니다.
-
-KAFKA와 같은 외부 스트림장치를 이용할때 메시지 전송이 보장이 될것이다란 믿음이 아닌, 메시지 전송보장에 가까운 설계를 위해 Kafka를 이용하는 다양한 전략을 가지는 테스트 코드를 작성할수 있습니다.  
+1088000번의 메시지 수신검사가 수행되었으며
+처리단위를 1000개씩하였기때문에  1000개 수신검사에 평균 0.032 수행되었음을 의미합니다.
 
 
 ```
-# 카프카 UnitTest
+[INFO ] [2023-09-06 15:56:20,458] [com.webnori.springweb.akka.bench.BasicTest.HelloWorldTest-jmh-worker-1] [count : 1087000]
+[INFO ] [2023-09-06 15:56:20,489] [com.webnori.springweb.akka.bench.BasicTest.HelloWorldTest-jmh-worker-1] [count : 1088000]
+[INFO ] [2023-09-06 15:56:20,518] [ClusterSystem-akka.actor.default-dispatcher-8] [Running CoordinatedShutdown with reason [ActorSystemTerminateReason]]
+[DEBUG] [09/06/2023 15:56:20.593] [ClusterSystem-akka.actor.internal-dispatcher-13] [EventStream] shutting down: StandardOutLogger
+[DEBUG] [09/06/2023 15:56:20.595] [ClusterSystem-akka.actor.internal-dispatcher-13] [EventStream] all default loggers stopped
+0.001 min/op
 
-final ConsumerSettings<String, String> consumerSettings =
-        ConsumerSettings.create(conSumeConfig, new StringDeserializer(), new StringDeserializer())
-                .withBootstrapServers(testKafkaServer)
-                .withGroupId(testGroup)
-                .withProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true")
-                .withProperty(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "3000")
-                .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");                
+Result "com.webnori.springweb.akka.bench.BasicTest.HelloWorldTest":
+  0.032 ±(99.9%) 0.015 s/op [Average]
+  (min, avg, max) = (0.031, 0.032, 0.033), stdev = 0.001
+  CI (99.9%): [0.016, 0.047] (assumes normal distribution)
 
-var consumer1 = Consumer.plainSource(
-                consumerSettings,
-                Subscriptions.assignment(new TopicPartition(topic, 0)))
-        .to(Sink.foreach(msg ->
-                debugKafkaMsg(msg.key(), msg.value(), greetActor, testKey, "consumer1"))
-        )
-        .run(system);
 
-.............        
-        
-// Kafka 생산시작
-source.runWith(sink, system);
-source2.runWith(sink, system);
+# Run complete. Total time: 00:00:45
 
-// Kafka 소비 메시지 확인 -
-for (int i = 0; i < testCount * partitionCount; i++) {
-    probe.expectMsg(Duration.ofSeconds(5), "world");
-}        
+REMEMBER: The numbers below are just data. To gain reusable insights, you need to follow up on
+why the numbers are the way they are. Use profilers (see -prof, -lprof), design factorial
+experiments, perform baseline and negative tests that provide experimental control, make sure
+the benchmarking environment is safe on JVM/OS/HW level, ask for reviews from the domain experts.
+Do not assume the numbers tell you what you want them to tell.
+
+Benchmark                 Mode  Cnt  Score   Error  Units
+BasicTest.HelloWorldTest  avgt    3  0.032 ± 0.015   s/op
 ```
 
-## 작성된 코드 샘플
 
-유닛테스트를 통해 코드작동을 이해할수 있으며 실제 작동되는 유넷테스트 코드 수행을통해 AKKA에서 제공되는 기능을 학습하고 실험할수 있습니다.
+기존 유닛테스트함수를 만드는방식과 유사하게
+다양한 성능측정 전략을 어노테이션을 통해 이용할수 있습니다.
+```
+@Benchmark
+@BenchmarkMode(Mode.All)
+@OutputTimeUnit(TimeUnit.SECONDS)
+public void HelloWorldTest(Blackhole blackhole, MyState state) 
+......
 
-- [Intro](./intro) : 액터메시지를 단일노드에서 이용하는 방법
-- [Router](./router) : 액터메시지를 라우터로 분기하는 방법
-- [Kafka](./kafka) : Kafka를 AkkaStream과 연결하는방법
-- [Cluster](./cluster) : Cluster를 구성하고 네트워크 분산처리 하는방법
-- [Utils](./utils) : 라이프사이클포함 AKKA유틸 툴 테스트
+@Test
+public void runBenchmarks() throws Exception {
+    Options options = new OptionsBuilder()
+            .include(this.getClass().getName() + ".*")
+            .mode(Mode.AverageTime)
+            .warmupTime(TimeValue.seconds(1))
+            .warmupIterations(6)
+            .threads(1)
+            .measurementIterations(3)
+            .forks(1)
+            .shouldFailOnError(true)
+            .shouldDoGC(true)
+            .build();
 
-## 참고링크
+    new Runner(options).run();
+    }
+```
 
-JAVA/.NET 동일이론으로 활용할수 있습니다.    
+함수당 호출수가 아닌 도메인관점에서 의미있는 처리량인경우 
+테스트 라이프사이클을 고려 ( 전체테스트별 / 하위테스트별 ) 커스텀측정을 설계할수도 있습니다.
+여기서는 전체메시지 수신검사량(1088000)에 이용되었으며 로그를 통해 리포팅이 됩니다.
+```
+@State(Scope.Thread)
+public static class MyState {
+    public int count = 0;
+}
 
-- [AkkaUnitTest-JAVA](https://doc.akka.io/docs/akka/current/testing.html)
-- [AkkaUnitTest-NET](https://getakka.net/articles/actors/testing-actor-systems.html)
-- [Reliable Message Delivery](https://getakka.net/articles/actors/reliable-delivery.html) : 메시지 전송을 보장하기위한 전략( at motst once)
-- [AkkaStream-Backpressure](https://blog.rockthejvm.com/akka-streams-backpressure/)
-- [Alpakka](https://doc.akka.io/docs/alpakka/current/index.html)
-- [AKKA 소식을 다루는 FaceBook(Kr) 채널](https://www.facebook.com/groups/akkalabs)
+//테스트중 수행결과
+[INFO ] [2023-09-06 15:56:20,489] [com.webnori.springweb.akka.bench.BasicTest.HelloWorldTest-jmh-worker-1] [count : 1088000]
+```
+
+
+여기서 작성된 샘플은 AKKATestToolkit과 함께 성능측정이 시도되었으며
+AKKA와 상관없이 JMH에 대한 자세한 기술자료는  다음링크를 통해서 확인할수 있습니다.
+
+- https://www.baeldung.com/java-microbenchmark-harness
+- https://medium.com/@truongbui95/jmh-java-microbenchmark-harness-tests-in-java-applications-f607f00f536d
+- 
