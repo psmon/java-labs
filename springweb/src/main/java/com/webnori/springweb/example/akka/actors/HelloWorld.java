@@ -27,6 +27,8 @@ public class HelloWorld extends AbstractActor {
 
     private Long blockTime;
 
+    private int receivedCount = 0;
+
     public static Props Props() {
         return Props.create(HelloWorld.class);
     }
@@ -44,7 +46,12 @@ public class HelloWorld extends AbstractActor {
             log.info("Switch SlowMode:{}", self().path());
         })
         .match(String.class, s -> {
-            log.info("Received:{}", s);
+            receivedCount++;
+
+            if(receivedCount % 50 == 0){
+                log.info("Received:{} Count:{}", s, receivedCount);
+            }
+
             if (isBlockForTest) Thread.sleep(blockTime);
             if (probe != null) {
                 probe.tell("world", this.context().self());

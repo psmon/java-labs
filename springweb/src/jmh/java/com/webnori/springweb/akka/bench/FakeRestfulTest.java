@@ -96,8 +96,8 @@ public class FakeRestfulTest {
                 // API호출 네트워크를 지연시간이 있을때 고려할수 있습니다.
                 //greetActor.tell(fakeSlowMode, getRef());
 
-                // PlanB : 블락킹없이 Throlle을 이용 의존 API 초당처리능력 100로 제약한다.
-                // 사용하는 API의 TPS스펙이 명시적일때 이용할수 있습니다.
+                // PlanB :
+                // 블락킹없이 Throlle을 이용, 초당 진행을 n으로 제약할때 이용할수 있습니다.
                 int givenAPiTPS = 100;
                 final Materializer materializer = ActorMaterializer.create(actorSystem);
                 throttler =
