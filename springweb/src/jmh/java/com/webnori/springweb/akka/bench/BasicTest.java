@@ -13,7 +13,6 @@ import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
-import org.openjdk.jmh.runner.options.WarmupMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,13 +27,9 @@ import java.util.concurrent.TimeUnit;
  */
 
 @State(Scope.Thread)
-@BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.SECONDS)
 public class BasicTest {
 
     private static final Logger logger = LoggerFactory.getLogger(BasicTest.class);
-    private static final String hello = "not another hello world";
-    Counter c1 = new Counter1();
     int testEventCount = 1000;
     private Blackhole blackhole;
     private ActorSystem actorSystem;
@@ -62,10 +57,12 @@ public class BasicTest {
         TestKit.shutdownActorSystem(actorSystem);
     }
 
-    @CompilerControl(CompilerControl.Mode.DONT_INLINE)
-    public int HelloWorldTest(Counter count, MyState state) {
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    @Measurement(iterations = 1)
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    public int HelloWorldTest(MyState state) {
 
-        final int[] s = {0};
         new TestKit(actorSystem) {
             {
                 final TestKit probe = new TestKit(actorSystem);
@@ -86,30 +83,21 @@ public class BasicTest {
                                 // check that the probe we injected earlier got the msg
                                 probe.expectMsg(Duration.ofSeconds(1), "world");
                                 state.count++;
-                                s[0] += count.inc();
                             }
 
+                            blackhole.consume(testEventCount);
                             return null;
                         });
             }
         };
-        logger.info("count : {}", state.count);
-        return s[0];
-    }
 
-    @Benchmark
-    @BenchmarkMode(Mode.All)
-    @OutputTimeUnit(TimeUnit.SECONDS)
-    public int PerformHelloWorldTest(MyState state) {
-        return HelloWorldTest(c1, state);
+        return testEventCount;
     }
 
     @Test
     public void runBenchmarks() throws Exception {
         Options options = new OptionsBuilder()
                 .include(this.getClass().getName() + ".*")
-                .mode(Mode.Throughput)
-                .warmupMode(WarmupMode.BULK)
                 .warmupTime(TimeValue.seconds(1))
                 .warmupIterations(6)
                 .threads(1)
@@ -131,14 +119,7 @@ public class BasicTest {
         public int count = 0;
     }
 
-    public class Counter1 implements Counter {
-        private int x;
 
-        @Override
-        public int inc() {
-            return x++;
-        }
-    }
 }
 
 /* Report Sample :

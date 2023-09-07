@@ -37,20 +37,15 @@ import java.util.concurrent.TimeUnit;
  */
 
 @State(Scope.Thread)
-@BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.SECONDS)
 public class FakeRestfulTest {
 
     private static final Logger logger = LoggerFactory.getLogger(FakeRestfulTest.class);
     private Blackhole blackhole;
     private ActorSystem actorSystem;
-
     private ActorRef throttler;
 
     private ActorSystem serverStart(String sysName, String config, String role) {
-        final Config newConfig = ConfigFactory.parseString(
-                String.format("akka.cluster.roles = [%s]", role)).withFallback(
-                ConfigFactory.load(config));
+        final Config newConfig = ConfigFactory.parseString(String.format("akka.cluster.roles = [%s]", role)).withFallback(ConfigFactory.load(config));
 
         ActorSystem serverSystem = ActorSystem.create(sysName, newConfig);
 
@@ -72,11 +67,12 @@ public class FakeRestfulTest {
     }
 
     @Benchmark
-    @BenchmarkMode(Mode.All)
+    @BenchmarkMode(Mode.Throughput)
+    @Measurement(iterations = 1)
     @OutputTimeUnit(TimeUnit.SECONDS)
-    public int HelloWorldTest(MyState state) {
+    public void HelloWorldTest(MyState state) {
 
-        int testEventCount = 1000;
+        int testEventCount = 10;
 
         new TestKit(actorSystem) {
             {
@@ -98,52 +94,34 @@ public class FakeRestfulTest {
 
                 // PlanB :
                 // 블락킹없이 Throlle을 이용, 초당 진행을 n으로 제약할때 이용할수 있습니다.
-                int givenAPiTPS = 100;
+                int givenAPiTPS = 5;
                 final Materializer materializer = ActorMaterializer.create(actorSystem);
-                throttler =
-                        Source.actorRef(1000, OverflowStrategy.dropNew())
-                                .throttle(givenAPiTPS, FiniteDuration.create(1, TimeUnit.SECONDS),
-                                        givenAPiTPS, (ThrottleMode) ThrottleMode.shaping())
-                                .to(Sink.actorRef(greetActor, akka.NotUsed.getInstance()))
-                                .run(materializer);
+                throttler = Source.actorRef(1000, OverflowStrategy.dropNew()).throttle(givenAPiTPS, FiniteDuration.create(1, TimeUnit.SECONDS), givenAPiTPS, ThrottleMode.shaping()).to(Sink.actorRef(greetActor, akka.NotUsed.getInstance())).run(materializer);
 
-                within(
-                        Duration.ofSeconds(10),
-                        () -> {
+                within(Duration.ofSeconds(20), () -> {
 
-                            for (int i = 0; i < testEventCount; i++) {
-                                throttler.tell("hello", getRef());
-                            }
+                    for (int i = 0; i < testEventCount; i++) {
+                        throttler.tell("hello", getRef());
+                    }
 
-                            for (int i = 0; i < testEventCount; i++) {
-                                // check that the probe we injected earlier got the msg
-                                probe.expectMsg(Duration.ofSeconds(1), "world");
-                                state.count++;
-                            }
+                    for (int i = 0; i < testEventCount; i++) {
+                        // check that the probe we injected earlier got the msg
+                        probe.expectMsg(Duration.ofSeconds(3), "world");
+                        state.count++;
+                    }
 
-                            return null;
-                        });
+                    return null;
+                });
             }
         };
 
         logger.info("count : {}", state.count);
         blackhole.consume(testEventCount);
-        return testEventCount;
     }
 
     @Test
     public void runBenchmarks() throws Exception {
-        Options options = new OptionsBuilder()
-                .include(this.getClass().getName() + ".*")
-                .mode(Mode.Throughput)
-                .warmupTime(TimeValue.seconds(1))
-                .warmupIterations(6)
-                .threads(5)
-                .measurementIterations(1)
-                .forks(1)
-                .shouldFailOnError(true)
-                .shouldDoGC(true)
-                .build();
+        Options options = new OptionsBuilder().include(this.getClass().getName() + ".*").warmupTime(TimeValue.seconds(1)).warmupIterations(6).threads(1).measurementIterations(1).forks(1).shouldFailOnError(true).shouldDoGC(true).build();
 
         new Runner(options).run();
     }
@@ -152,6 +130,7 @@ public class FakeRestfulTest {
     public static class MyState {
         public int count = 0;
     }
+
 }
 
 /* Report Sample

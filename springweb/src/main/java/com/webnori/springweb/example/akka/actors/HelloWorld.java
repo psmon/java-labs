@@ -49,7 +49,7 @@ public class HelloWorld extends AbstractActor {
             receivedCount++;
 
             if(receivedCount % 50 == 0){
-                log.info("Received:{} Count:{}", s, receivedCount);
+                //log.info("Received:{} Count:{}", s, receivedCount);
             }
 
             if (isBlockForTest) Thread.sleep(blockTime);
