@@ -5,7 +5,16 @@ import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import akka.stream.ActorMaterializer;
+import akka.stream.Materializer;
+import akka.stream.OverflowStrategy;
+import akka.stream.ThrottleMode;
+import akka.stream.javadsl.Sink;
+import akka.stream.javadsl.Source;
 import com.webnori.springweb.example.akka.models.FakeSlowMode;
+import scala.concurrent.duration.FiniteDuration;
+
+import java.util.concurrent.TimeUnit;
 
 // https://doc.akka.io/docs/akka/current/index-actors.html  - Classic Actor
 
@@ -15,6 +24,8 @@ public class HelloWorld extends AbstractActor {
     private ActorRef probe;
 
     private boolean isBlockForTest = false;
+
+    private Long blockTime;
 
     public static Props Props() {
         return Props.create(HelloWorld.class);
@@ -29,10 +40,12 @@ public class HelloWorld extends AbstractActor {
         })
         .match(FakeSlowMode.class, message -> {
             isBlockForTest = true;
-            log.info("Switch SlowMode:{}", self().path(), isBlockForTest);
+            blockTime = message.bockTime;
+            log.info("Switch SlowMode:{}", self().path());
         })
         .match(String.class, s -> {
-            if (isBlockForTest) Thread.sleep(3000L);
+            log.info("Received:{}", s);
+            if (isBlockForTest) Thread.sleep(blockTime);
             if (probe != null) {
                 probe.tell("world", this.context().self());
                 //log.info("Received String message: {}", s);
@@ -43,5 +56,4 @@ public class HelloWorld extends AbstractActor {
         .matchAny(o -> log.info("received unknown message"))
         .build();
     }
-
 }

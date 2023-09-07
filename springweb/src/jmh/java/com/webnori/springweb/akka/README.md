@@ -131,7 +131,7 @@ public void runBenchmarks() throws Exception {
 커스텀측정을 설계할수도 있습니다.  
 JMH는 호출량기반 성능측정을 시도하지만 , 시스템 성능시스템에 일반적으로 사용하는  매트릭스 기반측정이 필요한경우 활용할수 있습니다.
 
-성능에 이용되는 값이 호출이아닌 특정값인경우 Blackhole을 이용할수도 있습니다.
+성능에 이용되는 값이 호출이아닌 특정값인경우 Blackhole또는 State수치를 관리할수 있습니다.
 ```
 // 테스트에 특정한 상태값 변화를 측정할때 이용
 @State(Scope.Thread)
@@ -160,9 +160,21 @@ public void HelloWorldTest(Blackhole blackhole, MyState state) {
 다양한 측정전략을 사용할때 활용할수 있는 샘플코드 모음입니다.
 - https://github.com/Valloric/jmh-playground/tree/master/src/jmh/java/org/openjdk/jmh/samples
 
-
 여기서 작성된 샘플은 AKKATestToolkit과 함께 성능측정이 시도되었으며
-AKKA와 상관없이 JMH에 대한 자세한 기술자료는  다음링크를 통해서 확인할수 있습니다.
+AKKA를 채택하지 않더라도 AkkaStream API를 TestToolkit에 이용할수 있어서
+다음과같은 조절기를 테스트 코드작성시 전략적으로 이용할수 있습니다.
+(Thread.Sllep 이 아닌 조절기를 통한 흐름제어가가능)
+```
+throttler =
+    Source.actorRef(1000, OverflowStrategy.dropNew())
+            .throttle(givenAPiTPS, FiniteDuration.create(1, TimeUnit.SECONDS),
+                    givenAPiTPS, (ThrottleMode) ThrottleMode.shaping())
+            .to(Sink.actorRef(greetActor, akka.NotUsed.getInstance()))
+            .run(materializer);
+```
+
+AKKA와 상관없이 JMH만으로 마이크로한 측정을 할수 있으며
+더 자세한 기술자료는  다음링크를 통해서 확인할수 있습니다.
 
 - https://www.baeldung.com/java-microbenchmark-harness
 - https://medium.com/@truongbui95/jmh-java-microbenchmark-harness-tests-in-java-applications-f607f00f536d
