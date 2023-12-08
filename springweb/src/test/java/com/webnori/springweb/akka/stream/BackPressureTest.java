@@ -69,7 +69,7 @@ public class BackPressureTest {
                 expectMsg(Duration.ofSeconds(1), "done");
 
                 within(
-                        Duration.ofSeconds(10),
+                        Duration.ofSeconds(20),
                         () -> {
 
                             try {
@@ -93,15 +93,10 @@ public class BackPressureTest {
                                 throw new RuntimeException(e);
                             }
 
-
                             tpsActor.tell("tps", getRef());
 
-                            awaitCond(probe::msgAvailable);
+                            expectMsgClass(Duration.ofSeconds(1), TPSInfo.class);
 
-                            probe.expectMsgClass(Duration.ZERO, TPSInfo.class);
-
-                            // Will wait for the rest of the 3 seconds
-                            expectNoMessage();
                             return null;
                         });
             }
@@ -119,8 +114,8 @@ public class BackPressureTest {
                 slowConsumerActor.tell(probe.getRef(), getRef());
                 expectMsg(Duration.ofSeconds(1), "done");
 
-                int testCount = 10000;
-                int processCouuntPerSec = 100;
+                int testCount = 50000;
+                int processCouuntPerSec = 450;
 
                 final ActorRef throttlerTPS100 =
                         Source.actorRef(100000, OverflowStrategy.dropNew())
@@ -132,6 +127,7 @@ public class BackPressureTest {
                 within(
                         Duration.ofSeconds(10),
                         () -> {
+
                             for(int i=0;i<testCount;i++){
                                 throttlerTPS100.tell("hello", probe.getRef());
                             }

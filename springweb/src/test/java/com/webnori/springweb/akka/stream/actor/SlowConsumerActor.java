@@ -6,11 +6,15 @@ import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import com.webnori.springweb.example.akka.models.FakeSlowMode;
-
-import java.util.Random;
-
+import akka.pattern.Patterns;
+import akka.util.Timeout;
+import scala.concurrent.Await;
+import scala.concurrent.Future;
+import java.time.Duration;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 import static java.lang.Thread.sleep;
+
 
 public class SlowConsumerActor extends AbstractActor {
 
@@ -29,8 +33,6 @@ public class SlowConsumerActor extends AbstractActor {
 
     private ActorRef tpsActor;
 
-    private double currentTps;
-
     private long totalProcessCount = 0;
 
 
@@ -41,24 +43,24 @@ public class SlowConsumerActor extends AbstractActor {
         tpsActor.tell(self(), ActorRef.noSender());
 
         return receiveBuilder()
-        .match(TPSInfo.class, tps -> {
-            currentTps = tps.tps;
-        })
         .match(ActorRef.class, actorRef -> {
             this.probe = actorRef;
             getSender().tell("done", getSelf());
         })
         .match(String.class, s -> {
             tpsActor.tell("SomeEvent", ActorRef.noSender());
-
             long sleepValue = 0;
-            if( (currentTps > 50) && totalProcessCount % 10 == 0){
-                sleepValue =(long)currentTps;
+            Timeout timeout = Timeout.create(Duration.ofSeconds(1));
+            Future<Object> future = Patterns.ask(tpsActor, "tps", timeout);
+            TPSInfo result = (TPSInfo)Await.result(future, timeout.duration());
+
+            if( result.tps > 400){
+                sleepValue =(long)result.tps;
                 sleep(sleepValue);
+                log.info("World Slow - Total:{} Sleep:{}", totalProcessCount, sleepValue);
             }
 
             totalProcessCount++;
-            //log.info("World - Total:{} Sleep:{}", totalProcessCount, sleepValue);
             probe.tell("world", ActorRef.noSender());
         })
         .matchAny(o -> log.info("received unknown message")).build();

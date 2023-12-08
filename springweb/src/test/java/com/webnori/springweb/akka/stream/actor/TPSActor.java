@@ -46,29 +46,29 @@ public class TPSActor extends AbstractActorWithTimers {
                     // do something useful here
                     log.info("First Tick");
                     // Repeat Timer
-                    getTimers().startPeriodicTimer(TICK_KEY, new Tick(), Duration.ofMillis(500));
+                    getTimers().startPeriodicTimer(TICK_KEY, new TPSCheckTick(), Duration.ofMillis(1000));
                 })
                 .match(String.class, message -> {
                     if(message.equals("tps")){
-                        probe.tell(new TPSInfo(lastTps), ActorRef.noSender());
+                        getSender().tell(new TPSInfo(lastTps), ActorRef.noSender());
                     }else{
                         transactionCount++;
                     }
                 })
-                .match(Tick.class, message -> {
+                .match(TPSCheckTick.class, message -> {
                     long startTime = System.currentTimeMillis() - 1000;
                     long endTime = System.currentTimeMillis();
-                    tps = transactionCount * 2 / ((endTime - startTime) / 1000);
-                    if(tps > 0 ){
+                    tps = transactionCount  / ((endTime - startTime) / 1000);
+                    if(tps > 0){
                         lastTps = tps;
+                        getTimers().startPeriodicTimer(TICK_KEY2, new TPSResetHalfTick(), Duration.ofMillis(1000));
                     }
                     transactionCount = 0;
                     log.info("TPS:" + lastTps);
-                    if(lastTps > 0){
-                        getTimers().startSingleTimer(TICK_KEY2, new TPSResetTick(), Duration.ofMillis(500));
-                    }
-
-                    probe.tell(new TPSInfo(lastTps), ActorRef.noSender());
+                })
+                .match(TPSResetHalfTick.class, message -> {
+                    lastTps = lastTps / 2;
+                    getTimers().startPeriodicTimer(TICK_KEY2, new TPSResetTick(), Duration.ofMillis(1000));
                 })
                 .match(TPSResetTick.class, message -> {
                     lastTps = 0;
@@ -79,10 +79,13 @@ public class TPSActor extends AbstractActorWithTimers {
     private static final class FirstTick {
     }
 
-    private static final class Tick {
+    private static final class TPSCheckTick {
     }
 
     private static final class TPSResetTick {
+    }
+
+    private static final class TPSResetHalfTick {
     }
 
 }
