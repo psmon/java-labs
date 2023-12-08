@@ -1,0 +1,88 @@
+package com.webnori.springweb.akka.stream.actor;
+
+
+import akka.actor.AbstractActorWithTimers;
+import akka.actor.ActorRef;
+import akka.actor.Props;
+import akka.event.Logging;
+import akka.event.LoggingAdapter;
+
+import java.time.Duration;
+
+public class TPSActor extends AbstractActorWithTimers {
+
+    private static final Object TICK_KEY = "TickKey";
+
+    private static final Object TICK_KEY2 = "TickKey2";
+    private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
+
+    protected long transactionCount = 0;
+
+    private ActorRef probe;
+
+    protected  double tps;
+
+    protected double lastTps;
+
+    public TPSActor() {
+
+        // OnlyOnce Timer - Start Timer
+        getTimers().startSingleTimer(TICK_KEY, new FirstTick(), Duration.ofMillis(500));
+
+    }
+
+    public static Props Props() {
+        return Props.create(TPSActor.class);
+    }
+
+    @Override
+    public Receive createReceive() {
+        return receiveBuilder()
+                .match(ActorRef.class, actorRef -> {
+                    this.probe = actorRef;
+                    getSender().tell("done", getSelf());
+                })
+                .match(FirstTick.class, message -> {
+                    // do something useful here
+                    log.info("First Tick");
+                    // Repeat Timer
+                    getTimers().startPeriodicTimer(TICK_KEY, new Tick(), Duration.ofMillis(500));
+                })
+                .match(String.class, message -> {
+                    if(message.equals("tps")){
+                        probe.tell(new TPSInfo(lastTps), ActorRef.noSender());
+                    }else{
+                        transactionCount++;
+                    }
+                })
+                .match(Tick.class, message -> {
+                    long startTime = System.currentTimeMillis() - 1000;
+                    long endTime = System.currentTimeMillis();
+                    tps = transactionCount * 2 / ((endTime - startTime) / 1000);
+                    if(tps > 0 ){
+                        lastTps = tps;
+                    }
+                    transactionCount = 0;
+                    log.info("TPS:" + lastTps);
+                    if(lastTps > 0){
+                        getTimers().startSingleTimer(TICK_KEY2, new TPSResetTick(), Duration.ofMillis(500));
+                    }
+
+                    probe.tell(new TPSInfo(lastTps), ActorRef.noSender());
+                })
+                .match(TPSResetTick.class, message -> {
+                    lastTps = 0;
+                })
+                .build();
+    }
+
+    private static final class FirstTick {
+    }
+
+    private static final class Tick {
+    }
+
+    private static final class TPSResetTick {
+    }
+
+}
