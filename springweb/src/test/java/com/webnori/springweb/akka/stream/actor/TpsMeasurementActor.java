@@ -12,9 +12,10 @@ import java.time.Duration;
 
 public class TpsMeasurementActor extends AbstractActorWithTimers {
 
-    private static final Object TICK_KEY = "TickKey";
+    // 타이머의 고유키로 , 스케줄러 중복작동을 방지할수 있다.
+    private static final Object TICK_TPS_KEY = "TickKey";
 
-    private static final Object TICK_KEY2 = "TickKey2";
+    private static final Object TICK_TPSRESET_KEY = "TickKey2";
     private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
 
     protected long transactionCount = 0;
@@ -28,7 +29,7 @@ public class TpsMeasurementActor extends AbstractActorWithTimers {
     public TpsMeasurementActor() {
 
         // OnlyOnce Timer - Start Timer
-        getTimers().startSingleTimer(TICK_KEY, new FirstTick(), Duration.ofMillis(500));
+        getTimers().startSingleTimer(TICK_TPS_KEY, new FirstTick(), Duration.ofMillis(500));
 
     }
 
@@ -47,7 +48,7 @@ public class TpsMeasurementActor extends AbstractActorWithTimers {
                     // do something useful here
                     log.info("First Tick");
                     // Repeat Timer
-                    getTimers().startPeriodicTimer(TICK_KEY, new TPSCheckTick(), Duration.ofMillis(1000));
+                    getTimers().startPeriodicTimer(TICK_TPS_KEY, new TPSCheckTick(), Duration.ofMillis(1000));
                 })
                 .match(String.class, message -> {
                     if(message.equals("tps")){
@@ -62,14 +63,14 @@ public class TpsMeasurementActor extends AbstractActorWithTimers {
                     tps = transactionCount  / ((endTime - startTime) / 1000);
                     if(tps > 0){
                         lastTps = tps;
-                        getTimers().startPeriodicTimer(TICK_KEY2, new TPSResetHalfTick(), Duration.ofMillis(500));
+                        getTimers().startPeriodicTimer(TICK_TPSRESET_KEY, new TPSResetHalfTick(), Duration.ofMillis(500));
                     }
                     transactionCount = 0;
                     log.info("TPS:" + lastTps);
                 })
                 .match(TPSResetHalfTick.class, message -> {
                     lastTps = lastTps / 2;
-                    getTimers().startPeriodicTimer(TICK_KEY2, new TPSResetTick(), Duration.ofMillis(500));
+                    getTimers().startPeriodicTimer(TICK_TPSRESET_KEY, new TPSResetTick(), Duration.ofMillis(500));
                 })
                 .match(TPSResetTick.class, message -> {
                     lastTps = 0;
