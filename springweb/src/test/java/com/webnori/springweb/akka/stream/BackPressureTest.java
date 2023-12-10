@@ -1,11 +1,15 @@
 package com.webnori.springweb.akka.stream;
 
+import akka.Done;
+import akka.NotUsed;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.stream.ActorMaterializer;
 import akka.stream.Materializer;
 import akka.stream.OverflowStrategy;
 import akka.stream.ThrottleMode;
+import akka.stream.javadsl.Flow;
+import akka.stream.javadsl.RunnableGraph;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
 import akka.testkit.javadsl.TestKit;
@@ -22,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import scala.concurrent.duration.FiniteDuration;
 
 import java.time.Duration;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.Thread.sleep;
@@ -39,6 +44,8 @@ public class BackPressureTest {
 
     private static ActorSystem actorSystem;
     private static final String hello = "not another hello world";
+
+    private static ActorRef tpsActor;
 
     private static ActorSystem serverStart(String sysName, String config, String role) {
         final Config newConfig = ConfigFactory.parseString(
@@ -121,7 +128,7 @@ public class BackPressureTest {
                 int bufferSize = 100000;
                 int processCouuntPerSec = 200;
 
-                final ActorRef throttlerTPS100 =
+                final ActorRef throttler =
                         Source.actorRef(bufferSize, OverflowStrategy.dropNew())
                                 .throttle(processCouuntPerSec, FiniteDuration.create(1, TimeUnit.SECONDS),
                                         processCouuntPerSec, ThrottleMode.shaping())
@@ -133,7 +140,7 @@ public class BackPressureTest {
                         () -> {
 
                             for(int i=0;i<testCount;i++){
-                                throttlerTPS100.tell("hello", probe.getRef());
+                                throttler.tell("hello", probe.getRef());
                             }
 
                             for(int i=0;i<testCount;i++){
@@ -146,5 +153,56 @@ public class BackPressureTest {
                         });
             }
         };
+    }
+
+    @Test
+    @DisplayName("BackPressureTest")
+    public void BackPressureTest() {
+        new TestKit(actorSystem) {
+            {
+                final Materializer materializer = ActorMaterializer.create(actorSystem);
+                final TestKit probe = new TestKit(actorSystem);
+
+                tpsActor = actorSystem.actorOf(TpsMeasurementActor.Props(), "TpsActor");
+                tpsActor.tell(probe.getRef(), getRef());
+                expectMsg(Duration.ofSeconds(1), "done");
+
+                // Source 생성
+                Source<Integer, NotUsed> source = Source.range(1, 1000);
+
+                // Flow 정의 (API 호출을 시뮬레이션하는 로직)
+                Flow<Integer, String, NotUsed> flow = Flow.fromFunction(BackPressureTest::callApi);
+
+                // Buffer 설정 및 OverflowStrategy.backpressure 적용
+                int bufferSize = 100;
+                Flow<Integer, Integer, NotUsed> backpressureFlow = Flow.<Integer>create()
+                        .buffer(bufferSize, OverflowStrategy.backpressure());
+
+                // Sink 정의
+                Sink<String, CompletionStage<Done>> sink = Sink.foreach(System.out::println);
+
+                // RunnableGraph 생성 및 실행
+                source.via(backpressureFlow).via(flow).to(sink).run(materializer);
+
+                within(
+                        Duration.ofSeconds(15),
+                        () -> {
+                            // Will wait for the rest of the 10 seconds
+                            expectNoMessage(Duration.ofSeconds(10));
+                            return null;
+                        });
+            }
+        };
+    }
+
+    private static String callApi(Integer param) {
+        // API 호출을 시뮬레이션
+        try {
+            Thread.sleep(100); // API 응답 시간을 시뮬레이션하기 위한 지연
+            tpsActor.tell("CompletedEvent", ActorRef.noSender());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "Response for " + param;
     }
 }
