@@ -2,7 +2,7 @@
 
 Akka Streams 알아봅니다.
 
-```
+
 이 테스트 코드는 Akka 프레임워크를 사용한 단위 테스트입니다. 주요 기능과 목적을 요약하면 다음과 같습니다:
 
 테스트 설계: BackPressureTest라는 이름의 유닛 테스트입니다. 이 테스트는 Akka의 TestKit 클래스를 사용하여 작성되었습니다. TestKit은 Akka 액터 시스템을 테스트하기 위한 유틸리티입니다.
@@ -25,7 +25,8 @@ RunnableGraph 실행: 정의된 소스, 플로우, 싱크를 연결하여 스트
 테스트 검증: within 메서드를 사용하여 15초 동안 아무 메시지도 수신되지 않는 것을 확인함으로써, 스트림 처리가 예상대로 작동하는지 검증합니다.
 
 이 테스트는 Akka Streams의 백프레셔 메커니즘과 비동기 처리 기능을 검증하는 데 중점을 두고 있습니다.
-```
+
+
 
 참고링크 :
 - https://blog.rockthejvm.com/akka-streams-backpressure/
