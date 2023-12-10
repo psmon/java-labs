@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import scala.concurrent.duration.FiniteDuration;
 
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
@@ -168,21 +169,29 @@ public class BackPressureTest {
                 expectMsg(Duration.ofSeconds(1), "done");
 
                 // Source 생성
-                Source<Integer, NotUsed> source = Source.range(1, 1000);
+                Source<Integer, NotUsed> source = Source.range(1, 10000);
+
+
+                // 병렬 처리를 위한 Flow 정의
+                final int parallelism = 10; // 동시에 처리할 작업의 수
+                Flow<Integer, String, NotUsed> parallelFlow = Flow.<Integer>create()
+                        .mapAsync(parallelism, BackPressureTest::callApiAsync);
 
                 // Flow 정의 (API 호출을 시뮬레이션하는 로직)
-                Flow<Integer, String, NotUsed> flow = Flow.fromFunction(BackPressureTest::callApi);
+                //Flow<Integer, String, NotUsed> flow = Flow.fromFunction(BackPressureTest::callApi);
 
                 // Buffer 설정 및 OverflowStrategy.backpressure 적용
-                int bufferSize = 100;
+                int bufferSize = 1000;
                 Flow<Integer, Integer, NotUsed> backpressureFlow = Flow.<Integer>create()
                         .buffer(bufferSize, OverflowStrategy.backpressure());
 
                 // Sink 정의
                 Sink<String, CompletionStage<Done>> sink = Sink.foreach(System.out::println);
 
+                System.out.println("Run backpressureFlow bufferSize:"+bufferSize);
+
                 // RunnableGraph 생성 및 실행
-                source.via(backpressureFlow).via(flow).to(sink).run(materializer);
+                source.via(backpressureFlow).via(parallelFlow).to(sink).run(materializer);
 
                 within(
                         Duration.ofSeconds(15),
@@ -193,6 +202,19 @@ public class BackPressureTest {
                         });
             }
         };
+    }
+
+    private static CompletionStage<String> callApiAsync(Integer param) {
+        // CompletableFuture를 사용하여 비동기 처리 구현
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                Thread.sleep(100); // API 응답 시간을 시뮬레이션하기 위한 지연
+                tpsActor.tell("CompletedEvent", ActorRef.noSender());
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            return "Response for " + param;
+        });
     }
 
     private static String callApi(Integer param) {
