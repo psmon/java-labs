@@ -12,9 +12,8 @@ import akka.testkit.javadsl.TestKit;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.webnori.springweb.akka.stream.actor.SlowConsumerActor;
-import com.webnori.springweb.akka.stream.actor.TPSActor;
-import com.webnori.springweb.akka.stream.actor.TPSInfo;
-import com.webnori.springweb.example.akka.actors.HelloWorld;
+import com.webnori.springweb.akka.stream.actor.TpsMeasurementActor;
+import com.webnori.springweb.akka.stream.actor.model.TPSInfo;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
@@ -58,12 +57,12 @@ public class BackPressureTest {
     }
 
     @Test
-    @DisplayName("Actor - TpsActor Test")
-    public void TestIt() {
+    @DisplayName("TpsMeasurementActorTest")
+    public void TpsMeasurementActorTest() {
         new TestKit(actorSystem) {
             {
                 final TestKit probe = new TestKit(actorSystem);
-                final ActorRef tpsActor = actorSystem.actorOf(TPSActor.Props(), "TpsActor");
+                final ActorRef tpsActor = actorSystem.actorOf(TpsMeasurementActor.Props(), "TpsActor");
 
                 tpsActor.tell(probe.getRef(), getRef());
                 expectMsg(Duration.ofSeconds(1), "done");
@@ -88,14 +87,18 @@ public class BackPressureTest {
                                 }
                                 sleep(1500);
 
+                                for(int i=0;i<500;i++){
+                                    tpsActor.tell("some Event", getRef());
+                                }
+
                                 sleep(5000);
                             } catch (InterruptedException e) {
                                 throw new RuntimeException(e);
                             }
 
+                            TPSInfo expectedTcp = new TPSInfo(0);
                             tpsActor.tell("tps", getRef());
-
-                            expectMsgClass(Duration.ofSeconds(1), TPSInfo.class);
+                            expectMsg(expectedTcp);
 
                             return null;
                         });
@@ -104,8 +107,8 @@ public class BackPressureTest {
     }
 
     @Test
-    @DisplayName("Actor - TestSlowConsumerActor Test")
-    public void TestSlowConsumerActor() {
+    @DisplayName("SlowConsumerActorTest")
+    public void SlowConsumerActorTest() {
         new TestKit(actorSystem) {
             {
                 final Materializer materializer = ActorMaterializer.create(actorSystem);
@@ -115,12 +118,13 @@ public class BackPressureTest {
                 expectMsg(Duration.ofSeconds(1), "done");
 
                 int testCount = 50000;
-                int processCouuntPerSec = 450;
+                int bufferSize = 100000;
+                int processCouuntPerSec = 200;
 
                 final ActorRef throttlerTPS100 =
-                        Source.actorRef(100000, OverflowStrategy.dropNew())
+                        Source.actorRef(bufferSize, OverflowStrategy.dropNew())
                                 .throttle(processCouuntPerSec, FiniteDuration.create(1, TimeUnit.SECONDS),
-                                        processCouuntPerSec, (ThrottleMode) ThrottleMode.shaping())
+                                        processCouuntPerSec, ThrottleMode.shaping())
                                 .to(Sink.actorRef(slowConsumerActor, akka.NotUsed.getInstance()))
                                 .run(materializer);
 
@@ -143,5 +147,4 @@ public class BackPressureTest {
             }
         };
     }
-
 }
