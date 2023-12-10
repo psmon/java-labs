@@ -29,4 +29,5 @@ RunnableGraph 실행: 정의된 소스, 플로우, 싱크를 연결하여 스트
 
 
 참고링크 :
-- https://blog.rockthejvm.com/akka-streams-backpressure/
+- https://wiki.webnori.com/pages/viewpage.action?pageId=94240903  - 그림이 있는 자바버전
+- https://blog.rockthejvm.com/akka-streams-backpressure/  - 스칼라버전
