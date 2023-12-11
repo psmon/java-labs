@@ -132,7 +132,7 @@ public class BackPressureTest {
                 final ActorRef throttler =
                         Source.actorRef(bufferSize, OverflowStrategy.dropNew())
                                 .throttle(processCouuntPerSec, FiniteDuration.create(1, TimeUnit.SECONDS),
-                                        processCouuntPerSec, ThrottleMode.shaping())
+                                        processCouuntPerSec, (ThrottleMode) ThrottleMode.shaping())
                                 .to(Sink.actorRef(slowConsumerActor, akka.NotUsed.getInstance()))
                                 .run(materializer);
 
