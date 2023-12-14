@@ -4,12 +4,8 @@ import akka.Done;
 import akka.NotUsed;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
-import akka.stream.ActorMaterializer;
-import akka.stream.Materializer;
-import akka.stream.OverflowStrategy;
-import akka.stream.ThrottleMode;
+import akka.stream.*;
 import akka.stream.javadsl.Flow;
-import akka.stream.javadsl.RunnableGraph;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
 import akka.testkit.javadsl.TestKit;
@@ -29,6 +25,7 @@ import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.lang.Thread.sleep;
 
@@ -161,7 +158,10 @@ public class BackPressureTest {
     public void BackPressureTest() {
         new TestKit(actorSystem) {
             {
-                final Materializer materializer = ActorMaterializer.create(actorSystem);
+                final ActorMaterializerSettings settings = ActorMaterializerSettings.create(actorSystem)
+                        .withDispatcher("my-dispatcher-streamtest");
+
+                final Materializer materializer = ActorMaterializer.create(settings, actorSystem);
                 final TestKit probe = new TestKit(actorSystem);
 
                 tpsActor = actorSystem.actorOf(TpsMeasurementActor.Props(), "TpsActor");
@@ -169,11 +169,10 @@ public class BackPressureTest {
                 expectMsg(Duration.ofSeconds(1), "done");
 
                 // Source 생성
-                Source<Integer, NotUsed> source = Source.range(1, 10000);
-
+                Source<Integer, NotUsed> source = Source.range(1, 40000);
 
                 // 병렬 처리를 위한 Flow 정의
-                final int parallelism = 10; // 동시에 처리할 작업의 수
+                final int parallelism = 50; // TODO :15이상 작동값 찾기~
                 Flow<Integer, String, NotUsed> parallelFlow = Flow.<Integer>create()
                         .mapAsync(parallelism, BackPressureTest::callApiAsync);
 
@@ -185,8 +184,17 @@ public class BackPressureTest {
                 Flow<Integer, Integer, NotUsed> backpressureFlow = Flow.<Integer>create()
                         .buffer(bufferSize, OverflowStrategy.backpressure());
 
+                AtomicInteger processedCount = new AtomicInteger();
+
                 // Sink 정의
-                Sink<String, CompletionStage<Done>> sink = Sink.foreach(System.out::println);
+                Sink<String, CompletionStage<Done>> sink = Sink.foreach(s -> {
+                    //처리완료
+                    processedCount.getAndIncrement();
+
+                    if(processedCount.getAcquire() % 10 == 0) {
+                        System.out.println("Processed 10");
+                    }
+                });
 
                 System.out.println("Run backpressureFlow bufferSize:"+bufferSize);
 
@@ -208,7 +216,7 @@ public class BackPressureTest {
         // CompletableFuture를 사용하여 비동기 처리 구현
         return CompletableFuture.supplyAsync(() -> {
             try {
-                Thread.sleep(100); // API 응답 시간을 시뮬레이션하기 위한 지연
+                Thread.sleep(1000); // API 응답 시간을 시뮬레이션하기 위한 지연
                 tpsActor.tell("CompletedEvent", ActorRef.noSender());
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
