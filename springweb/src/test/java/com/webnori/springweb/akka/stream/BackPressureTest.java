@@ -22,9 +22,7 @@ import org.slf4j.LoggerFactory;
 import scala.concurrent.duration.FiniteDuration;
 
 import java.time.Duration;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.lang.Thread.sleep;
@@ -169,14 +167,14 @@ public class BackPressureTest {
                 expectMsg(Duration.ofSeconds(1), "done");
 
                 // Source 생성
-                Source<Integer, NotUsed> source = Source.range(1, 40000);
+                Source<Integer, NotUsed> source = Source.range(1, 4000);
 
                 // 병렬 처리를 위한 Flow 정의
-                final int parallelism = 50; // TODO :15이상 작동값 찾기~
+                final int parallelism = 450;
                 Flow<Integer, String, NotUsed> parallelFlow = Flow.<Integer>create()
                         .mapAsync(parallelism, BackPressureTest::callApiAsync);
 
-                // Flow 정의 (API 호출을 시뮬레이션하는 로직)
+                // Single Sync Flow
                 //Flow<Integer, String, NotUsed> flow = Flow.fromFunction(BackPressureTest::callApi);
 
                 // Buffer 설정 및 OverflowStrategy.backpressure 적용
@@ -190,16 +188,19 @@ public class BackPressureTest {
                 Sink<String, CompletionStage<Done>> sink = Sink.foreach(s -> {
                     //처리완료
                     processedCount.getAndIncrement();
-
                     if(processedCount.getAcquire() % 10 == 0) {
-                        System.out.println("Processed 10");
+                        //System.out.println("Processed 10");
                     }
                 });
 
                 System.out.println("Run backpressureFlow bufferSize:"+bufferSize);
 
                 // RunnableGraph 생성 및 실행
-                source.via(backpressureFlow).via(parallelFlow).to(sink).run(materializer);
+                source.via(backpressureFlow)
+                        //.throttle(100, FiniteDuration.create(1, TimeUnit.SECONDS), 100, (ThrottleMode) ThrottleMode.shaping())
+                        .via(parallelFlow)
+                        .to(sink)
+                        .run(materializer);
 
                 within(
                         Duration.ofSeconds(15),
@@ -212,17 +213,97 @@ public class BackPressureTest {
         };
     }
 
+    @Test
+    @DisplayName("ThrottleTest 100")
+    public void ThrottleTest100(){
+        ThrottleTest(100, 5000);
+    }
+
+    @Test
+    @DisplayName("ThrottleTest 200")
+    public void ThrottleTest200(){
+        ThrottleTest(200, 5000);
+    }
+
+    @Test
+    @DisplayName("ThrottleTest 450")
+    public void ThrottleTest450(){
+        ThrottleTest(450, 5000);
+    }
+
+    public void ThrottleTest(int tps, int testCount ) {
+        new TestKit(actorSystem) {
+            {
+                final ActorMaterializerSettings settings = ActorMaterializerSettings.create(actorSystem)
+                        .withDispatcher("my-dispatcher-streamtest");
+
+                final Materializer materializer = ActorMaterializer.create(settings, actorSystem);
+                final TestKit probe = new TestKit(actorSystem);
+
+                tpsActor = actorSystem.actorOf(TpsMeasurementActor.Props(), "TpsActor");
+                tpsActor.tell(probe.getRef(), getRef());
+                expectMsg(Duration.ofSeconds(1), "done");
+
+                // Source 생성
+                Source<Integer, NotUsed> source = Source.range(1, testCount);
+
+                // 병렬 처리를 위한 Flow 정의
+                final int parallelism = 450;
+                Flow<Integer, String, NotUsed> parallelFlow = Flow.<Integer>create()
+                        .mapAsync(parallelism, BackPressureTest::callApiAsync);
+
+                // Buffer 설정 및 OverflowStrategy.backpressure 적용
+                int bufferSize = 100000;
+                Flow<Integer, Integer, NotUsed> backpressureFlow = Flow.<Integer>create()
+                        .buffer(bufferSize, OverflowStrategy.backpressure());
+
+                AtomicInteger processedCount = new AtomicInteger();
+
+                // Sink 정의
+                Sink<String, CompletionStage<Done>> sink = Sink.foreach(s -> {
+                    //처리완료
+                    processedCount.getAndIncrement();
+                    if(processedCount.getAcquire() % 10 == 0) {
+                        //System.out.println("Processed 10");
+                    }
+                });
+
+                System.out.println("Run backpressureFlow bufferSize:"+bufferSize);
+
+                // RunnableGraph 생성 및 실행
+                source.via(backpressureFlow)
+                        .throttle(tps, FiniteDuration.create(1, TimeUnit.SECONDS), tps, (ThrottleMode) ThrottleMode.shaping())
+                        .via(parallelFlow)
+                        .to(sink)
+                        .run(materializer);
+
+                within(
+                        Duration.ofSeconds(15),
+                        () -> {
+                            // Will wait for the rest of the 10 seconds
+                            expectNoMessage(Duration.ofSeconds(10));
+                            return null;
+                        });
+            }
+        };
+    }
+
+    private static final Executor executor = Executors.newFixedThreadPool(450);
+
     private static CompletionStage<String> callApiAsync(Integer param) {
         // CompletableFuture를 사용하여 비동기 처리 구현
         return CompletableFuture.supplyAsync(() -> {
             try {
-                Thread.sleep(1000); // API 응답 시간을 시뮬레이션하기 위한 지연
+
+                double dValue = Math.random();
+                int iValue = (int)(dValue * 1000);
+                Thread.sleep(iValue); // API 응답 시간을 시뮬레이션하기 위한 지연
                 tpsActor.tell("CompletedEvent", ActorRef.noSender());
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
             return "Response for " + param;
-        });
+        }, executor);
     }
 
     private static String callApi(Integer param) {
