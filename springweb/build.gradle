@@ -21,6 +21,7 @@
 
     dependencies {
 
+        testImplementation 'org.projectlombok:lombok:1.18.22'
         def scalaVersion = '2.13'
         def akkaVersion = '2.7.0'
 
@@ -55,6 +56,9 @@
         //AKKA Cluster Metrics Extension
         implementation "com.typesafe.akka:akka-cluster-metrics_$scalaVersion:$akkaVersion"
 
+        // WebFlux
+        implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
         //Logging
         implementation 'ch.qos.logback:logback-classic:1.2.3'
         implementation "com.typesafe.akka:akka-slf4j_$scalaVersion:$akkaVersion"
@@ -71,6 +75,8 @@
         testImplementation "org.openjdk.jmh:jmh-core:1.36"
         testImplementation "org.openjdk.jmh:jmh-generator-annprocess:1.36"
         jmhAnnotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.36'
+        // Reactor Test 의존성
+        testImplementation 'io.projectreactor:reactor-test:3.4.0'
     }
 
     tasks.named('test') {
