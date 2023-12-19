@@ -146,7 +146,10 @@ public class BackPressureTest {
                 int bufferSize = 100000;
                 int processCouuntPerSec = 200;
 
-                final ActorRef throttler = Source.actorRef(bufferSize, OverflowStrategy.dropNew()).throttle(processCouuntPerSec, FiniteDuration.create(1, TimeUnit.SECONDS), processCouuntPerSec, (ThrottleMode) ThrottleMode.shaping()).to(Sink.actorRef(slowConsumerActor, akka.NotUsed.getInstance())).run(materializer);
+                final ActorRef throttler = Source.actorRef(bufferSize, OverflowStrategy.dropNew())
+                        .throttle(processCouuntPerSec, FiniteDuration.create(1, TimeUnit.SECONDS),
+                                processCouuntPerSec, (ThrottleMode) ThrottleMode.shaping())
+                        .to(Sink.actorRef(slowConsumerActor, akka.NotUsed.getInstance())).run(materializer);
 
                 within(Duration.ofSeconds(10), () -> {
 
@@ -287,3 +290,8 @@ public class BackPressureTest {
         };
     }
 }
+
+/*
+
+
+ */
