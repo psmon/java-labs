@@ -18,12 +18,9 @@ public class SubScribeActor extends AbstractActorWithTimers {
     private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
 
     protected long transactionCount = 0;
-
-    private ActorRef probe;
-
-    protected  double tps;
-
+    protected double tps;
     protected double lastTps;
+    private ActorRef probe;
 
     public SubScribeActor() {
 
@@ -38,47 +35,39 @@ public class SubScribeActor extends AbstractActorWithTimers {
 
     @Override
     public Receive createReceive() {
-        return receiveBuilder()
-                .match(ActorRef.class, actorRef -> {
+        return receiveBuilder().match(ActorRef.class, actorRef -> {
                     this.probe = actorRef;
                     getSender().tell("done", getSelf());
-                })
-                .match(FirstTick.class, message -> {
+                }).match(FirstTick.class, message -> {
                     log.info("First Tick");
                     getTimers().startPeriodicTimer(TICK_TPS_KEY, new TPSCheckTick(), Duration.ofMillis(1000));
-                })
-                .match(TPSReq.class, message -> {
+                }).match(TPSReq.class, message -> {
                     getSender().tell(new TPSInfo(lastTps), ActorRef.noSender());
                 })
                 // TPS 측정기능과 Confirm기능
                 .match(ConfirmEvent.class, message -> {
                     transactionCount++;
-                    if(this.probe != null){
+                    if (this.probe != null) {
                         probe.tell(message, ActorRef.noSender());
                     }
-                })
-                .match(String.class, message -> {
+                }).match(String.class, message -> {
                     transactionCount++;
-                })
-                .match(TPSCheckTick.class, message -> {
+                }).match(TPSCheckTick.class, message -> {
                     long startTime = System.currentTimeMillis() - 1000;
                     long endTime = System.currentTimeMillis();
-                    tps = transactionCount  / ((endTime - startTime) / 1000);
-                    if(tps > 0){
+                    tps = transactionCount / ((endTime - startTime) / 1000);
+                    if (tps > 0) {
                         lastTps = tps;
                         getTimers().startPeriodicTimer(TICK_TPSRESET_KEY, new TPSResetHalfTick(), Duration.ofMillis(500));
                     }
                     transactionCount = 0;
                     log.info("TPS:" + lastTps);
-                })
-                .match(TPSResetHalfTick.class, message -> {
+                }).match(TPSResetHalfTick.class, message -> {
                     lastTps = lastTps / 2;
                     getTimers().startPeriodicTimer(TICK_TPSRESET_KEY, new TPSResetTick(), Duration.ofMillis(500));
-                })
-                .match(TPSResetTick.class, message -> {
+                }).match(TPSResetTick.class, message -> {
                     lastTps = 0;
-                })
-                .build();
+                }).build();
     }
 
     private static final class FirstTick {

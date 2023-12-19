@@ -1,8 +1,12 @@
 # JAVA-LABS
 
-Spring Boot을 통해 JAVA를 연구하고 다양한 오픈스택들을 실험하고 학습하는 프로젝트입니다.
+![텍스트](./springweb//doc/akka-intro.png)
 
-활용되는 OpenStack들은 모두 도커로 구동하며, 로컬인프라를 통한 LocalFirst 테스트가능한 코드작성을 지원합니다.
+
+Spring Boot을 통해 JAVA를 연구하고 다양한 오픈스택들을 실험하고 학습하는 프로젝트로
+
+Akka를 중심으로 Reactive Streams을 다루고 있습니다.
+
 
 ## 사용툴
 
@@ -15,8 +19,9 @@ Spring Boot을 통해 JAVA를 연구하고 다양한 오픈스택들을 실험�
 ## AKKA
 
 - [AKKA 이용샘플](./springweb/src/test/java/com/webnori/springweb/akka/README.md)
+- [AkkaLabs](https://wiki.webnori.com/display/AKKA/AKKA+Labs)
 
-## Docker Build And Cluster
+## Docker Build
 
 ```
 cd springweb
@@ -25,7 +30,7 @@ docker build -f Dockerfile --force-rm -t java-labs-webnori:dev  .
 
 docker run -e SPRING_PROFILES_ACTIVE=dev --publish 8081:8080 --name cluster-lab-app1 java-labs-webnori:dev
 
-# Cluster 테스트를 위해 N개 구동
+# Cluster Test
 
 docker run -e SPRING_PROFILES_ACTIVE=dev --publish 8082:8080 --name cluster-lab-app2 java-labs-webnori:dev
 
@@ -34,15 +39,3 @@ docker run -e SPRING_PROFILES_ACTIVE=dev --publish 8083:8080 --name cluster-lab-
 ```
 
 
-## 유용한 단축키
-
-- 그레이들 디펜던시 업데이트 : Ctrl + Shift + O
-- 코드 Style : Ctrl + Shift + Alt + L
-
-## 활용 예정 Stacks
- 
-- Persitence With (Mysql8,Nosql,ElasticSearch...)
-- Docker with Spring BOOT
-- Swagger API DOC with SpringBoot
-- AKKA with Spring BOOT
-- 

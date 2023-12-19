@@ -73,6 +73,11 @@
 - gradle -q dependencies : 디펜던시 확인
 - gradle -q dependencies subproject:dependencies : 특정프로젝트 하위 디펜던시 확인
 
+#### 유용한 단축키
+
+- 그레이들 디펜던시 업데이트(빌드꼬일때) : Ctrl + Shift + O
+- 코드 Style 적용 : Ctrl + Shift + Alt + L
+- 
 
 ### 연습과제
 

@@ -7,7 +7,7 @@ public class ConfirmEvent {
 
     private String message;
 
-    public ConfirmEvent(String message){
+    public ConfirmEvent(String message) {
         this.message = message;
     }
 
