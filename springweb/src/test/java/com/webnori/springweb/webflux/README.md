@@ -138,7 +138,9 @@ AkkaStream과 Webplux가 어떻게 연결이 되고 작동되는지 살펴보겠
 
 도메인영역을 다루는 메인스트림은 단일요소로 활용하는 것이 권장되지만 
 아래와같이 데이터가 AkkaStream에서 출발하여 Webplux를 지나 Actor모델로 도달할수 있습니다.
-이것은 Akka와 Webplux가 상호 연동하려고 준비가 안되어도 ReactiveStream을 준수하였기때문에 가능한 시나리오입니다.
+이것은 Akka와 Webplux가 상호 연동하려고 맞춘적은 없지만~ ReactiveStream을 준수하였기때문에 가능한 시나리오이며
+모든 ReactiveStrem 준수모듈은 동일하게 연결이 가능합니다.
+
 
 ```
                                                                                                                                 
