@@ -15,25 +15,38 @@ Reactive Streams은 비동기 데이터 스트림 처리를 위한 표준이며,
 여기서 AkkaStreams의 특징만 정리하면 다음과 같이 요약할 수 있습니다.
 
 - Akka Streams는 리액티브 스트림스 표준을 준수합니다. 이는 데이터 스트림을 비동기적으로 처리하면서 백프레셔(backpressure)를 관리하여 시스템이 과부하되는 것을 방지합니다.
-- 스트림 그래프 DSL: Akka Streams는 선언적인 DSL을 제공하여, 스트림 처리 로직을 간결하고 명확하게 표현할 수 있게 해줍니다.
+- 스트림 그래프 DSL(Domain Specific Language): Akka Streams는 선언적인 DSL을 제공하여, 스트림 처리 로직을 간결하고 명확하게 표현할 수 있게 해줍니다.
 
 Akka Streams는 이러한 특징을 바탕으로 실시간 데이터 처리, 복잡한 이벤트 처리, 고성능 백엔드 시스템 개발 등에 널리 사용됩니다.
 
 
+![](https://rtjvm-website-blog-images.s3-eu-west-1.amazonaws.com/23-1-first-graph.png)
+
+Graph의 구성요소는 몇가지가 더있지만, 대표적으로 다음요소를 가지고 있습니다.
+- 소스(Source): 스트림의 데이터를 제공하는 시작점입니다. 예를 들어, 파일, 컬렉션, 외부 시스템 등에서 데이터를 읽을 수 있습니다.
+- 플로우(Flow): 소스와 싱크 사이에서 데이터를 변환하는 중간 처리 단계입니다. 예를 들어, 데이터 필터링, 변환, 집계 등을 수행할 수 있습니다.
+- 싱크(Sink): 스트림의 데이터를 소비하는 종점입니다. 데이터를 파일에 쓰거나, 데이터베이스에 저장하거나, 단순히 버리는 등의 작업을 수행할 수 있습니다.
+
+
 ### RunableGraph
 
-AkkaStream에서 실행되는 Flow들은 DSL을 이용하여 레고를 조립하듯이 구성할수 있으며 실행가능한 완전한 요소를 RunableGraph라고 합니다.
+각 요소는 각각 구성요소로 구현을하며, 흐름을 레고 조립하듯이 연결하여 구성할수 있습니다.
+실행가능한 완전한 요소를 RunableGraph라고 합니다. 
 
 ```
                              RunableGraph                                                                                       
                                                                                                                                 
       +--------+   +--------+  +--------+  +--------+  +--------+                                                               
       |        |+-+|        +-+|        +-+|        ++-+        |                                                               
-      |        |+-+|        +-+|        +-+|        ++-+        |                                                               
+      | Source |+-+| Buffer +-+| TPS    +-+| Flow   ++-+ Sink   |                                                               
       |        |   |        |  |        |  |        |  |        |                                                               
       +--------+   +--------+  +--------+  +--------+  +--------+                                                               
-       Source -> BackPresure -> Throttle -> ParalleFlow -> Sink                
+       Source -> BackPresure -> Throttle -> ParalleFlow -> Sink                                                                 
+                                                                                 
 ```
+
+- BackPresure의 아이디어는 간단합니다. Buffer가 밀리면 소비(Sink)가 느려지는것임으로 생산속도를 조절합니다.
+
 
 ```
 Source<Integer, NotUsed> source = Source.range(1, 100);
@@ -99,10 +112,9 @@ Flow<Integer, String, NotUsed> parallelFlow =
 
 ### Stream을 Actor에 연결
 
-입력되는 값이, 배열과같이 고정된 값이 아닌 액터를 연결 시킴으로 
+입력되는 값이, 배열과 같은 고정된 값이 아닌 액터를 연결 시킴으로 
 불특정하게 발생하는 이벤트에 대한 Flow제어를 할수 있으며 액터는 원격/클러스터로 확장가능할수 있으며 
-이것은 분산환경에서 Stream처리를 다룰수 있게합니다.
-
+이것은 분산환경에서 실시간성 StreamData를 액터모델을 통해 다룰수 있게합니다.
 
 ```
 final ActorRef throttler = Source.actorRef(bufferSize, OverflowStrategy.dropNew())
@@ -184,16 +196,23 @@ for (int i = 0; i < testCount; i++) {
 }
 ```
 
-여기서 설명된 내용은 작동가능한 코드로 커밋이 되었으며 추가로 유닛테스트를 통해 TPS측정및 유닛테스트화가 가능합니다.
+여기서 설명된 내용은 작동가능한 코드로 커밋이 되었으며 추가로 유닛테스트를 통해 TPS측정및 스트림흐름 수신검증이 가능합니다.
 
-StreamAPI와 같이 동시성/병렬처리를 다루는 선언형 프로그래밍을 다루는경우~ 유닛테스트를 작성하는것은
+StreamAPI와 같이 동시성/병렬처리를 다루는 선언형 프로그래밍을 다루는경우~ 
 
-올바른 작동방식과 다양한 응용방법을 발굴할수 있는 학습방식으로 권장됩니다.
+문서만을 보고 학습하는것보다~ 유닛테스트를 통해 실제작동하는 코드를 만들고 검증하는 방식이 도움이됩니다.
+
+생산한 메시지수만큼 Flow처리 과정을 거쳐 변환된 데이터가 우리의 의도대로 수신이되었나? 검증하는것은 중요합니다.
 
 link : https://github.com/psmon/java-labs/blob/master/springweb/src/test/java/com/webnori/springweb/webflux/BasicGuideTest.java
 
 
+여기서 상세하게 다루지 못한 내용은 다음 아티컬을 참고할수 있습니다.
 
 ## 참고링크
+- https://blog.rockthejvm.com/akka-streams-graphs/ - Akka Streams Graphs
 - https://doc.akka.io/docs/alpakka/current/index.html - AkkaStream을 ReactiveStream을 준수하는 모든 Stack에 연결하는 Akka 서브프로젝트
+- https://doc.akka.io/docs/akka/current/testing.html - Akka Test Tool Kit
+- https://medium.com/@BPandey/writing-unit-test-in-reactive-spring-boot-application-32b8878e2f57 - Webflux Test Kit
 - https://wiki.webnori.com/pages/viewpage.action?pageId=94240901 - 분산처리를 다루는 개발자가 AKKA를 학습하면 도움되는 이유 (도입을 하지 않더라도~)
+- https://wiki.webnori.com/pages/viewpage.action?pageId=94240903 - 빠른 생산자와 느린소비자 - API호출편
