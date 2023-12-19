@@ -196,18 +196,31 @@ for (int i = 0; i < testCount; i++) {
 }
 ```
 
-여기서 설명된 내용은 작동가능한 코드로 커밋이 되었으며 추가로 유닛테스트를 통해 TPS측정및 스트림흐름 수신검증이 가능합니다.
-
 StreamAPI와 같이 동시성/병렬처리를 다루는 선언형 프로그래밍을 다루는경우~ 
 
 문서만을 보고 학습하는것보다~ 유닛테스트를 통해 실제작동하는 코드를 만들고 검증하는 방식이 도움이됩니다.
 
 생산한 메시지수만큼 Flow처리 과정을 거쳐 변환된 데이터가 우리의 의도대로 수신이되었나? 검증하는것은 중요합니다.
 
+```
+// 동시처리 TPS 200에 제약을 둔 유닛테스트 결과 로그~ ( 수신검증 관찰자 SubScribeActor를 연결하면 TPS를 함께 제공해줍니다.)
+
+[INFO ] [2023-12-19 19:04:44,292] [ClusterSystem-akka.actor.default-dispatcher-5] [First Tick]
+[INFO ] [2023-12-19 19:04:45,322] [ClusterSystem-akka.actor.default-dispatcher-6] [TPS:74.0]
+[INFO ] [2023-12-19 19:04:46,306] [ClusterSystem-akka.actor.default-dispatcher-5] [TPS:197.0]
+[INFO ] [2023-12-19 19:04:47,308] [ClusterSystem-akka.actor.default-dispatcher-5] [TPS:201.0]
+[INFO ] [2023-12-19 19:04:48,308] [ClusterSystem-akka.actor.default-dispatcher-5] [TPS:204.0]
+[INFO ] [2023-12-19 19:04:49,311] [ClusterSystem-akka.actor.default-dispatcher-6] [TPS:197.0]
+```
+
+여기서 설명된 내용은, 작동가능 코드로 커밋이 되었으며  유닛테스트를 통해 TPS측정및 스트림흐름 수신검증이 가능합니다.
+
+Akka를 중심으로 여전히 다루고 있지만~ Webplux의 검증툴이 탑재되어 Webplux의 Stream 객체도 연구항목으로 최근 추가가 되어졌습니다.  
+
 link : https://github.com/psmon/java-labs/blob/master/springweb/src/test/java/com/webnori/springweb/webflux/BasicGuideTest.java
 
 
-여기서 상세하게 다루지 못한 내용은 다음 아티컬을 참고할수 있습니다.
+여기서 상세하게 다루지 못한 내용은 다음 아티컬을 통해 주가정보를 획득할수 있습니다.
 
 ## 참고링크
 - https://blog.rockthejvm.com/akka-streams-graphs/ - Akka Streams Graphs
