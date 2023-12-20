@@ -101,7 +101,15 @@ Flow<Integer, Integer, NotUsed> backpressureFlow =
 throttle(processCouuntPerSec, Duration.ofSeconds(1))
 ```
 
-### ParalleFlow
+### Flow
+
+Flow에서 스트림과정중 필터처리및 데이터가공이 필요한부분을 구현할수 있는 실제 코드 작성부분입니다.
+자바에서 제공하는 기본 비동기처리방식에 연결할수 있습니다.
+
+StreamAPI를 이용하기전에 잠깐~ 항상 기본언어가 제공하는 동시성 비동기처리 함수를 먼저 학습하는것을 권장하며
+이것을 건너띄고 학습하게되는경우 문제해결의 공간이 한정적이게 되는 부작용이 발생합니다.
+기본 제공스펙에서 해결할수 있는일이 대부분이며 이경우 AKKA와 같은 추상화 객체가 필요없을수도 있습니다. 
+추가로 JAVA StreamAPI에서도 유사한 기능을 제공하기때문에 함께 학습하면서 비교하는것도 권장됩니다.
 
 Stream 처리과정중 Blocking코드가 존재하거나 응답이 느린경우 Stream의 전체 처리가 늦어질수 있습니다. 
 동시성을 지원하는 일반적인 프레임워크를 이용하는경우 블락킹코드가 하나라도 있으면 전체가 멈출수 있음으로 
@@ -111,7 +119,19 @@ Executor에서 병렬처리 스레드수를 지정하고, Stream에서는 동시
 이러한 병렬처리 전략으로 지연이 높은 블락킹처리에 대해 멀티스레드 프로그래밍을 하지 않지만 그것을 활용할수 있습니다.
 
 ```
-private static final Executor executor = Executors.newFixedThreadPool(30);
+final int parallelism = 15;
+Flow<Integer, String, NotUsed> parallelFlow = 
+  Flow.<Integer>create().mapAsync(parallelism, callApiAsync);
+  
+Flow<Integer, String, NotUsed> sigleflow = 
+  Flow.fromFunction(BackPressureTest::callApi);  
+   
+// 자바의 비동기처리방식 - CompletionStage
+// 이 방식을 이용하는 경우 기본 스레드 이용값은 15입니다. 더 많은 스레드가 필요하면 이값을 높여주세요
+// 스레드는 공짜가아니며 이 값이 단순하게 높다고 처리성능이 향상되는것은 아닙니다.  
+private static final Executor executor = Executors.newFixedThreadPool(30); 
+
+
 private static CompletionStage<String> callApiAsync(Integer param) {
     // CompletableFuture를 사용하여 비동기 처리 구현
     return CompletableFuture.supplyAsync(() -> {
@@ -125,10 +145,17 @@ private static CompletionStage<String> callApiAsync(Integer param) {
         return "Response for " + param;
     }, executor);
 }
+
+// 자바의 일반적인 동기처리방식
+private static String callApi(Integer param) {    
+    try {
+        Thread.sleep(100); // API 응답 시간을 시뮬레이션하기 위한 지연        
+    } catch (InterruptedException e) {
+        e.printStackTrace();
+    }
+    return "Response for " + param;
+}
     
-final int parallelism = 15;
-Flow<Integer, String, NotUsed> parallelFlow = 
-  Flow.<Integer>create().mapAsync(parallelism, callApiAsync);
 ```
 
 ### Stream을 Actor에 연결
