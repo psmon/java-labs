@@ -293,3 +293,4 @@ link : https://github.com/psmon/java-labs/blob/master/springweb/src/test/java/co
 - https://wiki.webnori.com/display/AKKA/Terminology - 동시성 처리와 병렬처리의 차이점
 - https://wiki.webnori.com/pages/viewpage.action?pageId=94240901 - 분산처리를 다루는 개발자가 AKKA를 학습하면 도움되는 이유 (도입을 하지 않더라도~)
 - https://wiki.webnori.com/pages/viewpage.action?pageId=94240903 - 빠른 생산자와 느린소비자 - API호출편
+- https://wiki.webnori.com/pages/viewpage.action?pageId=94241023 - 기본언어가 지원하는 동시성처리 기능 (기본기는 항상 중요합니다.)
