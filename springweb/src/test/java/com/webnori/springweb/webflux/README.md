@@ -111,6 +111,9 @@ StreamAPI를 이용하기전에 잠깐~ 항상 기본언어가 제공하는 동�
 기본 제공스펙에서 해결할수 있는일이 대부분이며 이경우 AKKA와 같은 추상화 객체가 필요없을수도 있습니다. 
 추가로 JAVA StreamAPI에서도 유사한 기능을 제공하기때문에 함께 학습하면서 비교하는것도 권장됩니다.
 
+Flow를 단일/병렬 처리를 채택할수 있으며~ 유입된 스트림의 분기가 필요할시 FanIn/Out 달수도 있습니다.
+
+단일흐름요소에서 병렬(멀티스레드이용)하는 방법을 알아보겠습니다.
 Stream 처리과정중 Blocking코드가 존재하거나 응답이 느린경우 Stream의 전체 처리가 늦어질수 있습니다. 
 동시성을 지원하는 일반적인 프레임워크를 이용하는경우 블락킹코드가 하나라도 있으면 전체가 멈출수 있음으로 
 프레임이 제공하는 비동기처리만을 이용해야하는 경우도 있지만 AkkaStream은 JAVA의 비동기 병렬작동가능한 CompletionStage를 지원해서 병렬처리로 흘려보낼수 있습니다.
@@ -131,6 +134,11 @@ Flow<Integer, String, NotUsed> sigleflow =
 // 스레드는 공짜가아니며 이 값이 단순하게 높다고 처리성능이 향상되는것은 아닙니다.  
 private static final Executor executor = Executors.newFixedThreadPool(30); 
 
+
+
+// 자바의 경우 비동기처리로 CompletionStage 를 채택했으며
+// 여러진영에서 채택한 비동기를 조금더 심플하고 직관적으로 처리하는 async/await 아닌점은 조금 아쉽지만~
+// 다음 함수는 CompletionStage를 이용해 async에 대응합니다.
 
 private static CompletionStage<String> callApiAsync(Integer param) {
     // CompletableFuture를 사용하여 비동기 처리 구현
