@@ -49,10 +49,10 @@ Graph의 구성요소는 몇가지가 더있지만, 대표적으로 다음요소
 
 ### RunableGraph
 
-각 요소는 각각 구성요소로 구현을하며, 흐름을 레고 조립하듯이 연결하여 구성할수 있습니다.
-실행가능한 완전한 요소를 RunableGraph라고 합니다.
+요소를 구성하고 흐름을 DSL을 이용 레고 조립하듯이 우리가 원하는 플로우를 구성할수 있습니다.
+실행가능한 완전한 요소를 RunableGraph라고 하며
 
-via를 통해 한쪽방향으로만 흐르지만 유용한 샘플을 알아보겠습니다.
+이 샘플은 via를 통해 한쪽방향으로 흐르지만 TPS조절및 BackPresure등 유용한 기능을 이용할수 있습니다.
 
 ```
                              RunableGraph                                                                                       
@@ -66,7 +66,6 @@ via를 통해 한쪽방향으로만 흐르지만 유용한 샘플을 알아보�
                                                                                  
 ```
 
-- BackPresure의 아이디어는 간단합니다. Buffer가 밀리면 소비(Sink)가 느려지는것임으로 생산속도를 조절합니다.
 
 
 ```
@@ -89,6 +88,9 @@ source
 각각의 코드 구성이 어떻게 되었는지 살펴보겠습니다.
 
 ### BackPresure
+
+BackPresure의 아이디어는 간단합니다. Buffer가 밀리면 소비(Sink)가 느려지는것임으로 생산속도를 조절합니다.
+
 ```
 // Buffer 설정 및 OverflowStrategy.backpressure 적용
 int bufferSize = 100000;
@@ -97,14 +99,20 @@ Flow<Integer, Integer, NotUsed> backpressureFlow =
 ```
 
 ### Throttle
+
+TPS를 제어하기 위해 처리값을 계산하고 블락함수(sleep)로 지연시키는 방법은 성능에 있어서 멀티스레드이던 아니던 성능 파멸의 시나리오로 향합니다.
+특히 단일스레드만 이용해 동시성처리능력을 극대화하는 플랫폼들은 전체 중지가 될수 있습니다.
+
+BackPresure를 이용하여 자동조절장치를 도입하는것도 유용하지만~ AKKAStream에서는 TPS속도를 제어하는 장치자체를 제공하여 Stream에 연결할수 있습니다.
+
 ```
 throttle(processCouuntPerSec, Duration.ofSeconds(1))
 ```
 
 ### Flow
 
-Flow에서 스트림과정중 필터처리및 데이터가공이 필요한부분을 구현할수 있는 실제 코드 작성부분입니다.
-자바에서 제공하는 기본 비동기처리방식에 연결할수 있습니다.
+Flow에서 스트림과정중 필터처리및 데이터가공이 필요한부분을 구현할수 있는 실제 코드 작성부분으로
+자바에서 제공하는 기본 비동기 처리방식을 이용하여 연결할수 있습니다.
 
 StreamAPI를 이용하기전에 잠깐~ 항상 기본언어가 제공하는 동시성 비동기처리 함수를 먼저 학습하는것을 권장하며
 이것을 건너띄고 학습하게되는경우 문제해결의 공간이 한정적이게 되는 부작용이 발생합니다.
@@ -258,20 +266,19 @@ StreamAPI와 같이 동시성/병렬처리를 다루는 선언형 프로그래�
 
 생산한 메시지수만큼 Flow처리 과정을 거쳐 변환된 데이터가 우리의 의도대로 수신이되었나? 검증하는것은 중요합니다.
 
-```
-// 동시처리 TPS 200에 제약을 둔 유닛테스트 결과 로그~ ( 수신검증 관찰자 SubScribeActor를 연결하면 TPS를 함께 제공해줍니다.)
-
-[INFO ] [2023-12-19 19:04:44,292] [ClusterSystem-akka.actor.default-dispatcher-5] [First Tick]
-[INFO ] [2023-12-19 19:04:45,322] [ClusterSystem-akka.actor.default-dispatcher-6] [TPS:74.0]
-[INFO ] [2023-12-19 19:04:46,306] [ClusterSystem-akka.actor.default-dispatcher-5] [TPS:197.0]
-[INFO ] [2023-12-19 19:04:47,308] [ClusterSystem-akka.actor.default-dispatcher-5] [TPS:201.0]
-[INFO ] [2023-12-19 19:04:48,308] [ClusterSystem-akka.actor.default-dispatcher-5] [TPS:204.0]
-[INFO ] [2023-12-19 19:04:49,311] [ClusterSystem-akka.actor.default-dispatcher-6] [TPS:197.0]
-```
-
 여기서 설명된 내용은, 작동가능 코드로 커밋이 되었으며  유닛테스트를 통해 TPS측정및 스트림흐름 수신검증이 가능합니다.
 
-Akka를 중심으로 여전히 다루고 있지만~ Webplux의 검증툴이 탑재되어 Webplux의 Stream 객체도 연구항목으로 최근 추가가 되어졌습니다.  
+
+![unittest](../../../../../../../doc/unittest-webflux.png)
+Webplux의 처리 수신 검증툴과 함께 TPS측정기를 탑재하여 Webplux의 Stream 처리도 연구항목으로 최근 추가가 되었으며
+다양한 실험을 준비예정입니다.
+
+위 검증코드를 통해 Webflux와 Actor모델을 이용한 수신검증이 초당 1만회이상 수행할수 있음을 알수 있습니다. 
+스트림처리는 일반적으로 다양한 IO를 다루게되며 속도제어없이 만개를 IO 동시처리 시도하면 IO에서 문제가 발생할수 있습니다. 
+ 속도흐름 제어방식을 고민해야하며 이것을 측정하지못하면 개선을 못할뿐더러~ 우리가 작성한 코드의 처리량 자체를 짐작할수 없게됩니다. 
+ReactiveStream API를 이용하는경우 BackPresure를 다양한 구현방식으로 지원하기때문에 BufferSize 기본값이 무엇이며? 어떻게 작동하고 흐름을 조절할수 있는지? 파악하는것은 중요합니다.
+
+
 
 link : https://github.com/psmon/java-labs/blob/master/springweb/src/test/java/com/webnori/springweb/webflux/BasicGuideTest.java
 
@@ -283,5 +290,6 @@ link : https://github.com/psmon/java-labs/blob/master/springweb/src/test/java/co
 - https://doc.akka.io/docs/alpakka/current/index.html - AkkaStream을 ReactiveStream을 준수하는 모든 Stack에 연결하는 Akka 서브프로젝트
 - https://doc.akka.io/docs/akka/current/testing.html - Akka Test Tool Kit
 - https://medium.com/@BPandey/writing-unit-test-in-reactive-spring-boot-application-32b8878e2f57 - Webflux Test Kit
+- https://wiki.webnori.com/display/AKKA/Terminology - 동시성 처리와 병렬처리의 차이점
 - https://wiki.webnori.com/pages/viewpage.action?pageId=94240901 - 분산처리를 다루는 개발자가 AKKA를 학습하면 도움되는 이유 (도입을 하지 않더라도~)
 - https://wiki.webnori.com/pages/viewpage.action?pageId=94240903 - 빠른 생산자와 느린소비자 - API호출편
