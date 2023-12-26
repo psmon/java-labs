@@ -1,0 +1,35 @@
+version: '3'
+services:
+  localstack:
+    image: localstack/localstack:1.0.4
+    ports:
+          - "4567:4566"
+    environment:
+      - SERVICES=s3:4566
+      - HOSTNAME=localstack
+      - HOSTNAME_EXTERNAL=localstack
+      - DEFAULT_REGION=us-east-2
+  aws-cli:
+    image: amazon/aws-cli
+    depends_on:
+      - localstack
+    volumes:
+      - ./testbucket:/aws
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-2
+    entrypoint: /bin/sh -c
+    command: >
+      "
+        touch testData.csv
+        touch testDataOne.csv
+        touch testDataTwo.csv
+        touch testDataThree.csv
+        aws --endpoint-url=http://localstack:4566 s3api create-bucket --bucket my-bucket --region us-east-1
+        aws --endpoint-url=http://localstack:4566 s3 cp testData.csv s3://my-bucket//testData.csv
+        aws --endpoint-url=http://localstack:4566 s3 cp testDataOne.csv s3://my-bucket//testDataTwo.csv
+        aws --endpoint-url=http://localstack:4566 s3 cp testDataTwo.csv s3://my-bucket//testDataTwo.csv
+        aws --endpoint-url=http://localstack:4566 s3 cp testDataThree.csv s3://my-bucket//testDataThree.csv
+      "
+      
