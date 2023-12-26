@@ -3,39 +3,30 @@
 ![텍스트](./springweb//doc/akka-intro.png)
 
 
-Spring Boot을 통해 JAVA를 연구하고 다양한 오픈스택들을 실험하고 학습하는 프로젝트로
+Spring Boot(java)을 기본으로 주변 오픈스택을 활용하는 활동으로
 
-Akka를 중심으로 Reactive Streams을 다루고 있습니다.
+Akka/Webplux를 포함 다양한 오픈스택(Kafka/Spark)등을  Reactive Streams을 통해 
+
+이벤트/데이터를 다루는것을 추가로 연구하고 있습니다.
 
 
 ## 사용툴
 
 - https://www.jetbrains.com/ko-kr/idea/download
 
-## Spring BootWEB 기초
 
-- [프로젝트셋팅하기](./springweb/README.md)
+## Doc
 
-## AKKA
-
-- [AKKA 이용샘플](./springweb/src/test/java/com/webnori/springweb/akka/README.md)
+- [SpringBoot 셋팅](./springweb/README.md)
+- [AKKA](./springweb/src/test/java/com/webnori/springweb/akka/README.md)
+- [Webflux](./springweb/src/test/java/com/webnori/springweb/webflux/README.md)
 - [AkkaLabs](https://wiki.webnori.com/display/AKKA/AKKA+Labs)
-
-## Docker Build
-
-```
-cd springweb
-
-docker build -f Dockerfile --force-rm -t java-labs-webnori:dev  .
-
-docker run -e SPRING_PROFILES_ACTIVE=dev --publish 8081:8080 --name cluster-lab-app1 java-labs-webnori:dev
-
-# Cluster Test
-
-docker run -e SPRING_PROFILES_ACTIVE=dev --publish 8082:8080 --name cluster-lab-app2 java-labs-webnori:dev
-
-docker run -e SPRING_PROFILES_ACTIVE=dev --publish 8083:8080 --name cluster-lab-app3 java-labs-webnori:dev
-
-```
+- [OpenStack](./infra/README.md)
 
 
+## 참고사이트
+
+다른진영의 유사스펙(동시성/병렬처리/스트림처리)을 함께 알아가는것은 자신의 진영에서도 도움이 되며
+여기서 작성된 개념과 컨셉은 다른 언어로도 작동시켜보는것을 추가로 함께 연구합니다.
+
+- [NetCore With Reactive Stream](https://github.com/psmon/NetCoreLabs)
