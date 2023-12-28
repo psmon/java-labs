@@ -143,7 +143,7 @@ for (int i = 0; i < testCount * partitionCount; i++) {
 
 - [Intro](./intro) : 액터메시지를 단일노드에서 이용하는 방법
 - [Router](./router) : 액터메시지를 라우터로 분기하는 방법
-- [Kafka](./kafka) : Kafka를 AkkaStream과 연결하는방법
+- [Kafka](../alpakka/kafka) : Kafka를 AkkaStream과 연결하는방법
 - [Cluster](./cluster) : Cluster를 구성하고 네트워크 분산처리 하는방법
 - [Utils](./utils) : 라이프사이클포함 AKKA유틸 툴 테스트
 

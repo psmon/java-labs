@@ -1,4 +1,4 @@
-package com.webnori.springweb.akka.kafka;
+package com.webnori.springweb.alpakka.kafka;
 
 import akka.Done;
 import akka.NotUsed;
@@ -87,7 +87,7 @@ public class KafkaTest {
 
                 int topicCount = 100;
 
-                // Producer Flow (데이터 생상)
+                // Producer Flow (데이터 생산)
 
                 CompletionStage<Done> done =
                         Source.range(1, topicCount)

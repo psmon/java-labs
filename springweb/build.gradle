@@ -24,6 +24,7 @@
         testImplementation 'org.projectlombok:lombok:1.18.22'
         def scalaVersion = '2.13'
         def akkaVersion = '2.7.0'
+        def akkaHttpVersion = '10.6.0'
 
         implementation 'org.springframework.boot:spring-boot-starter-web'
         implementation 'org.springframework.boot:spring-boot-starter-aop:2.7.0'
@@ -48,7 +49,14 @@
 
         //AKKA Stream
         implementation "com.typesafe.akka:akka-stream_$scalaVersion:$akkaVersion"
+
+        //Kafka
         implementation "com.typesafe.akka:akka-stream-kafka_$scalaVersion:4.0.0"
+
+        //S3
+        implementation "com.lightbend.akka:akka-stream-alpakka-s3_$scalaVersion:7.0.1"
+        implementation "com.typesafe.akka:akka-http_$scalaVersion:$akkaHttpVersion"
+        implementation "com.typesafe.akka:akka-http-xml_$scalaVersion:$akkaHttpVersion"
 
         //AKKA Cluster
         implementation "com.typesafe.akka:akka-cluster_$scalaVersion:$akkaVersion"
