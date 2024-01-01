@@ -29,8 +29,8 @@ import static java.lang.Thread.sleep;
 
 
 /**
- * TestClass : BasicTest
- * 목표 : 액터의 기본메시지 전송을 확인하고, 이벤트를 유닛테스트화 하는방법을 학습합니다.
+ * TestClass : S3IOTest
+ * 목표 : S3 IO Test
  * 참고 링크 : https://doc.akka.io/docs/akka/current/testing.html
  */
 
@@ -90,10 +90,13 @@ public class S3IOTest {
                 tpsActor.tell(probe.getRef(), getRef());
                 expectMsg(Duration.ofSeconds(1), "done");
 
+                /* TODO : Flow 완성하기
                 final Source<ByteString, NotUsed> file = Source.single(ByteString.fromString(body()));
 
                 final Sink<ByteString, CompletionStage<MultipartUploadResult>> s3Sink =
                         S3.multipartUpload(bucket(), bucketKey());
+
+                 */
 
                 // Source 생성
                 Source<Integer, NotUsed> source = Source.range(1, testCount);
@@ -131,8 +134,3 @@ public class S3IOTest {
         };
     }
 }
-
-/*
-
-
- */
