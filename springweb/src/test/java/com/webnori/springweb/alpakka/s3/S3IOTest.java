@@ -1,31 +1,32 @@
 package com.webnori.springweb.alpakka.s3;
 
-import akka.Done;
 import akka.NotUsed;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
-import akka.stream.*;
-import akka.stream.javadsl.Flow;
+import akka.stream.ActorMaterializer;
+import akka.stream.ActorMaterializerSettings;
+import akka.stream.Materializer;
+import akka.stream.alpakka.s3.S3Attributes;
+import akka.stream.alpakka.s3.S3Ext;
+import akka.stream.alpakka.s3.S3Settings;
+import akka.stream.alpakka.s3.javadsl.S3;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
 import akka.testkit.javadsl.TestKit;
+import akka.util.ByteString;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import com.webnori.springweb.akka.stream.actor.SlowConsumerActor;
-import com.webnori.springweb.akka.stream.actor.TpsMeasurementActor;
-import com.webnori.springweb.akka.stream.actor.model.TPSInfo;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.concurrent.duration.FiniteDuration;
 
 import java.time.Duration;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static java.lang.Thread.sleep;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 
 /**
@@ -73,12 +74,8 @@ public class S3IOTest {
     }
 
     @Test
-    @DisplayName("ThrottleTest 100")
-    public void ThrottleTest100() {
-        UploadS3ThrottleTest(100, 5000);
-    }
-
-    public void UploadS3ThrottleTest(int tps, int testCount) {
+    @DisplayName("UploadS3")
+    public void UploadS3() {
         new TestKit(actorSystem) {
             {
                 final ActorMaterializerSettings settings = ActorMaterializerSettings.create(actorSystem).withDispatcher("my-dispatcher-streamtest");
@@ -86,50 +83,62 @@ public class S3IOTest {
                 final Materializer materializer = ActorMaterializer.create(settings, actorSystem);
                 final TestKit probe = new TestKit(actorSystem);
 
-                tpsActor = actorSystem.actorOf(TpsMeasurementActor.Props(), "TpsActor");
-                tpsActor.tell(probe.getRef(), getRef());
-                expectMsg(Duration.ofSeconds(1), "done");
+                final Config config = actorSystem.settings().config().getConfig("alpakka.s3");
 
-                /* TODO : Flow 완성하기
-                final Source<ByteString, NotUsed> file = Source.single(ByteString.fromString(body()));
+                S3Settings s3Settings = S3Settings.create(config);
+                S3Ext s3Ext = S3Ext.get(actorSystem);
 
-                final Sink<ByteString, CompletionStage<MultipartUploadResult>> s3Sink =
-                        S3.multipartUpload(bucket(), bucketKey());
+                // 업로드할 데이터
+                final Source<ByteString, NotUsed> fileSource = Source.single(ByteString.fromString("Hello, S3!"));
 
-                 */
+                // S3 버킷 및 파일 이름 정의
+                String bucketName = "my-test-bucket";
+                String fileName = "test.txt";
 
-                // Source 생성
-                Source<Integer, NotUsed> source = Source.range(1, testCount);
 
-                // 병렬 처리를 위한 Flow 정의
-                final int parallelism = 450;
-                Flow<Integer, String, NotUsed> parallelFlow = Flow.<Integer>create().mapAsync(parallelism, S3IOTest::callApiAsync);
+                // S3에 파일 업로드
+                fileSource.runWith(S3.multipartUpload(bucketName, fileName)
+                                .withAttributes(S3Attributes.settings(s3Settings)), materializer)
+                        .thenAccept(result -> {
+                            System.out.println("Upload complete: " + result);
+                        })
+                        .exceptionally(throwable -> {
+                            System.err.println("Upload failed: " + throwable.getMessage());
+                            return null;
+                        });
 
-                // Buffer 설정 및 OverflowStrategy.backpressure 적용
-                int bufferSize = 100000;
-                Flow<Integer, Integer, NotUsed> backpressureFlow = Flow.<Integer>create().buffer(bufferSize, OverflowStrategy.backpressure());
+                // S3로부터 파일 다운로드
+                S3.download(bucketName, fileName)
+                        .withAttributes(S3Attributes.settings(s3Settings))
+                        .runWith(Sink.head(), materializer)
+                        .thenAccept(result -> {
+                            if (result.isPresent()) {
+                                Source<ByteString, ?> fileReadSource = result.get().first();
+                                fileReadSource.runForeach(data -> System.out.println(data.utf8String()), materializer)
+                                        .whenComplete((done, exc) -> {
+                                            if (exc != null) {
+                                                System.err.println("Download failed: " + exc.getMessage());
+                                            } else {
+                                                System.out.println("Download complete");
+                                            }
+                                            actorSystem.terminate();
+                                        });
+                            } else {
+                                System.err.println("File not found");
+                                actorSystem.terminate();
+                            }
+                        });
 
-                AtomicInteger processedCount = new AtomicInteger();
+                within(
+                        Duration.ofSeconds(5),
+                        () -> {
 
-                // Sink 정의
-                Sink<String, CompletionStage<Done>> sink = Sink.foreach(s -> {
-                    //처리완료
-                    processedCount.getAndIncrement();
-                    if (processedCount.getAcquire() % 10 == 0) {
-                        //System.out.println("Processed 10");
-                    }
-                });
 
-                System.out.println("Run backpressureFlow bufferSize:" + bufferSize);
+                            expectNoMessage(Duration.ofSeconds(5));
+                            return null;
+                        });
 
-                // RunnableGraph 생성 및 실행
-                source.via(backpressureFlow).throttle(tps, FiniteDuration.create(1, TimeUnit.SECONDS), tps, (ThrottleMode) ThrottleMode.shaping()).via(parallelFlow).to(sink).run(materializer);
 
-                within(Duration.ofSeconds(15), () -> {
-                    // Will wait for the rest of the 10 seconds
-                    expectNoMessage(Duration.ofSeconds(10));
-                    return null;
-                });
             }
         };
     }

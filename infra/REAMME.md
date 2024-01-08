@@ -71,6 +71,7 @@ docker-compose -f docker-compose-kafka.yml down
 
 docker-compose -f docker-compose-mysql.yml down
 
+docker-compose -f docker-compose-s3.yml down
 
 
 ```
