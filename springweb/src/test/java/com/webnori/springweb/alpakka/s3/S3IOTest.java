@@ -16,6 +16,7 @@ import akka.testkit.javadsl.TestKit;
 import akka.util.ByteString;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.webnori.springweb.example.akka.actors.HelloWorld;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
@@ -83,6 +84,10 @@ public class S3IOTest {
                 final Materializer materializer = ActorMaterializer.create(settings, actorSystem);
                 final TestKit probe = new TestKit(actorSystem);
 
+                final ActorRef greetActor = actorSystem.actorOf(HelloWorld.Props(), "HelloWorld");
+                greetActor.tell(probe.getRef(), getRef());
+                expectMsg(Duration.ofSeconds(1), "done");
+
                 final Config config = actorSystem.settings().config().getConfig("alpakka.s3");
 
                 S3Settings s3Settings = S3Settings.create(config);
@@ -92,15 +97,16 @@ public class S3IOTest {
                 final Source<ByteString, NotUsed> fileSource = Source.single(ByteString.fromString("Hello, S3!"));
 
                 // S3 버킷 및 파일 이름 정의
-                String bucketName = "my-test-bucket";
-                String fileName = "test.txt";
-
+                final String bucketName = "my-bucket";
+                final String key = "testKey";
+                final String fileName = "test/test.txt";
 
                 // S3에 파일 업로드
                 fileSource.runWith(S3.multipartUpload(bucketName, fileName)
                                 .withAttributes(S3Attributes.settings(s3Settings)), materializer)
                         .thenAccept(result -> {
                             System.out.println("Upload complete: " + result);
+                            greetActor.tell("hello", null);
                         })
                         .exceptionally(throwable -> {
                             System.err.println("Upload failed: " + throwable.getMessage());
@@ -120,12 +126,11 @@ public class S3IOTest {
                                                 System.err.println("Download failed: " + exc.getMessage());
                                             } else {
                                                 System.out.println("Download complete");
+                                                greetActor.tell("hello", null);
                                             }
-                                            actorSystem.terminate();
                                         });
                             } else {
                                 System.err.println("File not found");
-                                actorSystem.terminate();
                             }
                         });
 
@@ -133,12 +138,12 @@ public class S3IOTest {
                         Duration.ofSeconds(5),
                         () -> {
 
+                            probe.expectMsg(Duration.ofSeconds(3), "world");
 
-                            expectNoMessage(Duration.ofSeconds(5));
+                            expectNoMessage(Duration.ofSeconds(1));
+
                             return null;
                         });
-
-
             }
         };
     }
