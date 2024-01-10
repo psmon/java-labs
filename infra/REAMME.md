@@ -21,6 +21,7 @@ Kafka/Elastic Search 스택을 단순하게 구동하는것을 넘어 이것을 
 - Kafka UI 
 - ELK
 - Spark
+- AWS LocalStack (S3,Labda)
 
 로컬테스트에 따라 선택하여 구동할수 있습니다.  샘플에 의해 테스트되는 DB스키마의 DDL은 도커구동시 
 자동생성되며 init/firstsql.txt 에 스크립트 작성되어 있습니다.
@@ -59,7 +60,7 @@ docker-compose -f docker-compose-elk.yml up -d
 
 docker-compose -f docker-compose-spark.yml up -d
 
-## AWS simulator by LocalStack(s3)
+## AWS simulator by LocalStack
 
 docker-compose -f docker-compose-localstack.yml up -d
 
@@ -84,9 +85,11 @@ aws configure
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
       - AWS_DEFAULT_REGION=us-east-1
+```      
 
-// S3(LocalStack) Bucket 생성
+### S3
 
+```
 aws --endpoint-url=http://localhost:4567 s3api create-bucket --bucket mybucket --region us-east-1
 
 aws --endpoint-url=http://localhost:4567 s3api create-bucket --bucket my-bucket2 --region us-east-1
@@ -96,8 +99,43 @@ aws --endpoint-url=http://localhost:4567 s3api list-buckets
 aws --endpoint-url=http://localhost:4567 s3api list-object
 
 aws --endpoint-url=http://localhost:4567 s3 ls s3://my-bucket//
+```
+
+
+참고 : https://docs.localstack.cloud/references/filesystem/
+
+
+### lambda
+
+간단한 함수를 수행할때 서버리스 lambda 수행할수 있으며
+
+localstack 은 iam를 포함 서버기반 lambda를 수행할수 있습니다.
+
+#### Iam Role 설정
+```
+aws iam create-role --role-name lambda-ex --assume-role-policy-document '{"Version": "2012-10-17","Statement": [{ "Effect": "Allow", "Principal": {"Service": "lambda.amazonaws.com"}, "Action": "sts:AssumeRole"}]}' --endpoint-url=http://localhost:4567
+
+aws iam attach-role-policy --role-name lambda-ex --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole --endpoint-url=http://localhost:4567
+
 
 ```
+#### lambda 등록및 구동
+```
+zip function.zip index.js
+
+aws lambda create-function --function-name my-function \
+--zip-file fileb://function.zip --handler index.handler --runtime nodejs20.x \
+--role arn:aws:iam::123456789012:role/lambda-ex --endpoint-url=http://localhost:4567
+
+aws lambda invoke --function-name my-function out --log-type Tail --endpoint-url=http://localhost:4567
+
+aws lambda invoke --function-name my-function out --log-type Tail --endpoint-url=http://localhost:4567 \
+--query 'LogResult' --output text |  base64 -d
+```
+
+샘플은 node.js이며 다른언어로 진행할경우 참고
+
+링크 : https://docs.aws.amazon.com/ko_kr/lambda/latest/dg/python-handler.html
 
 ## Docker Build
 
