@@ -96,8 +96,7 @@ Webplux의 처리 수신 검증툴과 함께 TPS측정기를 탑재하여 Webplu
 ReactiveStream API를 이용하는경우 BackPresure를 다양한 구현방식으로 지원하기때문에 BufferSize 기본값이 무엇이며? 어떻게 작동하고 흐름을 조절할수 있는지? 파악하는것은 중요합니다.
 
 
+## 참고링크
+- https://medium.com/@BPandey/writing-unit-test-in-reactive-spring-boot-application-32b8878e2f57 - Webflux Test Kit
 
-link : https://github.com/psmon/java-labs/blob/master/springweb/src/test/java/com/webnori/springweb/webflux/BasicGuideTest.java
 
-
-여기서 상세하게 다루지 못한 내용은 다음 아티컬을 통해 주가정보를 획득할수 있습니다.

@@ -1,13 +1,11 @@
 package com.webnori.springweb.alpakka.s3;
 
-import akka.NotUsed;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.stream.ActorMaterializer;
 import akka.stream.ActorMaterializerSettings;
 import akka.stream.Materializer;
 import akka.stream.alpakka.s3.S3Attributes;
-import akka.stream.alpakka.s3.S3Ext;
 import akka.stream.alpakka.s3.S3Settings;
 import akka.stream.alpakka.s3.javadsl.S3;
 import akka.stream.javadsl.Sink;
@@ -22,10 +20,11 @@ import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.regions.Region;
 
 import java.time.Duration;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -39,7 +38,6 @@ import java.util.concurrent.Executors;
 public class S3IOTest {
 
     private static final Logger logger = LoggerFactory.getLogger(S3IOTest.class);
-    private static final String hello = "not another hello world";
     private static final Executor executor = Executors.newFixedThreadPool(450);
     private static ActorSystem actorSystem;
     private static ActorRef tpsActor;
@@ -58,25 +56,9 @@ public class S3IOTest {
         logger.info("========= sever loaded =========");
     }
 
-    private static CompletionStage<String> callApiAsync(Integer param) {
-        // CompletableFuture를 사용하여 비동기 처리 구현
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-
-                double dValue = Math.random();
-                int iValue = (int) (dValue * 1000);
-                Thread.sleep(iValue); // API 응답 시간을 시뮬레이션하기 위한 지연
-                tpsActor.tell("CompletedEvent", ActorRef.noSender());
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-            return "Response for " + param;
-        }, executor);
-    }
-
     @Test
-    @DisplayName("UploadS3")
-    public void UploadS3() {
+    @DisplayName("UploadAndDownLoadS3")
+    public void UploadAndDownLoadS3() {
         new TestKit(actorSystem) {
             {
                 final ActorMaterializerSettings settings = ActorMaterializerSettings.create(actorSystem).withDispatcher("my-dispatcher-streamtest");
@@ -88,50 +70,56 @@ public class S3IOTest {
                 greetActor.tell(probe.getRef(), getRef());
                 expectMsg(Duration.ofSeconds(1), "done");
 
+                // AWS S3 Config - test.conf 참고
                 final Config config = actorSystem.settings().config().getConfig("alpakka.s3");
 
-                S3Settings s3Settings = S3Settings.create(config);
-                S3Ext s3Ext = S3Ext.get(actorSystem);
+                // 기존 Config를 사용하여 S3Settings 인스턴스 생성
+                S3Settings initialSettings = S3Settings.create(config);
 
-                // 업로드할 데이터
-                final Source<ByteString, NotUsed> fileSource = Source.single(ByteString.fromString("Hello, S3!"));
+                // 원하는 리전으로 S3Settings 수정
+                Region desiredRegion = Region.US_EAST_1;  // 예시로 'us-west-2' 리전 사용
+                S3Settings s3Settings = initialSettings.withS3RegionProvider(() -> desiredRegion);
+
 
                 // S3 버킷 및 파일 이름 정의
                 final String bucketName = "my-bucket";
-                final String key = "testKey";
-                final String fileName = "test/test.txt";
+                final String fileKey = "example.txt";
 
-                // S3에 파일 업로드
-                fileSource.runWith(S3.multipartUpload(bucketName, fileName)
-                                .withAttributes(S3Attributes.settings(s3Settings)), materializer)
-                        .thenAccept(result -> {
-                            System.out.println("Upload complete: " + result);
+                System.out.println("Try Upload");
+
+                Source<ByteString, ?> byteSource = Source.single(ByteString.fromString("file contents"));
+
+                byteSource
+                    .runWith(S3.multipartUpload(bucketName, fileKey)
+                            .withAttributes(S3Attributes.settings(s3Settings)), materializer)
+                    .thenAccept(result -> {
+                        System.out.println("Upload complete: " + result.location());
+                        greetActor.tell("hello", null);
+                    })
+                    .exceptionally(throwable -> {
+                        System.err.println("Upload failed: " + throwable.getMessage());
+                        return  null;
+                    });
+
+                System.out.println("Wait for UploadCompleted");
+
+                // 액터 수신확인을 통한 완료검증~
+                probe.expectMsg(Duration.ofSeconds(3), "world");
+
+                System.out.println("Try Download");
+
+                // 파일 다운로드
+                S3.download(bucketName, fileKey)
+                        .withAttributes(S3Attributes.settings(s3Settings))
+                        .runWith(Sink.head(), materializer)
+                        .thenApply(opt -> opt.orElseThrow(() -> new RuntimeException("File not found")))
+                        .thenAccept(bytes ->{
+                            System.out.println("Download complete: " + bytes.toString());
                             greetActor.tell("hello", null);
                         })
                         .exceptionally(throwable -> {
                             System.err.println("Upload failed: " + throwable.getMessage());
-                            return null;
-                        });
-
-                // S3로부터 파일 다운로드
-                S3.download(bucketName, fileName)
-                        .withAttributes(S3Attributes.settings(s3Settings))
-                        .runWith(Sink.head(), materializer)
-                        .thenAccept(result -> {
-                            if (result.isPresent()) {
-                                Source<ByteString, ?> fileReadSource = result.get().first();
-                                fileReadSource.runForeach(data -> System.out.println(data.utf8String()), materializer)
-                                        .whenComplete((done, exc) -> {
-                                            if (exc != null) {
-                                                System.err.println("Download failed: " + exc.getMessage());
-                                            } else {
-                                                System.out.println("Download complete");
-                                                greetActor.tell("hello", null);
-                                            }
-                                        });
-                            } else {
-                                System.err.println("File not found");
-                            }
+                            return  null;
                         });
 
                 within(
@@ -147,4 +135,94 @@ public class S3IOTest {
             }
         };
     }
+
+    @Test
+    @DisplayName("UploadAndDownLoadS3Throttle10")
+    public void UploadAndDownLoadS3Throttle10() {
+        new TestKit(actorSystem) {
+            {
+                final ActorMaterializerSettings settings = ActorMaterializerSettings.create(actorSystem).withDispatcher("my-dispatcher-streamtest");
+
+                final Materializer materializer = ActorMaterializer.create(settings, actorSystem);
+                final TestKit probe = new TestKit(actorSystem);
+
+                final ActorRef greetActor = actorSystem.actorOf(HelloWorld.Props(), "HelloWorld");
+                greetActor.tell(probe.getRef(), getRef());
+                expectMsg(Duration.ofSeconds(1), "done");
+
+                // AWS S3 Config - test.conf 참고
+                final Config config = actorSystem.settings().config().getConfig("alpakka.s3");
+
+                // 기존 Config를 사용하여 S3Settings 인스턴스 생성
+                S3Settings initialSettings = S3Settings.create(config);
+
+                // 원하는 리전으로 S3Settings 수정
+                Region desiredRegion = Region.US_EAST_1;  // 예시로 'us-west-2' 리전 사용
+                S3Settings s3Settings = initialSettings.withS3RegionProvider(() -> desiredRegion);
+
+                int processCouuntPerSec = 1;
+                int testCount = 10;
+
+                // S3 버킷 및 파일 이름 정의
+                final String bucketName = "my-bucket";
+                final String fileKey = "example.txt";
+
+                System.out.println("Try Upload");
+
+                List<ByteString> byteStrings = new ArrayList<>();
+                for (int i = 0; i < testCount; i++) {
+                    byteStrings.add(ByteString.fromString("file contents " + i));
+                }
+
+                Source<ByteString, ?> byteSource = Source.from(byteStrings);
+
+                byteSource
+                        .throttle(processCouuntPerSec, Duration.ofSeconds(1))
+                        .runWith(S3.multipartUpload(bucketName, fileKey)
+                                .withAttributes(S3Attributes.settings(s3Settings)), materializer)
+                        .thenAccept(result -> {
+                            System.out.println("Upload complete: " + result.location());
+                            greetActor.tell("hello", null);
+                        })
+                        .exceptionally(throwable -> {
+                            System.err.println("Upload failed: " + throwable.getMessage());
+                            return  null;
+                        });
+
+                System.out.println("Wait for UploadCompleted");
+
+                // 액터 수신검증을 이용 완료검증
+                probe.expectMsg(Duration.ofSeconds(15), "world");
+
+                System.out.println("Try Download");
+
+                // 파일 다운로드
+                S3.download(bucketName, fileKey)
+                        .withAttributes(S3Attributes.settings(s3Settings))
+                        .runWith(Sink.head(), materializer)
+                        .thenApply(opt -> opt.orElseThrow(() -> new RuntimeException("File not found")))
+                        .thenAccept(bytes ->{
+                            System.out.println("Download complete: " + bytes.toString());
+                            greetActor.tell("hello", null);
+                        })
+                        .exceptionally(throwable -> {
+                            System.err.println("Upload failed: " + throwable.getMessage());
+                            return  null;
+                        });
+
+                within(
+                        // 테스트 최대시간은 설정 : 이시간을 초과하면 유닛테스트 실패
+                        Duration.ofSeconds(2 * testCount),
+                        () -> {
+
+                            probe.expectMsg(Duration.ofSeconds(3), "world");
+
+                            expectNoMessage(Duration.ofSeconds(1));
+
+                            return null;
+                        });
+            }
+        };
+    }
+
 }

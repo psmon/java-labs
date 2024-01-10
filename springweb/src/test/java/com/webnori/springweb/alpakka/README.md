@@ -217,7 +217,6 @@ for (int i = 0; i < testCount; i++) {
 - https://blog.rockthejvm.com/akka-streams-graphs/ - Akka Streams Graphs
 - https://doc.akka.io/docs/alpakka/current/index.html - AkkaStream을 ReactiveStream을 준수하는 모든 Stack에 연결하는 Akka 서브프로젝트
 - https://doc.akka.io/docs/akka/current/testing.html - Akka Test Tool Kit
-- https://medium.com/@BPandey/writing-unit-test-in-reactive-spring-boot-application-32b8878e2f57 - Webflux Test Kit
 - https://wiki.webnori.com/display/AKKA/Terminology - 동시성 처리와 병렬처리의 차이점
 - https://wiki.webnori.com/pages/viewpage.action?pageId=94240901 - 분산처리를 다루는 개발자가 AKKA를 학습하면 도움되는 이유 (도입을 하지 않더라도~)
 - https://wiki.webnori.com/pages/viewpage.action?pageId=94240903 - 빠른 생산자와 느린소비자 - API호출편

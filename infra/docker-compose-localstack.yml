@@ -1,20 +1,22 @@
 version: '3'
 services:
   localstack:
-    image: localstack/localstack:1.0.4
+    image: localstack/localstack:3.0.2
     ports:
           - "4567:4566"
     environment:
       - SERVICES=s3:4566
       - HOSTNAME=localstack
       - HOSTNAME_EXTERNAL=localstack
-      - DEFAULT_REGION=us-east-2
+      - DEFAULT_REGION=us-east-1      
   aws-cli:
     image: amazon/aws-cli
     depends_on:
       - localstack
     volumes:
-      - ./testbucket:/aws
+      - ./testbucket:/aws      
+      - /opt/localstack:/tmp/localstack-s3-storage
+      - "/var/run/docker.sock:/var/run/docker.sock"
     environment:
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test

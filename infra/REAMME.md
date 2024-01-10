@@ -59,9 +59,9 @@ docker-compose -f docker-compose-elk.yml up -d
 
 docker-compose -f docker-compose-spark.yml up -d
 
-## AWS S3 simulator
+## AWS simulator by LocalStack(s3)
 
-docker-compose -f docker-compose-s3.yml up -d
+docker-compose -f docker-compose-localstack.yml up -d
 
 # Down
 
@@ -71,8 +71,31 @@ docker-compose -f docker-compose-kafka.yml down
 
 docker-compose -f docker-compose-mysql.yml down
 
-docker-compose -f docker-compose-s3.yml down
+docker-compose -f docker-compose-localstack.yml down
 
+
+```
+
+## AWS CLI Tool
+
+```
+// AWS TestKey 설정
+aws configure
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+
+// S3(LocalStack) Bucket 생성
+
+aws --endpoint-url=http://localhost:4567 s3api create-bucket --bucket mybucket --region us-east-1
+
+aws --endpoint-url=http://localhost:4567 s3api create-bucket --bucket my-bucket2 --region us-east-1
+
+aws --endpoint-url=http://localhost:4567 s3api list-buckets
+
+aws --endpoint-url=http://localhost:4567 s3api list-object
+
+aws --endpoint-url=http://localhost:4567 s3 ls s3://my-bucket//
 
 ```
 
