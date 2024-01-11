@@ -26,6 +26,8 @@ import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.regions.Region;
 
 import java.time.Duration;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -95,16 +97,16 @@ public class S3IOTest {
                 Source<ByteString, ?> byteSource = Source.single(ByteString.fromString("file contents"));
 
                 byteSource
-                    .runWith(S3.multipartUpload(bucketName, fileKey)
-                            .withAttributes(S3Attributes.settings(s3Settings)), materializer)
-                    .thenAccept(result -> {
-                        System.out.println("Upload complete: " + result.location());
-                        greetActor.tell("hello", null);
-                    })
-                    .exceptionally(throwable -> {
-                        System.err.println("Upload failed: " + throwable.getMessage());
-                        return  null;
-                    });
+                        .runWith(S3.multipartUpload(bucketName, fileKey)
+                                .withAttributes(S3Attributes.settings(s3Settings)), materializer)
+                        .thenAccept(result -> {
+                            System.out.println("Upload complete: " + result.location());
+                            greetActor.tell("hello", null);
+                        })
+                        .exceptionally(throwable -> {
+                            System.err.println("Upload failed: " + throwable.getMessage());
+                            return null;
+                        });
 
                 System.out.println("Wait for UploadCompleted");
 
@@ -118,13 +120,13 @@ public class S3IOTest {
                         .withAttributes(S3Attributes.settings(s3Settings))
                         .runWith(Sink.head(), materializer)
                         .thenApply(opt -> opt.orElseThrow(() -> new RuntimeException("File not found")))
-                        .thenAccept(bytes ->{
+                        .thenAccept(bytes -> {
                             System.out.println("Download complete: " + bytes.toString());
                             greetActor.tell("hello", null);
                         })
                         .exceptionally(throwable -> {
                             System.err.println("Upload failed: " + throwable.getMessage());
-                            return  null;
+                            return null;
                         });
 
                 within(
@@ -181,25 +183,27 @@ public class S3IOTest {
                 Source<Pair<ByteString, Long>, ?> uploadSource = byteSource.zipWithIndex();
 
                 uploadSource
-                    .throttle(processCouuntPerSec, Duration.ofSeconds(1))
-                            .runForeach(pair -> {
-                                ByteString byteString = pair.first();
-                                long index = pair.second();
-                                String dynamicFileKey = fileKey + index; // fileKey에 인덱스를 추가하여 고유한 파일 이름 생성
+                        .throttle(processCouuntPerSec, Duration.ofSeconds(1))
+                        .runForeach(pair -> {
+                            ByteString byteString = pair.first();
+                            long index = pair.second();
+                            String dynamicFileKey = fileKey + index; // fileKey에 인덱스를 추가하여 고유한 파일 이름 생성
 
-                                Source.single(byteString)
-                                .runWith(S3.multipartUpload(bucketName, dynamicFileKey)
-                                        .withAttributes(S3Attributes.settings(s3Settings)), materializer)
-                                .thenAccept(result -> {
-                                    System.out.println("Upload complete: " + result.location());
-                                    greetActor.tell("hello", null);
-                                })
-                                .exceptionally(throwable -> {
-                                    System.err.println("Upload failed: " + throwable.getMessage());
-                                    return  null;
-                                });
-                            }, materializer);
-
+                            Source.single(byteString)
+                                    .runWith(S3.multipartUpload(bucketName, dynamicFileKey)
+                                            .withAttributes(S3Attributes.settings(s3Settings)), materializer)
+                                    .thenAccept(result -> {
+                                        LocalTime now = LocalTime.now();
+                                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+                                        String formatedNow = now.format(formatter);
+                                        System.out.println(formatedNow + " Upload complete: " + result.location());
+                                        greetActor.tell("hello", null);
+                                    })
+                                    .exceptionally(throwable -> {
+                                        System.err.println("Upload failed: " + throwable.getMessage());
+                                        return null;
+                                    });
+                        }, materializer);
 
                 System.out.println("Wait for UploadCompleted");
 
@@ -224,8 +228,11 @@ public class S3IOTest {
 
                             download.thenAccept(optionalSourcePair -> {
                                         optionalSourcePair.ifPresent(sourcePair -> {
+                                            LocalTime now = LocalTime.now();
+                                            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+                                            String formatedNow = now.format(formatter);
                                             Source<ByteString, ?> downloadbyteSource = sourcePair.first();
-                                            downloadbyteSource.runWith(Sink.foreach(byteString -> System.out.println("Downloaded: " + byteString.utf8String())), materializer);
+                                            downloadbyteSource.runWith(Sink.foreach(byteString -> System.out.println(formatedNow + " Downloaded: " + dynamicFileKey)), materializer);
                                             greetActor.tell("hello", null);
                                         });
                                     })
