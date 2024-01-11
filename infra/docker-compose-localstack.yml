@@ -6,9 +6,7 @@ services:
           - "4567:4566"
     environment:
       - SERVICES=s3:4566
-      - HOSTNAME=localstack
-      - HOSTNAME_EXTERNAL=localstack
-      - DEFAULT_REGION=us-east-1      
+      - HOSTNAME=localstack      
   aws-cli:
     image: amazon/aws-cli
     depends_on:
@@ -20,7 +18,7 @@ services:
     environment:
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
-      - AWS_DEFAULT_REGION=us-east-2
+      - AWS_DEFAULT_REGION=us-east-1
     entrypoint: /bin/sh -c
     command: >
       "
