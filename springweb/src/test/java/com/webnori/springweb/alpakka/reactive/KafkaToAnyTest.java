@@ -25,9 +25,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.webnori.springweb.akka.utils.actor.MessageCofirmActor;
 import com.webnori.springweb.alpakka.reactive.models.S3TestJsonModel;
 import com.webnori.springweb.alpakka.reactive.models.S3TestModel;
-import com.webnori.springweb.example.akka.actors.HelloWorld;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
@@ -55,21 +55,23 @@ import java.util.concurrent.CompletionStage;
 
 import static org.junit.Assert.assertEquals;
 
-// 
-// http://localhost:8989/
-
 /**
- * TestClass : KafkaTest
- * 목표 : Akka의 Stream을 이용해 카프카를 리액티스 스트림하게 이용
- * 참고 링크 : https://doc.akka.io/docs/alpakka-kafka/current/producer.html
+ * TestClass : KafkaToAnyTest
+ * 목표 : Kafka에서 이벤트가 시작하여 ReactiveStream을 준수하는 스펙의 종착지까지 흘려보내는 Test입니다.
+ * 참고 링크 :
+ * - https://www.reactive-streams.org/
+ * - https://doc.akka.io/docs/alpakka/current/index.html
  */
 
-public class KafkaToS3Test {
+public class KafkaToAnyTest {
 
-    private static final Logger logger = LoggerFactory.getLogger(KafkaToS3Test.class);
+    private static final Logger logger = LoggerFactory.getLogger(KafkaToAnyTest.class);
     private static final String hello = "not another hello world";
     private static ActorSystem actorSystem;
-    String testTopicName = "s3test";
+
+    // KAFKA-TOPIC 클린테스트로 테스트가 한번이라도 꼬이면~ TOPIC초기화를 해주세요!
+    // test.conf - akka.kafka.committer 정책참고
+    private String testTopicName = "s3test";
     private int consumeCnt1 = 0;
     private int consumeCnt2 = 0;
 
@@ -89,7 +91,8 @@ public class KafkaToS3Test {
         logger.info("========= sever loaded =========");
     }
 
-    public static ByteString serializeGenericRecordToByteString(GenericRecord record) throws IOException {
+    //  Paqrquet를 ByteString 으로 변환
+    private ByteString serializeGenericRecordToByteString(GenericRecord record) throws IOException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(outputStream, null);
         DatumWriter<GenericRecord> writer = new SpecificDatumWriter<>(record.getSchema());
@@ -102,12 +105,8 @@ public class KafkaToS3Test {
         return ByteString.fromArray(serializedBytes);
     }
 
-    CompletionStage<String> business(String key, String value) {
-        System.out.printf("business with Key-Value : %s-%s%n", key, value);
-        return null;
-    }
-
-    void debugKafkaMsg(String key, String value, ActorRef greet, String testKey, String consumerId) {
+    // Kafka 수신 메시지 Debug및, 수신검증
+    private void debugKafkaMsg(String key, String value, ActorRef greet, String testKey, String consumerId) {
         if (consumerId.equals("consumer1")) {
             consumeCnt1++;
         } else if (consumerId.equals("consumer2")) {
@@ -117,37 +116,46 @@ public class KafkaToS3Test {
         System.out.printf("[%s] Kafka with Key-Value : %s-%s Count[1:%d/2:%d] %n", consumerId, key, value, consumeCnt1, consumeCnt2);
 
         //테스트키 동일한것만 카운트 확인..(테스트마다 Kafka고유키 사용)
-        if (testKey.equals(key)) greet.tell("hello", null);
+        if (testKey.equals(key)) greet.tell("kafkaOK", null);
 
     }
+
+    /* Test - ProduceAndConsumeToS3AreOK
+
+
+
+
+     */
 
     @Test
     @DisplayName("ProduceAndConsumeToS3AreOK")
     public void ProduceAndConsumeToS3AreOK() {
         new TestKit(actorSystem) {
             {
+                // Test System
                 final ActorMaterializerSettings settings = ActorMaterializerSettings.create(actorSystem).withDispatcher("my-dispatcher-streamtest");
                 final Materializer materializer = ActorMaterializer.create(settings, actorSystem);
 
-                // AkkaStream Setup
                 final TestKit probe = new TestKit(actorSystem);
-                final ActorRef greetActor = actorSystem.actorOf(HelloWorld.Props(), "HelloWorld");
+                final ActorRef confirmActor = actorSystem.actorOf(MessageCofirmActor.Props(), "confirmActor");
 
                 final String testKey = java.util.UUID.randomUUID().toString();
                 final String testKafkaServer = "localhost:9092";
                 final String testGroup = "group1";
 
-                greetActor.tell(probe.getRef(), getRef());
+                confirmActor.tell(probe.getRef(), getRef());
                 expectMsg(Duration.ofSeconds(1), "done");
 
-                // Policy
+                // Test Policy
                 final int testCount = 1000;
                 final int maxEntityPerFile = 50;
                 final String fileName = "s3testfile-";
                 final int[] curFileIdx = {0};
                 int expectedFileCount = 1000 / maxEntityPerFile;
 
-                // Avro 스키마 정의
+                // Given Configs....
+
+                // Avro Schema
                 String schemaString = "{\"namespace\": \"com.example\", " +
                         "\"type\": \"record\", " +
                         "\"name\": \"S3TestModel\", " +
@@ -166,14 +174,13 @@ public class KafkaToS3Test {
                 // JSON변환 객체 - 멀티스레드(동시성)에 안전한 객체이지만, 구성변경시 주의
                 ObjectMapper mapper = new ObjectMapper();
 
-                // producerConfig
+                // Producer Config
                 final Config producerConfig = actorSystem.settings().config().getConfig("akka.kafka.producer");
                 final ProducerSettings<String, String> producerSettings =
                         ProducerSettings.create(producerConfig, new StringSerializer(), new StringSerializer())
                                 .withBootstrapServers(testKafkaServer);
 
-                // conSumeConfig
-
+                // ConSumer Config
                 final Config conSumeConfig = actorSystem.settings().config().getConfig("akka.kafka.consumer");
                 final ConsumerSettings<String, String> consumerSettings =
                         ConsumerSettings.create(conSumeConfig, new StringDeserializer(), new StringDeserializer())
@@ -183,7 +190,7 @@ public class KafkaToS3Test {
                                 .withProperty(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "3000")
                                 .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
-                //Consumer Flow
+                // Flow - Consumer
                 Consumer
                         .plainSource(
                                 consumerSettings,
@@ -205,6 +212,7 @@ public class KafkaToS3Test {
 
                             group.forEach(msg -> {
                                 try {
+                                    // AnyJson을 처리할수 있는~ S3TestModel
                                     S3TestModel obj = mapper.readValue(msg.value(), S3TestModel.class);
                                     record.put("name", obj.name);
                                     record.put("jsonValue", obj.jsonValue);
@@ -212,7 +220,7 @@ public class KafkaToS3Test {
                                 } catch (JsonProcessingException e) {
                                     throw new RuntimeException(e);
                                 }
-                                debugKafkaMsg(msg.key(), msg.value(), greetActor, testKey, "consumer1");
+                                debugKafkaMsg(msg.key(), msg.value(), confirmActor, testKey, "consumer1");
                             });
 
                             ByteString byteString = serializeGenericRecordToByteString(record);
@@ -225,7 +233,7 @@ public class KafkaToS3Test {
                                         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
                                         String formatedNow = now.format(formatter);
                                         System.out.println(formatedNow + " Upload complete: " + result.location());
-                                        greetActor.tell("hello", null);
+                                        confirmActor.tell("s3UploadOK", null);
                                     })
                                     .exceptionally(throwable -> {
                                         System.err.println("Upload failed: " + throwable.getMessage());
@@ -234,7 +242,7 @@ public class KafkaToS3Test {
                         }))
                         .run(actorSystem);
 
-                //Producer Flow
+                // Flow - Producer
                 CompletionStage<Done> done =
                         Source.range(1, testCount)
                                 .map(number -> {
@@ -263,7 +271,7 @@ public class KafkaToS3Test {
                                     System.out.println("생산완료")
                             );
 
-                            //For Clean Test - 3초후 메시지생성
+                            //For Waitfor Safe Test - 소비자가 셋업되기 전에, 생산이 먼저시작하는 케이스 방지!
                             expectNoMessage(Duration.ofSeconds(3));
 
                             // Kafka 생산시작
@@ -271,12 +279,12 @@ public class KafkaToS3Test {
 
                             // Kafka 소비 메시지 확인(100)
                             for (int i = 0; i < testCount; i++) {
-                                probe.expectMsg(Duration.ofSeconds(5), "world");
+                                probe.expectMsg(Duration.ofSeconds(5), "kafkaOK");
                             }
 
                             // Upload 확인
                             for (int i = 0; i < curFileIdx[0]; i++) {
-                                probe.expectMsg(Duration.ofSeconds(5), "world");
+                                probe.expectMsg(Duration.ofSeconds(5), "s3UploadOK");
                             }
 
                             System.out.println(" Upload complete - count:" + curFileIdx[0]);
@@ -302,7 +310,7 @@ public class KafkaToS3Test {
                                                         String formatedNow = now.format(formatter);
                                                         Source<ByteString, ?> downloadbyteSource = sourcePair.first();
                                                         downloadbyteSource.runWith(Sink.foreach(byteString -> System.out.println(formatedNow + " Downloaded: " + dynamicFileKey)), materializer);
-                                                        greetActor.tell("hello", null);
+                                                        confirmActor.tell("s3DownloadOK", null);
                                                     });
                                                 })
                                                 .exceptionally(throwable -> {
@@ -313,10 +321,10 @@ public class KafkaToS3Test {
 
                             // Download 확인
                             for (int i = 0; i < curFileIdx[0]; i++) {
-                                probe.expectMsg(Duration.ofSeconds(5), "world");
+                                probe.expectMsg(Duration.ofSeconds(5), "s3DownloadOK");
                             }
 
-                            // 추가 이벤트가 없는지 확인후 TEST Clean 종료
+                            // 추가 이벤트가 없는지 확인후 TEST 종료 for CleanTest.
                             expectNoMessage(Duration.ofSeconds(1));
 
                             return null;
