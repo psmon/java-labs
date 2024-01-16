@@ -61,6 +61,12 @@ import static org.junit.Assert.assertEquals;
  * 참고 링크 :
  * - https://www.reactive-streams.org/
  * - https://doc.akka.io/docs/alpakka/current/index.html
+ *
+ * 준비 로컬 인프라 명령어
+ * kafka : docker-compose -f docker-compose-kafka.yml up -d
+ *  > s3test Topic 수동생성필요
+ * aws s3 : docker-compose -f docker-compose-localstack.yml up -d
+ *  > us-east-1 / my-bucket 자동생성됨
  */
 
 public class KafkaToAnyTest {
@@ -120,10 +126,17 @@ public class KafkaToAnyTest {
 
     }
 
-    /* Test - ProduceAndConsumeToS3AreOK
+    /* ProduceAndConsumeToS3AreOK 테스트 시나리오
 
++--------------+        +--------------+       +--------------+      +--------------+     +--------------+
+|              |        |              |       |              |      |              |     |              |
+|  Kafka       |        |  Kafka       |       |   Flow       |      | S3 Upload    |     | S3 DownLoad  |
+|  (Producer)  |------->|  (Consumer)  |------>|   Convert    |----->|              |---->|              |
+|              |        |              |       |   Pqrquet    |      |              |     |              |
+|              |        |              |       |              |      |              |     |              |
++--------------+        +--------------+       +--------------+      +--------------+     +--------------+
 
-
+  JSON 이벤트를 N개 발생  ->    수신검증    ->     N개씩 파일묶음처리   ->    N개파일 업로드검증  ->  N개파일 다운로드검증및 데이터 변환검증
 
      */
 
@@ -164,8 +177,6 @@ public class KafkaToAnyTest {
                         "{\"name\": \"jsonValue\", \"type\": \"string\"}" +
                         "]}";
 
-
-                // s3 Config
                 // AWS S3 Config - test.conf 참고
                 final Config config = actorSystem.settings().config().getConfig("alpakka.s3");
                 S3Settings s3Settings = S3Settings.create(config);
@@ -190,7 +201,28 @@ public class KafkaToAnyTest {
                                 .withProperty(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "3000")
                                 .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
-                // Flow - Consumer
+                // CompletionStage - Producer
+                CompletionStage<Done> producerStage =
+                        Source.range(1, testCount)
+                                .map(number -> {
+                                    // JSON형태의 다양한 수십소스
+                                    S3TestJsonModel s3TestJsonModel = new S3TestJsonModel();
+                                    s3TestJsonModel.count = number;
+                                    String jsonOriginData = mapper.writeValueAsString(s3TestJsonModel);
+
+                                    // 원본유지를 위한 정의모델
+                                    S3TestModel s3TestModel = new S3TestModel();
+                                    s3TestModel.jsonValue = jsonOriginData;
+                                    String jsonSendData = mapper.writeValueAsString(s3TestModel);
+
+                                    return jsonSendData;
+                                })
+                                .map(value -> new ProducerRecord<String, String>(testTopicName, testKey, value))
+                                .runWith(Producer.plainSink(producerSettings), actorSystem);
+
+                Source<Done, NotUsed> producerFlow = Source.completionStage(producerStage);
+
+                // Runable - Consumer
                 Consumer
                         .plainSource(
                                 consumerSettings,
@@ -242,27 +274,6 @@ public class KafkaToAnyTest {
                         }))
                         .run(actorSystem);
 
-                // Flow - Producer
-                CompletionStage<Done> done =
-                        Source.range(1, testCount)
-                                .map(number -> {
-                                    // JSON형태의 다양한 수십소스
-                                    S3TestJsonModel s3TestJsonModel = new S3TestJsonModel();
-                                    s3TestJsonModel.count = number;
-                                    String jsonOriginData = mapper.writeValueAsString(s3TestJsonModel);
-
-                                    // 원본유지를 위한 정의모델
-                                    S3TestModel s3TestModel = new S3TestModel();
-                                    s3TestModel.jsonValue = jsonOriginData;
-                                    String jsonSendData = mapper.writeValueAsString(s3TestModel);
-
-                                    return jsonSendData;
-                                })
-                                .map(value -> new ProducerRecord<String, String>(testTopicName, testKey, value))
-                                .runWith(Producer.plainSink(producerSettings), actorSystem);
-
-                Source<Done, NotUsed> source = Source.completionStage(done);
-
                 within(
                         Duration.ofSeconds(30),
                         () -> {
@@ -275,7 +286,7 @@ public class KafkaToAnyTest {
                             expectNoMessage(Duration.ofSeconds(3));
 
                             // Kafka 생산시작
-                            source.runWith(sink, actorSystem);
+                            producerFlow.runWith(sink, actorSystem);
 
                             // Kafka 소비 메시지 확인(100)
                             for (int i = 0; i < testCount; i++) {
