@@ -17,6 +17,8 @@ import akka.stream.alpakka.s3.ObjectMetadata;
 import akka.stream.alpakka.s3.S3Attributes;
 import akka.stream.alpakka.s3.S3Settings;
 import akka.stream.alpakka.s3.javadsl.S3;
+import akka.stream.javadsl.Flow;
+import akka.stream.javadsl.Keep;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
 import akka.testkit.javadsl.TestKit;
@@ -74,9 +76,6 @@ public class KafkaToAnyTest {
     private static final Logger logger = LoggerFactory.getLogger(KafkaToAnyTest.class);
     private static final String hello = "not another hello world";
     private static ActorSystem actorSystem;
-
-    // KAFKA-TOPIC 클린테스트로 테스트가 한번이라도 꼬이면~ TOPIC초기화를 해주세요!
-    // test.conf - akka.kafka.committer 정책참고
     private String testTopicName = "s3test";
     private int consumeCnt1 = 0;
     private int consumeCnt2 = 0;
@@ -110,9 +109,8 @@ public class KafkaToAnyTest {
         byte[] serializedBytes = outputStream.toByteArray();
         return ByteString.fromArray(serializedBytes);
     }
-
-    // Kafka 수신 메시지 Debug및, 수신검증
-    private void debugKafkaMsg(String key, String value, ActorRef greet, String testKey, String consumerId) {
+    private void debugKafkaMsgAndConfirm(String key, String value, ActorRef greet, String testKey, String consumerId) {
+        // Consumer Distributed Balance Monitor
         if (consumerId.equals("consumer1")) {
             consumeCnt1++;
         } else if (consumerId.equals("consumer2")) {
@@ -121,7 +119,6 @@ public class KafkaToAnyTest {
 
         System.out.printf("[%s] Kafka with Key-Value : %s-%s Count[1:%d/2:%d] %n", consumerId, key, value, consumeCnt1, consumeCnt2);
 
-        //테스트키 동일한것만 카운트 확인..(테스트마다 Kafka고유키 사용)
         if (testKey.equals(key)) greet.tell("kafkaOK", null);
 
     }
@@ -201,26 +198,25 @@ public class KafkaToAnyTest {
                                 .withProperty(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "3000")
                                 .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
-                // CompletionStage - Producer
-                CompletionStage<Done> producerStage =
-                        Source.range(1, testCount)
-                                .map(number -> {
-                                    // JSON형태의 다양한 수십소스
-                                    S3TestJsonModel s3TestJsonModel = new S3TestJsonModel();
-                                    s3TestJsonModel.count = number;
-                                    String jsonOriginData = mapper.writeValueAsString(s3TestJsonModel);
 
-                                    // 원본유지를 위한 정의모델
-                                    S3TestModel s3TestModel = new S3TestModel();
-                                    s3TestModel.jsonValue = jsonOriginData;
-                                    String jsonSendData = mapper.writeValueAsString(s3TestModel);
+                Source<String, NotUsed> sourceJson = Source.range(1, testCount)
+                        .map(number -> {
+                            // JSON 형태의 다양한 소스
+                            S3TestJsonModel s3TestJsonModel = new S3TestJsonModel();
+                            s3TestJsonModel.count = number;
+                            String jsonOriginData = mapper.writeValueAsString(s3TestJsonModel);
 
-                                    return jsonSendData;
-                                })
-                                .map(value -> new ProducerRecord<String, String>(testTopicName, testKey, value))
-                                .runWith(Producer.plainSink(producerSettings), actorSystem);
+                            // 원본 유지를 위한 정의 모델
+                            S3TestModel s3TestModel = new S3TestModel();
+                            s3TestModel.jsonValue = jsonOriginData;
+                            return mapper.writeValueAsString(s3TestModel);
+                        });
 
-                Source<Done, NotUsed> producerFlow = Source.completionStage(producerStage);
+                Flow<String, ProducerRecord<String, String>, NotUsed> flowProducer = Flow.of(String.class)
+                        .map(value -> new ProducerRecord<>(testTopicName, testKey, value));
+
+                Sink<ProducerRecord<String, String>, CompletionStage<Done>> sinkProducer = Producer.plainSink(producerSettings);
+
 
                 // Runable - Consumer
                 Consumer
@@ -252,7 +248,7 @@ public class KafkaToAnyTest {
                                 } catch (JsonProcessingException e) {
                                     throw new RuntimeException(e);
                                 }
-                                debugKafkaMsg(msg.key(), msg.value(), confirmActor, testKey, "consumer1");
+                                debugKafkaMsgAndConfirm(msg.key(), msg.value(), confirmActor, testKey, "consumer1");
                             });
 
                             ByteString byteString = serializeGenericRecordToByteString(record);
@@ -278,15 +274,11 @@ public class KafkaToAnyTest {
                         Duration.ofSeconds(30),
                         () -> {
 
-                            Sink<Done, CompletionStage<Done>> sink = Sink.foreach(i ->
-                                    System.out.println("생산완료")
-                            );
-
                             //For Waitfor Safe Test - 소비자가 셋업되기 전에, 생산이 먼저시작하는 케이스 방지!
                             expectNoMessage(Duration.ofSeconds(3));
 
                             // Kafka 생산시작
-                            producerFlow.runWith(sink, actorSystem);
+                            sourceJson.via(flowProducer).toMat(sinkProducer, Keep.right()).run(materializer);
 
                             // Kafka 소비 메시지 확인(100)
                             for (int i = 0; i < testCount; i++) {
