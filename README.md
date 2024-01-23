@@ -20,6 +20,26 @@ Akka/Webplux를 포함 다양한 오픈스택(Kafka/Spark Stream)등을  Reactiv
 - https://www.jetbrains.com/ko-kr/idea/download
 
 
+## 도커 빌드/푸시
+
+```
+springweb>
+
+// 도커허브 또는 사설레지스트리 로그인
+docker login registry.webnori.com
+
+// 도커빌드
+docker build -f Dockerfile --force-rm -t registry.webnori.com/javalabs-api:dev .
+
+// 도커런 - 푸시전에 잘작동하는지 로컬 테스트
+docker run -e SPRING_PROFILES_ACTIVE=dev --publish 8081:8080 --name javalabs-app registry.webnori.com/javalabs-api:dev
+
+// 도커푸시
+docker push registry.webnori.com/javalabs-api:dev
+
+```
+
+
 ## Doc
 
 - [SpringBoot 셋팅](./springweb/README.md)
