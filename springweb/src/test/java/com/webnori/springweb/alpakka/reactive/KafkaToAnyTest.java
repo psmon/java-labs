@@ -68,7 +68,7 @@ import static org.junit.Assert.assertEquals;
  * kafka : docker-compose -f docker-compose-kafka.yml up -d
  *  > s3test Topic 수동생성필요
  * aws s3 : docker-compose -f docker-compose-localstack.yml up -d
- *  > us-east-1 / my-bucket 자동생성됨
+ *  > us-east-2 / my-bucket 자동생성됨
  */
 
 public class KafkaToAnyTest {
@@ -117,7 +117,7 @@ public class KafkaToAnyTest {
             consumeCnt2++;
         }
 
-        System.out.printf("[%s] Kafka with Key-Value : %s-%s Count[1:%d/2:%d] %n", consumerId, key, value, consumeCnt1, consumeCnt2);
+        //System.out.printf("[%s] Kafka with Key-Value : %s-%s Count[1:%d/2:%d] %n", consumerId, key, value, consumeCnt1, consumeCnt2);
 
         if (testKey.equals(key)) greet.tell("kafkaOK", null);
 
