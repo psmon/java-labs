@@ -1,19 +1,14 @@
-package com.webnori.springweb.example.akka;
+package com.webnori.lighthouse.akka;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
-import akka.routing.RoundRobinPool;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import com.webnori.springweb.example.akka.actors.HelloWorld;
-import com.webnori.springweb.example.akka.actors.TimerActor;
-import com.webnori.springweb.example.akka.actors.cluster.ClusterListener;
+import com.webnori.lighthouse.akka.cluster.ClusterListener;
 import lombok.Getter;
 
-// 클래스 목적 :
-// Actor시스템을 생성하고, 액터관리 Spring 디펜던시 없이 로우코드로 구현
-// Spring Bean 활용시 참조 : https://www.baeldung.com/akka-with-spring
+
 public final class AkkaManager {
     private static AkkaManager INSTANCE;
     @Getter
@@ -101,15 +96,6 @@ public final class AkkaManager {
 
     private void InitActor() {
         // Create Some Actor
-        greetActor = actorSystem.actorOf(HelloWorld.Props()
-                .withDispatcher("my-dispatcher"), "HelloWorld");
-
-        // Create Router Actor
-        routerActor = actorSystem.actorOf(new RoundRobinPool(5)
-                .props(HelloWorld.Props()), "roundRobinPool");
-
-        actorSystem.actorOf(TimerActor.Props()
-                .withDispatcher("my-blocking-dispatcher"), "TimerActor");
 
     }
 

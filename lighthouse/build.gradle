@@ -1,0 +1,95 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '2.7.11'
+	id 'io.spring.dependency-management' version '1.0.15.RELEASE'
+}
+
+group = 'com.webnori'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+	maven {
+		url "https://repo.akka.io/maven"
+	}
+}
+
+dependencies {
+
+	testImplementation 'org.projectlombok:lombok:1.18.22'
+	def scalaVersion = '2.13'
+	def akkaVersion = '2.7.0'
+	def akkaHttpVersion = '10.4.0'
+
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-aop:2.7.0'
+	implementation 'org.springframework.boot:spring-boot-starter-validation:2.7.5'
+
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+
+	//DB
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'com.mysql:mysql-connector-j'
+
+	runtimeOnly 'com.h2database:h2:2.1.214'
+	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+
+	//AKKA
+	implementation platform("com.typesafe.akka:akka-bom_$scalaVersion:$akkaVersion")
+	implementation "com.typesafe.akka:akka-actor_$scalaVersion:$akkaVersion"
+
+	//Akka Jackson
+	implementation "com.typesafe.akka:akka-serialization-jackson_$scalaVersion:$akkaVersion"
+
+	//AKKA Stream
+	implementation "com.typesafe.akka:akka-stream_$scalaVersion:$akkaVersion"
+
+	//Kafka Stream
+	implementation "com.typesafe.akka:akka-stream-kafka_$scalaVersion:4.0.0"
+
+	//S3 Stream
+	implementation "com.lightbend.akka:akka-stream-alpakka-s3_$scalaVersion:7.0.0"
+	implementation "com.typesafe.akka:akka-http_$scalaVersion:$akkaHttpVersion"
+	implementation "com.typesafe.akka:akka-http-xml_$scalaVersion:$akkaHttpVersion"
+
+	//parquet
+	implementation "org.apache.parquet:parquet-avro:1.12.0"
+
+	//AKKA Cluster
+	implementation "com.typesafe.akka:akka-cluster_$scalaVersion:$akkaVersion"
+
+	//AKKA Cluster Metrics Extension
+	implementation "com.typesafe.akka:akka-cluster-metrics_$scalaVersion:$akkaVersion"
+
+	// WebFlux
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+	//Logging
+	implementation 'ch.qos.logback:logback-classic:1.2.3'
+	implementation "com.typesafe.akka:akka-slf4j_$scalaVersion:$akkaVersion"
+
+	//Swagger
+	implementation 'org.springdoc:springdoc-openapi-ui:1.6.6'
+
+	//Test
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation "org.scalatestplus:junit-4-12_$scalaVersion:3.3.0.0-SNAP2"
+	testImplementation "com.typesafe.akka:akka-testkit_$scalaVersion:$akkaVersion"
+	testImplementation "com.typesafe.akka:akka-stream-testkit_$scalaVersion:$akkaVersion"
+	testImplementation "com.typesafe.akka:akka-stream-kafka-testkit_$scalaVersion:4.0.0"
+	// Reactor Test 의존성
+	testImplementation 'io.projectreactor:reactor-test:3.4.0'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
