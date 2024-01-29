@@ -3,13 +3,20 @@ package com.webnori.springweb.example.akka;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
+import akka.cluster.routing.ClusterRouterPool;
+import akka.cluster.routing.ClusterRouterPoolSettings;
 import akka.routing.RoundRobinPool;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.webnori.springweb.example.akka.actors.HelloWorld;
 import com.webnori.springweb.example.akka.actors.TimerActor;
+import com.webnori.springweb.example.akka.actors.cluster.ClusterHelloWorld;
 import com.webnori.springweb.example.akka.actors.cluster.ClusterListener;
 import lombok.Getter;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 // 클래스 목적 :
 // Actor시스템을 생성하고, 액터관리 Spring 디펜던시 없이 로우코드로 구현
@@ -33,6 +40,9 @@ public final class AkkaManager {
 
     @Getter
     private ActorRef routerActor;
+
+    @Getter
+    private ActorRef clusterActor;
 
     private AkkaManager() {
 
@@ -110,6 +120,24 @@ public final class AkkaManager {
 
         actorSystem.actorOf(TimerActor.Props()
                 .withDispatcher("my-blocking-dispatcher"), "TimerActor");
+
+
+        // Cluster Actor
+        int totalInstances = 100;
+        int maxInstancesPerNode = 3;
+        boolean allowLocalRoutees = true;
+        Set<String> useRoles = new HashSet<>(Arrays.asList("work"));
+        clusterActor =
+                actorSystem
+                        .actorOf(
+                                new ClusterRouterPool(
+                                        new RoundRobinPool(0),
+                                        new ClusterRouterPoolSettings(
+                                                totalInstances, maxInstancesPerNode, allowLocalRoutees, useRoles))
+                                        .props(Props.create(ClusterHelloWorld.class)),
+                                "workerRouter3");
+
+
 
     }
 

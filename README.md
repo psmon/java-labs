@@ -26,13 +26,13 @@ Akka/Webplux를 포함 다양한 오픈스택(Kafka/Spark Stream)등을  Reactiv
 // 도커허브 또는 사설레지스트리 로그인
 docker login registry.webnori.com
 
-## lighthouse>
+lighthouse>
 
 docker build -f Dockerfile --force-rm -t registry.webnori.com/javalabs-lighthouse:dev .
 
 docker push registry.webnori.com/javalabs-lighthouse:dev
 
-## springweb>
+springweb>
 
 // 도커빌드
 docker build -f Dockerfile --force-rm -t registry.webnori.com/javalabs-api:dev .
@@ -48,9 +48,21 @@ docker push registry.webnori.com/javalabs-api:dev
 ## Springweb Cluster
 
 ```
+infra>
+
+docker-compose -f docker-compose-cluster.yml up -d
+
+http://localhost:8082/swagger-ui/index.html
+
+
+# 해당 메시지가 클러스터 분산전송됩니다.
+
+curl -X 'GET' \
+  'http://localhost:8082/api/greeting/greeting-cluster-router?name=hello&testCount=10' \
+  -H 'accept: */*'
+
 
 ```
-
 
 ## Doc
 

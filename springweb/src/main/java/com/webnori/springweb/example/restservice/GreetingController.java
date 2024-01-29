@@ -35,6 +35,8 @@ public class GreetingController {
 
     ActorRef roundRobbinActor;
 
+    ActorRef clusterActor;
+
 
     GreetingController() {
 
@@ -58,6 +60,9 @@ public class GreetingController {
 
         // Router
         roundRobbinActor = AkkaManager.getInstance().getRouterActor();
+
+        // ClusterActor
+        clusterActor = AkkaManager.getInstance().getClusterActor();
 
     }
 
@@ -142,4 +147,32 @@ public class GreetingController {
 
         return new Greeting(counter.incrementAndGet(), testMessage);
     }
+
+    @Operation(summary = "greetingClusterRouterActor",
+            description = "테스트 : 분산어플리케이션에 RoundRobin")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "OK",
+            content = @Content(schema = @Schema(implementation = Greeting.class))),
+            @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+            @ApiResponse(responseCode = "404", description = "NOT FOUND"),
+            @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")})
+    @Parameters({
+            @Parameter(name = "name", description = "name", example = "hello"),
+            @Parameter(name = "testCount", description = "testCount", example = "1")
+    })
+    @ResponseBody
+    @GetMapping("/greeting-cluster-router")
+    public Greeting greetingClusterRouterActor(
+            @RequestParam(value = "name", defaultValue = "World") String name,
+            @RequestParam(value = "testCount") int testCount)
+    {
+
+        String testMessage = String.format(template, name);
+
+        for(int i=0;i<testCount;i++){
+            clusterActor.tell(testMessage + i , ActorRef.noSender());
+        }
+
+        return new Greeting(counter.incrementAndGet(), testMessage);
+    }
+
 }
