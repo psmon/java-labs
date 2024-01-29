@@ -44,6 +44,9 @@ public final class AkkaManager {
     @Getter
     private ActorRef clusterActor;
 
+    @Getter
+    private ActorRef clusterManagerActor;
+
     private AkkaManager() {
 
         akkaConfig = System.getenv("akka.cluster-config");
@@ -126,6 +129,7 @@ public final class AkkaManager {
         int totalInstances = 100;
         int maxInstancesPerNode = 3;
         boolean allowLocalRoutees = true;
+
         Set<String> useRoles = new HashSet<>(Arrays.asList("work"));
         clusterActor =
                 actorSystem
@@ -135,10 +139,18 @@ public final class AkkaManager {
                                         new ClusterRouterPoolSettings(
                                                 totalInstances, maxInstancesPerNode, allowLocalRoutees, useRoles))
                                         .props(Props.create(ClusterHelloWorld.class)),
-                                "workerRouter3");
+                                "workerRouter1");
 
-
-
+        Set<String> useManagerRoles = new HashSet<>(Arrays.asList("manager"));
+        clusterManagerActor =
+                actorSystem
+                        .actorOf(
+                                new ClusterRouterPool(
+                                        new RoundRobinPool(0),
+                                        new ClusterRouterPoolSettings(
+                                                totalInstances, maxInstancesPerNode, allowLocalRoutees, useManagerRoles))
+                                        .props(Props.create(ClusterHelloWorld.class)),
+                                "workerRouter2");
     }
 
 }

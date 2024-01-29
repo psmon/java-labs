@@ -4,6 +4,7 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSelection;
 import akka.actor.ActorSystem;
 import com.webnori.springweb.example.akka.AkkaManager;
+import com.webnori.springweb.example.akka.actors.cluster.TestClusterMessages;
 import com.webnori.springweb.example.akka.models.FakeSlowMode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -37,6 +38,8 @@ public class GreetingController {
 
     ActorRef clusterActor;
 
+    ActorRef clusterManagerActor;
+
 
     GreetingController() {
 
@@ -63,6 +66,8 @@ public class GreetingController {
 
         // ClusterActor
         clusterActor = AkkaManager.getInstance().getClusterActor();
+
+        clusterManagerActor = AkkaManager.getInstance().getClusterManagerActor();
 
     }
 
@@ -170,6 +175,31 @@ public class GreetingController {
 
         for(int i=0;i<testCount;i++){
             clusterActor.tell(testMessage + i , ActorRef.noSender());
+        }
+
+        return new Greeting(counter.incrementAndGet(), testMessage);
+    }
+
+    @Operation(summary = "greetingClusterManagerActor",
+            description = "테스트 : 특정 Role에게만 전송")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "OK",
+            content = @Content(schema = @Schema(implementation = Greeting.class))),
+            @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+            @ApiResponse(responseCode = "404", description = "NOT FOUND"),
+            @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")})
+    @Parameters({
+            @Parameter(name = "testCount", description = "testCount", example = "1")
+    })
+    @ResponseBody
+    @GetMapping("/greeting-cluster-manager")
+    public Greeting greetingClusterManagerActor(
+            @RequestParam(value = "testCount") int testCount)
+    {
+
+        String testMessage = String.format(template, "test");
+
+        for(int i=0;i<testCount;i++){
+            clusterManagerActor.tell( TestClusterMessages.ping() , ActorRef.noSender());
         }
 
         return new Greeting(counter.incrementAndGet(), testMessage);

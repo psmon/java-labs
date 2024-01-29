@@ -42,7 +42,22 @@ services:
       akka.hostport: 12000
       akka.cluster-config: cluster.conf
     networks:
-      - mynet             
+      - mynet
+  app3:
+    image: registry.webnori.com/javalabs-api:dev        
+    ports:
+      - "8084:8080"
+    depends_on:
+      - light-house     
+    environment:      
+      TZ: Asia/Seoul
+      akka.role: manager
+      akka.seed: akka://ClusterSystem@light-house:12000
+      akka.hostname: app3
+      akka.hostport: 12000
+      akka.cluster-config: cluster.conf
+    networks:
+      - mynet                     
 networks:
   mynet:
     driver: bridge

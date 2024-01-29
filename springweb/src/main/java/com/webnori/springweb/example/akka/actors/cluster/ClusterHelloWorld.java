@@ -48,6 +48,9 @@ public class ClusterHelloWorld extends AbstractActor {
         }).match(String.class, s -> {
             log.info("Received String message: {} {}", s, context().self().path());
         })
+        .match(TestClusterMessages.Ping.class, s -> {
+            log.info("Received Ping message: {}",  context().self().path());
+        })
         .build();
     }
 
