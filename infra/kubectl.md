@@ -4,7 +4,8 @@
 
 $HOME/.kube/config/late-cluster.yml
 
-export KUBECONFIG=$(pwd)/late-cluster.yml
+export KUBECONFIG=$HOME/.kube/config/late-cluster.yml
+
 
 # 네임스페이스
 
