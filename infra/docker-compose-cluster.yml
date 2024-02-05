@@ -13,7 +13,7 @@ services:
       akka.cluster-config: cluster.conf
     networks:
       - mynet      
-  app1:
+  work-node1:
     image: registry.webnori.com/javalabs-api:dev        
     ports:
       - "8082:8080"
@@ -23,12 +23,12 @@ services:
       TZ: Asia/Seoul
       akka.role: work
       akka.seed: akka://ClusterSystem@light-house:12000
-      akka.hostname: app1
+      akka.hostname: work-node1
       akka.hostport: 12000
       akka.cluster-config: cluster.conf
     networks:
       - mynet
-  app2:
+  work-node2:
     image: registry.webnori.com/javalabs-api:dev        
     ports:
       - "8083:8080"
@@ -38,12 +38,12 @@ services:
       TZ: Asia/Seoul
       akka.role: work
       akka.seed: akka://ClusterSystem@light-house:12000
-      akka.hostname: app2
+      akka.hostname: work-node2
       akka.hostport: 12000
       akka.cluster-config: cluster.conf
     networks:
       - mynet
-  app3:
+  manager-node:
     image: registry.webnori.com/javalabs-api:dev        
     ports:
       - "8084:8080"
@@ -53,7 +53,7 @@ services:
       TZ: Asia/Seoul
       akka.role: manager
       akka.seed: akka://ClusterSystem@light-house:12000
-      akka.hostname: app3
+      akka.hostname: manager-node
       akka.hostport: 12000
       akka.cluster-config: cluster.conf
     networks:

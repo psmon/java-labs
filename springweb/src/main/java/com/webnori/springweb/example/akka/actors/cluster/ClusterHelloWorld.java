@@ -9,12 +9,8 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import com.webnori.springweb.example.akka.models.FakeSlowMode;
 
-// https://doc.akka.io/docs/akka/current/index-actors.html  - Classic Actor
-
 public class ClusterHelloWorld extends AbstractActor {
     private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
-
-    private boolean isBlockForTest = false;
 
     Cluster cluster = Cluster.get(getContext().system());
 
@@ -29,7 +25,6 @@ public class ClusterHelloWorld extends AbstractActor {
                 ClusterEvent.MemberEvent.class, ClusterEvent.UnreachableMember.class);
     }
 
-    //re-subscribe when restart
     @Override
     public void postStop() {
         cluster.unsubscribe(self());
@@ -44,7 +39,7 @@ public class ClusterHelloWorld extends AbstractActor {
         }).match(ClusterEvent.MemberRemoved.class, mRemoved -> {
             log.info("Member is Removed: {}", mRemoved.member());
         }).match(ClusterEvent.MemberEvent.class, message -> {
-            // ignore
+        // 구현가능 분산처리 메시지 사용자 정의부분
         }).match(String.class, s -> {
             log.info("Received String message: {} {}", s, context().self().path());
         })
@@ -53,5 +48,4 @@ public class ClusterHelloWorld extends AbstractActor {
         })
         .build();
     }
-
 }
