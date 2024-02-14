@@ -22,6 +22,7 @@ Kafka/Elastic Search 스택을 단순하게 구동하는것을 넘어 이것을 
 - ELK
 - Spark
 - AWS LocalStack (S3,Labda)
+- AKKA Cluster
 
 로컬테스트에 따라 선택하여 구동할수 있습니다.  샘플에 의해 테스트되는 DB스키마의 DDL은 도커구동시 
 자동생성되며 init/firstsql.txt 에 스크립트 작성되어 있습니다.
@@ -64,6 +65,20 @@ docker-compose -f docker-compose-spark.yml up -d
 
 docker-compose -f docker-compose-localstack.yml up -d
 
+
+## Akka Cluster
+
+docker-compose -f docker-compose-cluster.yml up -d
+
+
+
+# Update
+
+docker-compose -f docker-compose-cluster.yml pull
+
+docker-compose -f docker-compose-cluster.yml up --detach
+
+
 # Down
 
 docker-compose -f docker-compose-elk.yml down    
@@ -73,6 +88,8 @@ docker-compose -f docker-compose-kafka.yml down
 docker-compose -f docker-compose-mysql.yml down
 
 docker-compose -f docker-compose-localstack.yml down
+
+docker-compose -f docker-compose-cluster.yml down
 
 
 ```
