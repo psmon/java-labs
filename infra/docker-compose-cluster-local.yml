@@ -1,0 +1,74 @@
+version: '3.5'
+services:
+  light-house:
+    build:
+      context: ../lighthouse
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080"    
+    environment:      
+      TZ: Asia/Seoul
+      akka.role: seed
+      akka.seed: akka://ClusterSystem@light-house:12000
+      akka.hostname: light-house
+      akka.hostport: 12000
+      akka.cluster-config: cluster.conf
+    networks:
+      - mynet      
+  work-node1:    
+    build:
+      context: ../springweb
+      dockerfile: Dockerfile    
+    ports:
+      - "8082:8080"
+    depends_on:
+      - light-house     
+    environment:      
+      TZ: Asia/Seoul
+      akka.role: work
+      akka.seed: akka://ClusterSystem@light-house:12000
+      akka.hostname: work-node1
+      akka.hostport: 12000
+      akka.cluster-config: cluster.conf
+    networks:
+      - mynet
+  work-node2:
+    build:
+      context: ../springweb
+      dockerfile: Dockerfile  
+    ports:
+      - "8083:8080"
+    depends_on:
+      - light-house     
+    environment:      
+      TZ: Asia/Seoul
+      akka.role: work
+      akka.seed: akka://ClusterSystem@light-house:12000
+      akka.hostname: work-node2
+      akka.hostport: 12000
+      akka.cluster-config: cluster.conf
+    networks:
+      - mynet
+  manager-node:
+    build:
+      context: ../springweb
+      dockerfile: Dockerfile  
+    ports:
+      - "8084:8080"
+    depends_on:
+      - light-house     
+    environment:      
+      TZ: Asia/Seoul
+      akka.role: manager
+      akka.seed: akka://ClusterSystem@light-house:12000
+      akka.hostname: manager-node
+      akka.hostport: 12000
+      akka.cluster-config: cluster.conf
+    networks:
+      - mynet                     
+networks:
+  mynet:
+    driver: bridge
+
+
+
