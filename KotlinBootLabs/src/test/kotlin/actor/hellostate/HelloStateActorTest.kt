@@ -1,6 +1,5 @@
 package actor.hellostate
 
-import akka.actor.testkit.typed.TestKitSettings
 import akka.actor.testkit.typed.javadsl.ActorTestKit
 import akka.actor.testkit.typed.javadsl.ManualTime
 import com.typesafe.config.ConfigFactory
@@ -100,8 +99,13 @@ class HelloStateActorTest {
         // Wait for the timer to reset the count
         //Thread.sleep(Duration.ofSeconds(11).toMillis())
 
+        // Advance the time by 5 seconds
+        manualTime.timePasses(Duration.ofSeconds(5))
+        helloStateActor.tell(GetHelloCount(probe.ref()))
+        probe.expectMessage(HelloCountResponse(2))
+
         // Advance the time by 11 seconds
-        manualTime.timePasses(Duration.ofSeconds(11))
+        manualTime.timePasses(Duration.ofSeconds(6))
 
         // Verify the hello count is reset
         helloStateActor.tell(GetHelloCount(probe.ref()))

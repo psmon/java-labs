@@ -14,6 +14,7 @@ import akka.stream.Materializer
 import java.time.Duration
 
 import akka.actor.typed.javadsl.TimerScheduler
+import java.io.Console
 
 /** HelloStateActor 처리할 수 있는 명령들 */
 sealed class HelloStateActorCommand
@@ -95,6 +96,7 @@ class HelloStateActor private constructor(
                     helloCount++
                     helloTotalCount++
                     command.replyTo.tell(HelloResponse("Kotlin"))
+                    println("onHello-Kotlin")
                 }
             }
             State.ANGRY -> {
@@ -111,6 +113,7 @@ class HelloStateActor private constructor(
 
     private fun onGetHelloCount(command: GetHelloCount): Behavior<HelloStateActorCommand> {
         command.replyTo.tell(HelloCountResponse(helloCount))
+        println("onGetHelloCount-helloCount: $helloCount")
         return this
     }
 
@@ -125,6 +128,7 @@ class HelloStateActor private constructor(
     }
 
     private fun onResetHelloCount(command: ResetHelloCount): Behavior<HelloStateActorCommand> {
+        println("Resetting hello count")
         helloCount = 0
         return this
     }
