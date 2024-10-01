@@ -10,10 +10,13 @@ import akka.actor.typed.javadsl.Receive
 /** HelloActor 처리할 수 있는 명령들 */
 sealed class HelloActorCommand
 data class Hello(val message: String, val replyTo: ActorRef<Any>) : HelloActorCommand()
-
+data class GetHelloCount(val replyTo: ActorRef<Any>) : HelloActorCommand()
 /** HelloActor 반환할 수 있는 응답들 */
 sealed class HelloActorResponse
 data class HelloResponse(val message: String) : HelloActorResponse()
+data class HelloCountResponse(val count: Int) : HelloActorResponse()
+
+
 
 
 /** HelloActor 클래스 */
@@ -30,14 +33,22 @@ class HelloActor private constructor(
     override fun createReceive(): Receive<HelloActorCommand> {
         return newReceiveBuilder()
             .onMessage(Hello::class.java, this::onHello)
+            .onMessage(GetHelloCount::class.java, this::onGetHelloCount)
             .build()
     }
 
-    private fun onHello(command: Hello): Behavior<HelloActorCommand> {
+    private var helloCount: Int = 0
 
+    private fun onHello(command: Hello): Behavior<HelloActorCommand> {
         if (command.message == "Hello") {
+            helloCount++
             command.replyTo.tell(HelloResponse("Kotlin"))
         }
+        return this
+    }
+
+    private fun onGetHelloCount(command: GetHelloCount): Behavior<HelloActorCommand> {
+        command.replyTo.tell(HelloCountResponse(helloCount))
         return this
     }
 }

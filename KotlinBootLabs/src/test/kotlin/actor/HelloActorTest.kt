@@ -32,5 +32,10 @@ class HelloActorTest {
         helloActor.tell(Hello("Hello", probe.ref()))
 
         probe.expectMessage(HelloResponse("Kotlin"))
+
+        helloActor.tell(GetHelloCount(probe.ref()))
+
+        probe.expectMessage(HelloCountResponse(1))
+
     }
 }
