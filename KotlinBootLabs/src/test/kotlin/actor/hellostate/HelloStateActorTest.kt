@@ -46,4 +46,34 @@ class HelloStateActorTest {
         helloStateActor.tell(GetHelloCount(probe.ref()))
         probe.expectMessage(HelloCountResponse(1)) // Count should not change
     }
+
+    @Test
+    fun testHelloLimitCommand() {
+        val probe = testKit.createTestProbe<Any>()
+        val helloStateActor = testKit.spawn(HelloStateActor.create(State.HAPPY))
+
+        // Send 100 HelloLimit messages
+        val startTime = System.currentTimeMillis()
+        for (i in 1..100) {
+            helloStateActor.tell(HelloLimit("Hello", probe.ref()))
+        }
+
+        // Expect 100 responses
+        for (i in 1..100) {
+            probe.expectMessage(HelloResponse("Kotlin"))
+        }
+        val endTime = System.currentTimeMillis()
+
+        // Calculate TPS
+        val durationInSeconds = (endTime - startTime) / 1000.0
+        val tps = 100 / durationInSeconds
+        println("TPS: $tps")
+
+        // Verify the hello count
+        helloStateActor.tell(GetHelloCount(probe.ref()))
+        probe.expectMessage(HelloCountResponse(100))
+    }
+
+
+
 }
