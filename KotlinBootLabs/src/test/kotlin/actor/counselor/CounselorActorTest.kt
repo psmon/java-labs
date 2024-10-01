@@ -1,4 +1,4 @@
-package actor
+package actor.counselor
 
 import akka.actor.testkit.typed.javadsl.ActorTestKit
 import org.junit.jupiter.api.AfterAll

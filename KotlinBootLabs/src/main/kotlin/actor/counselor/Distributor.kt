@@ -1,6 +1,5 @@
-package actor
+package actor.counselor
 
-import CounselorActor
 import akka.actor.typed.ActorRef
 
 data class Skill(val name: String, val priority: Int)

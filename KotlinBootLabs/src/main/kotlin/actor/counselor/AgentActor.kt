@@ -1,4 +1,4 @@
-package actor
+package actor.counselor
 
 import akka.actor.typed.ActorRef
 import akka.actor.typed.Behavior

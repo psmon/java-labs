@@ -1,4 +1,5 @@
-import actor.*
+package actor.counselor
+
 import akka.actor.typed.Behavior
 import akka.actor.typed.javadsl.*
 
