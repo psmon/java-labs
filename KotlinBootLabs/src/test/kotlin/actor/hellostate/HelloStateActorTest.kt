@@ -1,19 +1,26 @@
 package actor.hellostate
 
+import akka.actor.testkit.typed.TestKitSettings
 import akka.actor.testkit.typed.javadsl.ActorTestKit
+import akka.actor.testkit.typed.javadsl.ManualTime
+import com.typesafe.config.ConfigFactory
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.time.Duration
 
 class HelloStateActorTest {
 
     companion object {
         private lateinit var testKit: ActorTestKit
+        private lateinit var manualTime: ManualTime
 
         @BeforeAll
         @JvmStatic
         fun setup() {
-            testKit = ActorTestKit.create()
+            val config = ManualTime.config().withFallback(ConfigFactory.defaultApplication())
+            testKit = ActorTestKit.create(config)
+            manualTime = ManualTime.get(testKit.system())
         }
 
         @AfterAll
@@ -33,7 +40,7 @@ class HelloStateActorTest {
         helloStateActor.tell(Hello("Hello", probe.ref()))
         probe.expectMessage(HelloResponse("Kotlin"))
 
-        helloStateActor.tell(GetHelloCount(probe.ref()))
+        helloStateActor.tell(GetHelloTotalCount(probe.ref()))
         probe.expectMessage(HelloCountResponse(1))
 
         // Change state to ANGRY
@@ -43,7 +50,7 @@ class HelloStateActorTest {
         helloStateActor.tell(Hello("Hello", probe.ref()))
         probe.expectMessage(HelloResponse("Don't talk to me!"))
 
-        helloStateActor.tell(GetHelloCount(probe.ref()))
+        helloStateActor.tell(GetHelloTotalCount(probe.ref()))
         probe.expectMessage(HelloCountResponse(1)) // Count should not change
     }
 
@@ -70,10 +77,34 @@ class HelloStateActorTest {
         println("TPS: $tps")
 
         // Verify the hello count
-        helloStateActor.tell(GetHelloCount(probe.ref()))
+        helloStateActor.tell(GetHelloTotalCount(probe.ref()))
         probe.expectMessage(HelloCountResponse(100))
     }
 
+    @Test
+    fun testResetHelloCount() {
+        val probe = testKit.createTestProbe<Any>()
+        val helloStateActor = testKit.spawn(HelloStateActor.create(State.HAPPY))
 
+        // Send Hello messages
+        helloStateActor.tell(Hello("Hello", probe.ref()))
+        helloStateActor.tell(Hello("Hello", probe.ref()))
 
+        probe.expectMessage(HelloResponse("Kotlin"))
+        probe.expectMessage(HelloResponse("Kotlin"))
+
+        // Verify the hello count
+        helloStateActor.tell(GetHelloCount(probe.ref()))
+        probe.expectMessage(HelloCountResponse(2))
+
+        // Wait for the timer to reset the count
+        //Thread.sleep(Duration.ofSeconds(11).toMillis())
+
+        // Advance the time by 11 seconds
+        manualTime.timePasses(Duration.ofSeconds(11))
+
+        // Verify the hello count is reset
+        helloStateActor.tell(GetHelloCount(probe.ref()))
+        probe.expectMessage(HelloCountResponse(0))
+    }
 }
