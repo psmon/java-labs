@@ -34,14 +34,20 @@ dependencies {
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
-	// Akka UnTyped Actor
+	// Akka
 	implementation(platform("com.typesafe.akka:akka-bom_$scalaVersion:$akkaVersion"))
+
+	// Akka UnTyped Actor
 	implementation("com.typesafe.akka:akka-actor_$scalaVersion:$akkaVersion")
 	implementation("com.typesafe.akka:akka-stream_$scalaVersion:$akkaVersion")
 
 	// Akka Typed Actor
 	implementation("com.typesafe.akka:akka-actor-typed_$scalaVersion:$akkaVersion")
 	testImplementation("com.typesafe.akka:akka-actor-testkit-typed_$scalaVersion:$akkaVersion")
+
+	// Logging
+	implementation("ch.qos.logback:logback-classic:1.4.12")
+	implementation("com.typesafe.akka:akka-slf4j_$scalaVersion:$akkaVersion")
 
 	// TestToolKit
 	testImplementation("com.typesafe.akka:akka-testkit_$scalaVersion:$akkaVersion")
