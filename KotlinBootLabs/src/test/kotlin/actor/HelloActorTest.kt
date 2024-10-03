@@ -25,7 +25,7 @@ class HelloActorTest {
 
     @Test
     fun testHelloActorRespondsWithKotlin() {
-        val probe = testKit.createTestProbe<Any>()
+        val probe = testKit.createTestProbe<HelloActorResponse>()
 
         val helloActor = testKit.spawn(HelloActor.create())
 

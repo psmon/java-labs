@@ -29,10 +29,6 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
 	runtimeOnly("com.h2database:h2")
-	testImplementation("org.springframework.boot:spring-boot-starter-test")
-	testImplementation("io.projectreactor:reactor-test")
-	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
 	// Akka
 	implementation(platform("com.typesafe.akka:akka-bom_$scalaVersion:$akkaVersion"))
@@ -53,6 +49,10 @@ dependencies {
 	testImplementation("com.typesafe.akka:akka-testkit_$scalaVersion:$akkaVersion")
 
 	// JUnit
+	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	testImplementation("io.projectreactor:reactor-test")
+	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.3")
 	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.3")
 

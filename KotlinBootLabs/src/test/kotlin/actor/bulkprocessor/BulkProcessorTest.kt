@@ -1,7 +1,5 @@
 package actor.bulkprocessor
 
-import actor.hellostate.*
-import actor.hellostate.HelloStateActorTest.Companion
 import akka.actor.testkit.typed.javadsl.ActorTestKit
 import akka.actor.testkit.typed.javadsl.ManualTime
 import com.typesafe.config.ConfigFactory

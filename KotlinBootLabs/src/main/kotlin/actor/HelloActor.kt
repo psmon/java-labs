@@ -9,8 +9,8 @@ import akka.actor.typed.javadsl.Receive
 
 /** HelloActor 처리할 수 있는 명령들 */
 sealed class HelloActorCommand
-data class Hello(val message: String, val replyTo: ActorRef<Any>) : HelloActorCommand()
-data class GetHelloCount(val replyTo: ActorRef<Any>) : HelloActorCommand()
+data class Hello(val message: String, val replyTo: ActorRef<HelloActorResponse>) : HelloActorCommand()
+data class GetHelloCount(val replyTo: ActorRef<HelloActorResponse>) : HelloActorCommand()
 /** HelloActor 반환할 수 있는 응답들 */
 sealed class HelloActorResponse
 data class HelloResponse(val message: String) : HelloActorResponse()
@@ -42,8 +42,13 @@ class HelloActor private constructor(
     private fun onHello(command: Hello): Behavior<HelloActorCommand> {
         if (command.message == "Hello") {
             helloCount++
+            context.log.info("Received valid Hello message. Count incremented to $helloCount")
             command.replyTo.tell(HelloResponse("Kotlin"))
         }
+        else if (command.message == "InvalidMessage") {
+            throw RuntimeException("Invalid message received!")
+        }
+
         return this
     }
 
