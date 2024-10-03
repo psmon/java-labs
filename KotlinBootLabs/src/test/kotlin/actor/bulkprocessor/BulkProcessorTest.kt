@@ -54,7 +54,9 @@ class BulkProcessorTest {
         helloStateActor.tell(DataEvent("data1", probe.ref()))
         helloStateActor.tell(DataEvent("data2", probe.ref()))
         helloStateActor.tell(DataEvent("data3", probe.ref()))
-        Thread.sleep(Duration.ofSeconds(5).toMillis())
+
+        //Thread.sleep(Duration.ofSeconds(5).toMillis())
+        manualTime.timePasses(Duration.ofSeconds(5))
 
         helloStateActor.tell(DataEvent("testend", probe.ref()))
 
