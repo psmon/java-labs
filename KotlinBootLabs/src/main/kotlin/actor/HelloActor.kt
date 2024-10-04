@@ -17,8 +17,6 @@ data class HelloResponse(val message: String) : HelloActorResponse()
 data class HelloCountResponse(val count: Int) : HelloActorResponse()
 
 
-
-
 /** HelloActor 클래스 */
 class HelloActor private constructor(
     private val context: ActorContext<HelloActorCommand>,
@@ -42,7 +40,7 @@ class HelloActor private constructor(
     private fun onHello(command: Hello): Behavior<HelloActorCommand> {
         if (command.message == "Hello") {
             helloCount++
-            context.log.info("Received valid Hello message. Count incremented to $helloCount")
+            context.log.info("[${context.self.path()}] Received valid Hello message. Count incremented to $helloCount")
             command.replyTo.tell(HelloResponse("Kotlin"))
         }
         else if (command.message == "InvalidMessage") {
