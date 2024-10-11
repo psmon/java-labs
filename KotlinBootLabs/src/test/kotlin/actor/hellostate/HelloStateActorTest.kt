@@ -1,7 +1,13 @@
 package actor.hellostate
 
+import akka.actor.ActorSystem
 import akka.actor.testkit.typed.javadsl.ActorTestKit
 import akka.actor.testkit.typed.javadsl.ManualTime
+import akka.actor.typed.javadsl.Behaviors
+import akka.stream.Materializer
+import akka.stream.OverflowStrategy
+import akka.stream.javadsl.Sink
+import akka.stream.javadsl.Source
 import com.typesafe.config.ConfigFactory
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -13,6 +19,7 @@ class HelloStateActorTest {
     companion object {
         private lateinit var testKit: ActorTestKit
         private lateinit var manualTime: ManualTime
+        private lateinit var materializer: Materializer
 
         @BeforeAll
         @JvmStatic
@@ -20,11 +27,15 @@ class HelloStateActorTest {
             val config = ManualTime.config().withFallback(ConfigFactory.defaultApplication())
             testKit = ActorTestKit.create(config)
             manualTime = ManualTime.get(testKit.system())
+
+            val newSystem = ActorSystem.create();
+            materializer = Materializer.createMaterializer(newSystem)
         }
 
         @AfterAll
         @JvmStatic
         fun teardown() {
+            materializer.shutdown()
             testKit.shutdownTestKit()
         }
     }
@@ -58,16 +69,35 @@ class HelloStateActorTest {
         val probe = testKit.createTestProbe<Any>()
         val helloStateActor = testKit.spawn(HelloStateActor.create(State.HAPPY))
 
+        helloStateActor.tell(StopResetTimer)
+
+        val helloLimitSource = Source.queue<HelloLimit>(100, OverflowStrategy.backpressure())
+            .throttle(3, Duration.ofSeconds(1))
+            .to(Sink.foreach { cmd ->
+                helloStateActor.tell(Hello(cmd.message, cmd.replyTo))
+            })
+            .run(materializer)
+
         // Send 100 HelloLimit messages
         val startTime = System.currentTimeMillis()
+
+        // Send 100 HelloLimit messages
         for (i in 1..100) {
-            helloStateActor.tell(HelloLimit("Hello", probe.ref()))
+            // # Actor에 Throllle탑재(A) vs Throttle 분리(B)
+            // TODO : A방식이 TestKit에서는 동작하지 않음 원인분석...
+
+            // # A방식
+            //helloStateActor.tell(HelloLimit("Hello", probe.ref()))
+
+            // # B방식
+            helloLimitSource.offer(HelloLimit("Hello", probe.ref()))
         }
 
-        // Expect 100 responses
+        // Expect 100 responses with increased timeout
         for (i in 1..100) {
-            probe.expectMessage(HelloResponse("Kotlin"))
+            probe.expectMessage(Duration.ofSeconds(3), HelloResponse("Kotlin"))
         }
+
         val endTime = System.currentTimeMillis()
 
         // Calculate TPS

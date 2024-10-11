@@ -14,6 +14,8 @@ import akka.stream.Materializer
 import java.time.Duration
 
 import akka.actor.typed.javadsl.TimerScheduler
+import akka.stream.QueueOfferResult
+import akka.stream.javadsl.SourceQueueWithComplete
 import java.io.Console
 
 /** HelloStateActor 처리할 수 있는 명령들 */
@@ -24,6 +26,7 @@ data class GetHelloTotalCount(val replyTo: ActorRef<Any>) : HelloStateActorComma
 data class ChangeState(val newState: State) : HelloStateActorCommand()
 data class HelloLimit(val message: String, val replyTo: ActorRef<Any>) : HelloStateActorCommand()
 object ResetHelloCount : HelloStateActorCommand()
+object StopResetTimer : HelloStateActorCommand()
 
 /** HelloStateActor 반환할 수 있는 응답들 */
 sealed class HelloStateActorResponse
@@ -62,6 +65,10 @@ class HelloStateActor private constructor(
             .onMessage(GetHelloTotalCount::class.java, this::onGetHelloTotalCount)
             .onMessage(ChangeState::class.java, this::onChangeState)
             .onMessage(ResetHelloCount::class.java, this::onResetHelloCount)
+            .onMessage(StopResetTimer::class.java) {
+                timers.cancel(ResetHelloCount)
+                Behaviors.same()
+            }
             .build()
     }
 
@@ -74,18 +81,7 @@ class HelloStateActor private constructor(
     private val helloLimitSource = Source.queue<HelloLimit>(100, OverflowStrategy.backpressure())
         .throttle(3, Duration.ofSeconds(1))
         .to(Sink.foreach { cmd ->
-            when (state) {
-                State.HAPPY -> {
-                    if (cmd.message == "Hello") {
-                        helloCount++
-                        helloTotalCount++
-                        cmd.replyTo.tell(HelloResponse("Kotlin"))
-                    }
-                }
-                State.ANGRY -> {
-                    cmd.replyTo.tell(HelloResponse("Don't talk to me!"))
-                }
-            }
+            context.self.tell(Hello(cmd.message, cmd.replyTo))
         })
         .run(materializer)
 
@@ -107,7 +103,14 @@ class HelloStateActor private constructor(
     }
 
     private fun onHelloLimit(command: HelloLimit): Behavior<HelloStateActorCommand> {
-        helloLimitSource.offer(command)
+        helloLimitSource.offer(command).thenAccept { result ->
+            when (result) {
+                is QueueOfferResult.`Enqueued$` -> context.log.info("Command enqueued successfully")
+                is QueueOfferResult.`Dropped$` -> context.log.error("Command dropped")
+                is QueueOfferResult.Failure -> context.log.error("Failed to enqueue command", result.cause())
+                is QueueOfferResult.`QueueClosed$` -> context.log.error("Queue was closed")
+            }
+        }
         return this
     }
 
