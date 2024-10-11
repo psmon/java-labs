@@ -105,6 +105,8 @@ class HelloStateActorTest {
         val tps = 100 / durationInSeconds
         println("TPS: $tps")
 
+        assert(tps > 2.0 && tps < 4.0)
+
         // Verify the hello count
         helloStateActor.tell(GetHelloTotalCount(probe.ref()))
         probe.expectMessage(HelloCountResponse(100))
