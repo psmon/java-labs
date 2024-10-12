@@ -9,6 +9,7 @@ import akka.stream.OverflowStrategy
 import akka.stream.javadsl.Sink
 import akka.stream.javadsl.Source
 import com.typesafe.config.ConfigFactory
+import kotlinx.coroutines.delay
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -83,12 +84,10 @@ class HelloStateActorTest {
 
         // Send 100 HelloLimit messages
         for (i in 1..100) {
-            // # Actor에 Throllle탑재(A) vs Throttle 분리(B)
-            // TODO : A방식이 TestKit에서는 동작하지 않음 원인분석...
-
+            // # Actor에 Throllle탑재(A) vs Throttle을 외부로 분리(B)
             // # A방식
+            // manualTime Test주입으로 AkkaStream-Throttle을 테스트하기 어려움, B방식으로 테스트가능
             //helloStateActor.tell(HelloLimit("Hello", probe.ref()))
-
             // # B방식
             helloLimitSource.offer(HelloLimit("Hello", probe.ref()))
         }
