@@ -1,8 +1,9 @@
 package actor.supervisor
 
-import actor.HelloActorResponse
-import actor.HelloResponse
+import com.example.kotlinbootlabs.actor.HelloActorResponse
+import com.example.kotlinbootlabs.actor.HelloResponse
 import akka.actor.testkit.typed.javadsl.ActorTestKit
+import com.example.kotlinbootlabs.actor.supervisor.*
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test

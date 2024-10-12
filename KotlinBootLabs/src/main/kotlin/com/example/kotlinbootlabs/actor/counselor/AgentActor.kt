@@ -1,4 +1,4 @@
-package actor.counselor
+package com.example.kotlinbootlabs.actor.counselor
 
 import akka.actor.typed.ActorRef
 import akka.actor.typed.Behavior

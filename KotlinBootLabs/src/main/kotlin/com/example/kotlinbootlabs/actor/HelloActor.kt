@@ -1,4 +1,4 @@
-package actor
+package com.example.kotlinbootlabs.actor
 
 import akka.actor.typed.ActorRef
 import akka.actor.typed.Behavior

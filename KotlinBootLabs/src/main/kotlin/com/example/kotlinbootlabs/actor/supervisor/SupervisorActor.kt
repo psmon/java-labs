@@ -1,4 +1,4 @@
-package actor.supervisor
+package com.example.kotlinbootlabs.actor.supervisor
 
 import akka.actor.typed.ActorRef
 import akka.actor.typed.Behavior
@@ -7,10 +7,10 @@ import akka.actor.typed.javadsl.ActorContext
 import akka.actor.typed.javadsl.Behaviors
 import akka.actor.typed.javadsl.Receive
 
-import actor.Hello
-import actor.HelloActor
-import actor.HelloActorCommand
-import actor.HelloActorResponse
+import com.example.kotlinbootlabs.actor.Hello
+import com.example.kotlinbootlabs.actor.HelloActor
+import com.example.kotlinbootlabs.actor.HelloActorCommand
+import com.example.kotlinbootlabs.actor.HelloActorResponse
 import akka.actor.typed.SupervisorStrategy
 import akka.actor.typed.Terminated
 

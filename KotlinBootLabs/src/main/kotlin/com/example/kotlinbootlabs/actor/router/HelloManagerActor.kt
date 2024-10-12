@@ -1,8 +1,8 @@
-package actor.router
-import actor.Hello
-import actor.HelloActor
-import actor.HelloActorCommand
-import actor.HelloActorResponse
+package com.example.kotlinbootlabs.actor.router
+import com.example.kotlinbootlabs.actor.Hello
+import com.example.kotlinbootlabs.actor.HelloActor
+import com.example.kotlinbootlabs.actor.HelloActorCommand
+import com.example.kotlinbootlabs.actor.HelloActorResponse
 import akka.actor.typed.ActorRef
 import akka.actor.typed.Behavior
 import akka.actor.typed.SupervisorStrategy

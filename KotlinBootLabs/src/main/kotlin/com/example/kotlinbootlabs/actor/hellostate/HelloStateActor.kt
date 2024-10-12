@@ -1,4 +1,4 @@
-package actor.hellostate
+package com.example.kotlinbootlabs.actor.hellostate
 
 import akka.actor.typed.ActorRef
 import akka.actor.typed.Behavior

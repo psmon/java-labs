@@ -1,4 +1,4 @@
-package actor.bulkprocessor
+package com.example.kotlinbootlabs.actor.bulkprocessor
 
 import akka.actor.Cancellable
 import akka.actor.typed.ActorRef

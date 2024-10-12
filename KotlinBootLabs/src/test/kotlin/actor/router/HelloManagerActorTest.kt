@@ -1,10 +1,13 @@
 package actor.router
 
-import actor.HelloActorResponse
-import actor.HelloResponse
+import com.example.kotlinbootlabs.actor.HelloActorResponse
+import com.example.kotlinbootlabs.actor.HelloResponse
 import akka.actor.testkit.typed.javadsl.ActorTestKit
 import akka.actor.testkit.typed.javadsl.TestProbe
 import akka.actor.typed.ActorRef
+import com.example.kotlinbootlabs.actor.router.DistributedHelloMessage
+import com.example.kotlinbootlabs.actor.router.HelloManagerActor
+import com.example.kotlinbootlabs.actor.router.HelloManagerCommand
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
