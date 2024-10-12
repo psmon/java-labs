@@ -1,16 +1,13 @@
-package actor.hellostate
+package com.example.kotlinbootlabs.actor.hellostate
 
 import akka.actor.ActorSystem
 import akka.actor.testkit.typed.javadsl.ActorTestKit
 import akka.actor.testkit.typed.javadsl.ManualTime
-import akka.actor.typed.javadsl.Behaviors
 import akka.stream.Materializer
 import akka.stream.OverflowStrategy
 import akka.stream.javadsl.Sink
 import akka.stream.javadsl.Source
-import com.example.kotlinbootlabs.actor.hellostate.*
 import com.typesafe.config.ConfigFactory
-import kotlinx.coroutines.delay
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test

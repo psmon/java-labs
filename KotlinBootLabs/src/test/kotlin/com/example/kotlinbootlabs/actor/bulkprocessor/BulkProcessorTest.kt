@@ -1,11 +1,7 @@
-package actor.bulkprocessor
+package com.example.kotlinbootlabs.actor.bulkprocessor
 
 import akka.actor.testkit.typed.javadsl.ActorTestKit
 import akka.actor.testkit.typed.javadsl.ManualTime
-import com.example.kotlinbootlabs.actor.bulkprocessor.BulkProcessor
-import com.example.kotlinbootlabs.actor.bulkprocessor.BulkTaskCompleted
-import com.example.kotlinbootlabs.actor.bulkprocessor.DataEvent
-import com.example.kotlinbootlabs.actor.bulkprocessor.Flush
 import com.typesafe.config.ConfigFactory
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
