@@ -1,7 +1,6 @@
 package com.example.kotlinbootlabs.ws.actor
 
 import akka.actor.testkit.typed.javadsl.ActorTestKit
-import akka.actor.testkit.typed.javadsl.TestProbe
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -60,6 +59,7 @@ class WebSocketSessionManagerActorTest {
 
     @Test
     fun testSendMessageToSession() {
+        val probe = testKit.createTestProbe<WebSocketSessionManagerResponse>()
         val session = Mockito.mock(WebSocketSession::class.java)
         Mockito.`when`(session.id).thenReturn("session1")
 
@@ -68,11 +68,17 @@ class WebSocketSessionManagerActorTest {
         actor.tell(AddSession(session))
         actor.tell(SendMessageToSession("session1", "Hello"))
 
+        // Test for DelayedMessage
+        actor.tell(Ping(probe.ref()))
+        probe.expectMessageClass(Pong::class.java)
+
         Mockito.verify(session).sendMessage(TextMessage("Hello"))
+
     }
 
     @Test
     fun testSendMessageToTopic() {
+        val probe = testKit.createTestProbe<WebSocketSessionManagerResponse>()
         val session1 = Mockito.mock(WebSocketSession::class.java)
         val session2 = Mockito.mock(WebSocketSession::class.java)
         Mockito.`when`(session1.id).thenReturn("session1")
@@ -84,11 +90,15 @@ class WebSocketSessionManagerActorTest {
         actor.tell(AddSession(session2))
         actor.tell(SubscribeToTopic("session1", "topic1"))
         actor.tell(SubscribeToTopic("session2", "topic1"))
-
         actor.tell(SendMessageToTopic("topic1", "Hello Topic"))
+
+        actor.tell(Ping(probe.ref()))
+        probe.expectMessageClass(Pong::class.java)
 
         Mockito.verify(session1).sendMessage(TextMessage("Hello Topic"))
         Mockito.verify(session2).sendMessage(TextMessage("Hello Topic"))
+
+
     }
 
     @Test
@@ -109,6 +119,17 @@ class WebSocketSessionManagerActorTest {
         assertEquals(2, response.sessions.size)
         assertTrue(response.sessions.containsKey("session1"))
         assertTrue(response.sessions.containsKey("session2"))
+    }
+
+    @Test
+    fun testPingPong() {
+        val actor = testKit.spawn(WebSocketSessionManagerActor.create())
+        val probe = testKit.createTestProbe<WebSocketSessionManagerResponse>()
+
+        actor.tell(Ping(probe.ref()))
+
+        val response = probe.expectMessageClass(Pong::class.java)
+        assertEquals("Pong", response.message)
     }
 
 

@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 
 sealed class WebSocketSessionManagerCommand
+sealed class WebSocketSessionManagerResponse
+
 data class AddSession(val session: WebSocketSession) : WebSocketSessionManagerCommand()
 data class RemoveSession(val session: WebSocketSession) : WebSocketSessionManagerCommand()
 data class SubscribeToTopic(val sessionId: String, val topic: String) : WebSocketSessionManagerCommand()
@@ -19,11 +21,12 @@ data class UnsubscribeFromTopic(val sessionId: String, val topic: String) : WebS
 data class SendMessageToSession(val sessionId: String, val message: String) : WebSocketSessionManagerCommand()
 data class SendMessageToTopic(val topic: String, val message: String) : WebSocketSessionManagerCommand()
 
-sealed class WebSocketSessionManagerResponse
+
 data class GetSessions(val replyTo: ActorRef<WebSocketSessionManagerResponse>) : WebSocketSessionManagerCommand()
 data class SessionsResponse(val sessions: Map<String, WebSocketSession>) : WebSocketSessionManagerResponse()
 
-
+data class Ping(val replyTo: ActorRef<WebSocketSessionManagerResponse>) : WebSocketSessionManagerCommand()
+data class Pong(val message: String) : WebSocketSessionManagerResponse()
 
 class WebSocketSessionManagerActor private constructor(
     context: ActorContext<WebSocketSessionManagerCommand>
@@ -48,7 +51,13 @@ class WebSocketSessionManagerActor private constructor(
             .onMessage(SendMessageToSession::class.java, this::onSendMessageToSession)
             .onMessage(SendMessageToTopic::class.java, this::onSendMessageToTopic)
             .onMessage(GetSessions::class.java, this::onGetSessions)
+            .onMessage(Ping::class.java, this::onPing)
             .build()
+    }
+
+    private fun onPing(command: Ping): Behavior<WebSocketSessionManagerCommand> {
+        command.replyTo.tell(Pong("Pong"))
+        return this
     }
 
     private fun onGetSessions(command: GetSessions): Behavior<WebSocketSessionManagerCommand> {
