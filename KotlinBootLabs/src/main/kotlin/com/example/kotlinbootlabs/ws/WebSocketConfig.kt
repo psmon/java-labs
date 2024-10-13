@@ -9,10 +9,10 @@ import org.springframework.web.socket.server.support.HttpSessionHandshakeInterce
 
 @Configuration
 @EnableWebSocket
-class WebSocketConfig(private val webSocketHandler: MyWebSocketHandler) : WebSocketConfigurer {
+class WebSocketConfig(private val webSocketHandler: MyWebSocketHandler,private val sessionManager: WebSocketSessionManager) : WebSocketConfigurer {
 
     @Bean
-    fun webSocketHandler() = MyWebSocketHandler()
+    fun webSocketHandler() = MyWebSocketHandler(sessionManager)
 
     override fun registerWebSocketHandlers(registry: WebSocketHandlerRegistry) {
         registry.addHandler(webSocketHandler, "/ws")
