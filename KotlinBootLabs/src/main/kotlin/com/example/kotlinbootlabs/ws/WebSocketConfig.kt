@@ -31,6 +31,4 @@ class WebSocketConfig(private val webSocketHandler: MyWebSocketHandler,
             .addInterceptors(HttpSessionHandshakeInterceptor())
             .setAllowedOrigins("*")
     }
-
-
 }

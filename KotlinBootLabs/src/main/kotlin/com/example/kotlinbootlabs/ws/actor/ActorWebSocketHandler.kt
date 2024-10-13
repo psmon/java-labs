@@ -1,20 +1,20 @@
 package com.example.kotlinbootlabs.ws.actor
 
 import akka.actor.typed.ActorRef
+import com.fasterxml.jackson.module.kotlin.readValue
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession
 import org.springframework.web.socket.handler.TextWebSocketHandler
 import org.springframework.stereotype.Component
 
+data class WebSocketMessage(val type: String, val topic: String? = null, val data: String? = null)
+
 @Component
 class ActorWebSocketHandler(private val sessionManagerActor: ActorRef<WebSocketSessionManagerCommand>)
     : TextWebSocketHandler() {
 
-    //private lateinit var sessionManagerActor: ActorRef<WebSocketSessionManagerCommand>
-
-    fun setSessionManagerActor(actorRef: ActorRef<WebSocketSessionManagerCommand>) {
-        //this.sessionManagerActor = actorRef
-    }
+    private val objectMapper = jacksonObjectMapper()
 
     override fun afterConnectionEstablished(session: WebSocketSession) {
         sessionManagerActor.tell(AddSession(session))
@@ -26,18 +26,26 @@ class ActorWebSocketHandler(private val sessionManagerActor: ActorRef<WebSocketS
 
     override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
         val payload = message.payload
+        val webSocketMessage: WebSocketMessage = objectMapper.readValue(payload)
 
-        when {
-            payload.startsWith("subscribe:") -> {
-                val topic = payload.substringAfter("subscribe:")
-                sessionManagerActor.tell(SubscribeToTopic(session.id, topic))
+        when (webSocketMessage.type) {
+            "subscribe" -> {
+                webSocketMessage.topic?.let { topic ->
+                    sessionManagerActor.tell(SubscribeToTopic(session.id, topic))
+                }
             }
-            payload.startsWith("unsubscribe:") -> {
-                val topic = payload.substringAfter("unsubscribe:")
-                sessionManagerActor.tell(UnsubscribeFromTopic(session.id, topic))
+            "unsubscribe" -> {
+                webSocketMessage.topic?.let { topic ->
+                    sessionManagerActor.tell(UnsubscribeFromTopic(session.id, topic))
+                }
+            }
+            "message" -> {
+                webSocketMessage.data?.let { data ->
+                    session.sendMessage(TextMessage("Echo: $data"))
+                }
             }
             else -> {
-                session.sendMessage(TextMessage("Echo: $payload"))
+                session.sendMessage(TextMessage("Unknown message type: ${webSocketMessage.type}"))
             }
         }
     }
