@@ -20,7 +20,13 @@ class WebSocketClient {
         };
 
         this.socket.onmessage = (event) => {
-            this.addEvent("Received from server: " + event.data);
+            const data = JSON.parse(event.data);
+            if (data.type === "sessionId") {
+                this.sessionId = data.id;
+                this.addEvent("Your session ID: " + this.sessionId);
+            } else {
+                this.addEvent("Received from server: " + event.data);
+            }
         };
 
         this.socket.onclose = (event) => {

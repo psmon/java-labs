@@ -2,10 +2,10 @@ package com.example.kotlinbootlabs.controller
 
 import akka.actor.typed.ActorRef
 import com.example.kotlinbootlabs.ws.WebSocketSessionManager
+import com.example.kotlinbootlabs.ws.actor.SendMessageToAll
 import com.example.kotlinbootlabs.ws.actor.SendMessageToSession
 import com.example.kotlinbootlabs.ws.actor.SendMessageToTopic
 import com.example.kotlinbootlabs.ws.actor.WebSocketSessionManagerCommand
-import io.swagger.v3.oas.annotations.Operation
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -35,6 +35,12 @@ class WebSocketController(private val sessionManager: WebSocketSessionManager,
     fun sendMessageToTopicByActor(@RequestParam topic: String, @RequestBody message: String): String {
         sessionManagerActor.tell(SendMessageToTopic(topic, message))
         return "Message sent to topic $topic"
+    }
+
+    @PostMapping("actor/send-to-all")
+    fun sendMessageToAllByActor(@RequestBody message: String): String {
+        sessionManagerActor.tell(SendMessageToAll(message))
+        return "Message sent to All $message"
     }
 
 }

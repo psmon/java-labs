@@ -16,11 +16,13 @@ sealed class WebSocketSessionManagerResponse
 
 data class AddSession(val session: WebSocketSession) : WebSocketSessionManagerCommand()
 data class RemoveSession(val session: WebSocketSession) : WebSocketSessionManagerCommand()
+
 data class SubscribeToTopic(val sessionId: String, val topic: String) : WebSocketSessionManagerCommand()
 data class UnsubscribeFromTopic(val sessionId: String, val topic: String) : WebSocketSessionManagerCommand()
+
 data class SendMessageToSession(val sessionId: String, val message: String) : WebSocketSessionManagerCommand()
 data class SendMessageToTopic(val topic: String, val message: String) : WebSocketSessionManagerCommand()
-
+data class SendMessageToAll(val message: String) : WebSocketSessionManagerCommand()
 
 data class GetSessions(val replyTo: ActorRef<WebSocketSessionManagerResponse>) : WebSocketSessionManagerCommand()
 data class SessionsResponse(val sessions: Map<String, WebSocketSession>) : WebSocketSessionManagerResponse()
@@ -50,6 +52,7 @@ class WebSocketSessionManagerActor private constructor(
             .onMessage(UnsubscribeFromTopic::class.java, this::onUnsubscribeFromTopic)
             .onMessage(SendMessageToSession::class.java, this::onSendMessageToSession)
             .onMessage(SendMessageToTopic::class.java, this::onSendMessageToTopic)
+            .onMessage(SendMessageToAll::class.java, this::onSendMessageToAll)
             .onMessage(GetSessions::class.java, this::onGetSessions)
             .onMessage(Ping::class.java, this::onPing)
             .build()
@@ -68,12 +71,20 @@ class WebSocketSessionManagerActor private constructor(
     private fun onAddSession(command: AddSession): Behavior<WebSocketSessionManagerCommand> {
         sessions[command.session.id] = command.session
         logger.info("Connected: ${command.session.id}")
+        command.session.sendMessage(TextMessage("{\"type\": \"sessionId\", \"id\": \"${command.session.id}\"}"))
         return this
     }
 
     private fun onRemoveSession(command: RemoveSession): Behavior<WebSocketSessionManagerCommand> {
         sessions.remove(command.session.id)
         logger.info("Disconnected: ${command.session.id}")
+        return this
+    }
+
+    private fun onSendMessageToAll(command: SendMessageToAll): Behavior<WebSocketSessionManagerCommand> {
+        sessions.values.forEach { session ->
+            session.sendMessage(TextMessage(command.message))
+        }
         return this
     }
 
