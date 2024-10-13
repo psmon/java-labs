@@ -19,6 +19,12 @@ data class UnsubscribeFromTopic(val sessionId: String, val topic: String) : WebS
 data class SendMessageToSession(val sessionId: String, val message: String) : WebSocketSessionManagerCommand()
 data class SendMessageToTopic(val topic: String, val message: String) : WebSocketSessionManagerCommand()
 
+sealed class WebSocketSessionManagerResponse
+data class GetSessions(val replyTo: ActorRef<WebSocketSessionManagerResponse>) : WebSocketSessionManagerCommand()
+data class SessionsResponse(val sessions: Map<String, WebSocketSession>) : WebSocketSessionManagerResponse()
+
+
+
 class WebSocketSessionManagerActor private constructor(
     context: ActorContext<WebSocketSessionManagerCommand>
 ) : AbstractBehavior<WebSocketSessionManagerCommand>(context) {
@@ -41,7 +47,13 @@ class WebSocketSessionManagerActor private constructor(
             .onMessage(UnsubscribeFromTopic::class.java, this::onUnsubscribeFromTopic)
             .onMessage(SendMessageToSession::class.java, this::onSendMessageToSession)
             .onMessage(SendMessageToTopic::class.java, this::onSendMessageToTopic)
+            .onMessage(GetSessions::class.java, this::onGetSessions)
             .build()
+    }
+
+    private fun onGetSessions(command: GetSessions): Behavior<WebSocketSessionManagerCommand> {
+        command.replyTo.tell(SessionsResponse(sessions.toMap()))
+        return this
     }
 
     private fun onAddSession(command: AddSession): Behavior<WebSocketSessionManagerCommand> {
