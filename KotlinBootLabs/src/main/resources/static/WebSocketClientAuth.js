@@ -51,6 +51,12 @@ class WebSocketClient {
         }
     }
 
+    login(token) {
+        const jsonMessage = JSON.stringify({ type: "login", data: token });
+        this.socket.send(jsonMessage);
+        this.addEvent("Try Login....");
+    }
+
     sendMessage(message) {
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
             const jsonMessage = JSON.stringify({ type: "message", data: message });
@@ -82,7 +88,7 @@ class WebSocketClient {
     }
 }
 
-const client = new WebSocketClient("ws://localhost:8080/ws-actor");
+const client = new WebSocketClient("ws://localhost:8080/ws-auth");
 
 
 function connectWebSocket() {
@@ -91,6 +97,11 @@ function connectWebSocket() {
 
 function disconnectWebSocket() {
     client.disconnect();
+}
+
+function login() {
+    const token = document.getElementById('token').value;
+    client.login(token);
 }
 
 function sendMessage() {

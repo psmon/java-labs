@@ -1,6 +1,7 @@
-package com.example.kotlinbootlabs.ws.actor
+package com.example.kotlinbootlabs.ws.handler.basic
 
 import akka.actor.typed.ActorRef
+import com.example.kotlinbootlabs.ws.actor.*
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.springframework.web.socket.TextMessage
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Component
 data class WebSocketMessage(val type: String, val topic: String? = null, val data: String? = null)
 
 @Component
-class ActorWebSocketHandler(private val sessionManagerActor: ActorRef<WebSocketSessionManagerCommand>)
+class SocketHandlerWithActor(private val sessionManagerActor: ActorRef<WebSocketSessionManagerCommand>)
     : TextWebSocketHandler() {
 
     private val objectMapper = jacksonObjectMapper()

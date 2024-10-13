@@ -1,8 +1,7 @@
 package com.example.kotlinbootlabs.ws
 
-import akka.actor.typed.ActorRef
-import com.example.kotlinbootlabs.ws.actor.ActorWebSocketHandler
-import com.example.kotlinbootlabs.ws.actor.WebSocketSessionManagerCommand
+import com.example.kotlinbootlabs.ws.handler.auth.SocketHandlerAuth
+import com.example.kotlinbootlabs.ws.handler.basic.SocketHandlerWithActor
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.socket.config.annotation.EnableWebSocket
@@ -13,7 +12,8 @@ import org.springframework.web.socket.server.support.HttpSessionHandshakeInterce
 @Configuration
 @EnableWebSocket
 class WebSocketConfig(private val webSocketHandler: MyWebSocketHandler,
-                      private val actorWebSocketHandler: ActorWebSocketHandler,
+                      private val actorWebSocketHandler: SocketHandlerWithActor,
+                      private var socketHandlerAuth: SocketHandlerAuth,
                       private val sessionManager: WebSocketSessionManager
 ) : WebSocketConfigurer {
 
@@ -28,6 +28,11 @@ class WebSocketConfig(private val webSocketHandler: MyWebSocketHandler,
 
         // Actor WebSocket handler
         registry.addHandler(actorWebSocketHandler, "/ws-actor")
+            .addInterceptors(HttpSessionHandshakeInterceptor())
+            .setAllowedOrigins("*")
+
+        // Actor WebSocket handler
+        registry.addHandler(socketHandlerAuth, "/ws-auth")
             .addInterceptors(HttpSessionHandshakeInterceptor())
             .setAllowedOrigins("*")
     }

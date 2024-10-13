@@ -9,6 +9,7 @@ import com.example.kotlinbootlabs.ws.actor.WebSocketSessionManagerCommand
 import org.springframework.web.bind.annotation.*
 
 @RestController
+@RequestMapping("/api/websocket")
 class WebSocketController(private val sessionManager: WebSocketSessionManager,
                           private val sessionManagerActor: ActorRef<WebSocketSessionManagerCommand>
 ) {

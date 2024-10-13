@@ -31,6 +31,12 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
 
+	// Jwt
+	implementation("io.jsonwebtoken:jjwt-api:0.11.5")
+	implementation("io.jsonwebtoken:jjwt-impl:0.11.5")
+	implementation("io.jsonwebtoken:jjwt-jackson:0.11.5")
+	// or jjwt-gson, jjwt-orgjson, etc.
+
 	// Swagger
 	// Swagger / OpenAPI
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
