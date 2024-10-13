@@ -1,15 +1,21 @@
 package com.example.kotlinbootlabs.controller
 
+import com.example.kotlinbootlabs.ws.MyWebSocketHandler
 import io.swagger.v3.oas.annotations.Operation
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RestController
-class WebSocketController {
+class WebSocketController(private val webSocketHandler: MyWebSocketHandler) {
 
-    @Operation(summary = "WebSocket endpoint", description = "WebSocket endpoint for real-time messaging")
-    @GetMapping("/ws-info")
-    fun websocketInfo(): String {
-        return "Use /ws endpoint for WebSocket connection"
+    @PostMapping("/send-to-session")
+    fun sendMessageToSession(@RequestParam sessionId: String, @RequestBody message: String): String {
+        webSocketHandler.sendMessageToSession(sessionId, message)
+        return "Message sent to session $sessionId"
+    }
+
+    @PostMapping("/send-to-topic")
+    fun sendMessageToTopic(@RequestParam topic: String, @RequestBody message: String): String {
+        webSocketHandler.sendMessageToTopic(topic, message)
+        return "Message sent to topic $topic"
     }
 }

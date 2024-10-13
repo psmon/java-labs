@@ -8,41 +8,58 @@
 <body>
 <h1>WebSocket Test</h1>
 <button onclick="connectWebSocket()">Connect to WebSocket</button>
+<button onclick="disconnectWebSocket()">Disconnect WebSocket</button>
 <button onclick="sendMessage()">Send Hello</button>
+<button onclick="subscribeTopic()">Subscribe to Topic</button>
 
 <script>
     let socket;
 
     function connectWebSocket() {
-        // WebSocket 객체 생성 및 서버 연결
         socket = new WebSocket("ws://localhost:8080/ws");
 
-        // WebSocket 연결이 열렸을 때
         socket.onopen = function(event) {
             console.log("WebSocket is open now.");
         };
 
-        // 서버로부터 메시지를 받았을 때
         socket.onmessage = function(event) {
             console.log("Received from server: " + event.data);
         };
 
-        // WebSocket 연결이 닫혔을 때
         socket.onclose = function(event) {
             console.log("WebSocket is closed now.");
         };
 
-        // 오류가 발생했을 때
         socket.onerror = function(error) {
             console.error("WebSocket error: " + error);
         };
     }
 
+    function disconnectWebSocket() {
+        if (socket) {
+            socket.close();
+            console.log("WebSocket is closed.");
+        } else {
+            console.log("WebSocket is not connected.");
+        }
+    }
+
     function sendMessage() {
         if (socket && socket.readyState === WebSocket.OPEN) {
-            // 서버로 "hello" 메시지 보내기
             socket.send("hello");
             console.log("Sent: hello");
+        } else {
+            console.log("WebSocket is not open.");
+        }
+    }
+
+    function subscribeTopic() {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            const topic = prompt("Enter topic to subscribe:");
+            if (topic) {
+                socket.send("subscribe:" + topic);
+                console.log("Subscribed to topic: " + topic);
+            }
         } else {
             console.log("WebSocket is not open.");
         }

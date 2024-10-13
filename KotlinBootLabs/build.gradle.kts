@@ -22,15 +22,14 @@ val scalaVersion = "2.13"
 val akkaVersion = "2.7.0"
 
 dependencies {
+	// Core
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
 	implementation("org.springframework.boot:spring-boot-starter-websocket")
-
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
-	runtimeOnly("com.h2database:h2")
 
 	// Swagger
 	// Swagger / OpenAPI
@@ -51,16 +50,18 @@ dependencies {
 	implementation("ch.qos.logback:logback-classic:1.4.12")
 	implementation("com.typesafe.akka:akka-slf4j_$scalaVersion:$akkaVersion")
 
-	// TestToolKit
-	testImplementation("com.typesafe.akka:akka-testkit_$scalaVersion:$akkaVersion")
+	// Only RUNTIME
+	runtimeOnly("com.h2database:h2")
 
-	// JUnit
+	// Only TEST
+	testImplementation("com.typesafe.akka:akka-testkit_$scalaVersion:$akkaVersion")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("io.projectreactor:reactor-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.3")
 	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.3")
+	testImplementation("com.squareup.okhttp3:okhttp:4.9.3")
 
 }
 
