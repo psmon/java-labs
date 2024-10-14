@@ -57,6 +57,11 @@ class WebSocketClient {
         this.addEvent("Try Login....");
     }
 
+    sendAction(action) {
+        const jsonMessage = JSON.stringify({ type: "action", data: action });
+        this.socket.send(jsonMessage);
+    }
+
     sendMessage(message) {
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
             const jsonMessage = JSON.stringify({ type: "message", data: message });
@@ -106,6 +111,13 @@ function login() {
 
 function sendMessage() {
     client.sendMessage("hello");
+}
+
+function sendAction() {
+    const action = prompt("Enter action:");
+    if (action) {
+        client.sendAction(action);
+    }
 }
 
 function subscribeTopic() {

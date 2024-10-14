@@ -6,6 +6,7 @@ import akka.actor.typed.javadsl.AbstractBehavior
 import akka.actor.typed.javadsl.ActorContext
 import akka.actor.typed.javadsl.Behaviors
 import akka.actor.typed.javadsl.Receive
+import com.example.kotlinbootlabs.service.TokenClaims
 import org.springframework.web.socket.WebSocketSession
 import org.springframework.web.socket.TextMessage
 import org.slf4j.LoggerFactory
@@ -19,6 +20,9 @@ data class RemoveSession(val session: WebSocketSession) : WebSocketSessionManage
 
 data class SubscribeToTopic(val sessionId: String, val topic: String) : WebSocketSessionManagerCommand()
 data class UnsubscribeFromTopic(val sessionId: String, val topic: String) : WebSocketSessionManagerCommand()
+
+data class UpdateSession(val session: WebSocketSession, val claims: TokenClaims) : WebSocketSessionManagerCommand()
+data class OnUserAction(val session: WebSocketSession, val action: String) : WebSocketSessionManagerCommand()
 
 data class SendMessageToSession(val sessionId: String, val message: String) : WebSocketSessionManagerCommand()
 data class SendMessageToTopic(val topic: String, val message: String) : WebSocketSessionManagerCommand()
@@ -48,14 +52,33 @@ class WebSocketSessionManagerActor private constructor(
         return newReceiveBuilder()
             .onMessage(AddSession::class.java, this::onAddSession)
             .onMessage(RemoveSession::class.java, this::onRemoveSession)
+            .onMessage(UpdateSession::class.java, this::onUpdateSession)
             .onMessage(SubscribeToTopic::class.java, this::onSubscribeToTopic)
             .onMessage(UnsubscribeFromTopic::class.java, this::onUnsubscribeFromTopic)
             .onMessage(SendMessageToSession::class.java, this::onSendMessageToSession)
             .onMessage(SendMessageToTopic::class.java, this::onSendMessageToTopic)
             .onMessage(SendMessageToAll::class.java, this::onSendMessageToAll)
             .onMessage(GetSessions::class.java, this::onGetSessions)
+            .onMessage(OnUserAction::class.java, this::onUserAction)
             .onMessage(Ping::class.java, this::onPing)
             .build()
+    }
+
+    private fun onUserAction(command: OnUserAction): Behavior<WebSocketSessionManagerCommand> {
+        when (command.action) {
+            "cart" -> {
+                command.session.sendMessage(TextMessage("장바구니에 상품을 담으셨군요 00한 상품은 어떤가요?"))
+            }
+            "buy" -> {
+                command.session.sendMessage(TextMessage("상품을 구매하셨네요~"))
+            }
+        }
+        return this
+    }
+
+    private fun onUpdateSession(command: UpdateSession): Behavior<WebSocketSessionManagerCommand> {
+        command.session.sendMessage(TextMessage("Welcome ${command.claims.nick}"))
+        return this
     }
 
     private fun onPing(command: Ping): Behavior<WebSocketSessionManagerCommand> {
@@ -78,6 +101,15 @@ class WebSocketSessionManagerActor private constructor(
     private fun onRemoveSession(command: RemoveSession): Behavior<WebSocketSessionManagerCommand> {
         sessions.remove(command.session.id)
         logger.info("Disconnected: ${command.session.id}")
+
+        // Remove the session from all topic subscriptions
+        topicSubscriptions.forEach { (topic, sessionIds) ->
+            sessionIds.remove(command.session.id)
+            if (sessionIds.isEmpty()) {
+                topicSubscriptions.remove(topic)
+            }
+        }
+
         return this
     }
 

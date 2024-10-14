@@ -10,8 +10,9 @@ import org.springframework.web.bind.annotation.*
 class AuthController(private val authService: AuthService) {
 
     @PostMapping("/login")
-    fun login(@RequestParam id: String, @RequestParam password: String): AuthResponse? {
-        return authService.authenticate(id, password)
+    fun login(@RequestParam id: String, @RequestParam password: String,
+              @RequestParam identifier: String): AuthResponse? {
+        return authService.authenticate(id, password, identifier)
     }
 
     @GetMapping("/claims")

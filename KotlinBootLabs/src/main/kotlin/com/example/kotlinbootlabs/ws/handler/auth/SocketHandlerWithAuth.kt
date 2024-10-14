@@ -42,7 +42,9 @@ class SocketHandlerAuth(
                         session.attributes["token"] = token;
                         session.attributes["id"] = authResponse.id;
                         session.attributes["nick"] = authResponse.nick;
+                        session.attributes["identifier"] = authResponse.identifier;
                         session.sendMessage(TextMessage("Login successful"))
+                        sessionManagerActor.tell(UpdateSession(session, authResponse))
                     } catch (e: Exception) {
                         session.sendMessage(TextMessage("Login failed: ${e.message}"))
                     }
@@ -58,6 +60,11 @@ class SocketHandlerAuth(
                 }
 
                 when (webSocketMessage.type) {
+                    "action" -> {
+                        webSocketMessage.data?.let { data ->
+                            sessionManagerActor.tell(OnUserAction(session, data))
+                        }
+                    }
                     "subscribe" -> {
                         webSocketMessage.topic?.let { topic ->
                             sessionManagerActor.tell(SubscribeToTopic(session.id, topic))
