@@ -78,6 +78,9 @@ class WebSocketSessionManagerActor private constructor(
 
     private fun onUpdateSession(command: UpdateSession): Behavior<WebSocketSessionManagerCommand> {
         command.session.sendMessage(TextMessage("Welcome ${command.claims.nick}"))
+
+        command.claims.identifier?.let { createPrivacyRoom(it) }
+
         return this
     }
 
@@ -143,4 +146,24 @@ class WebSocketSessionManagerActor private constructor(
         }
         return this
     }
+
+    private fun createPrivacyRoom(identifier: String) {
+        val actorName = "PrivacyRoomActor-${identifier}"
+        context.spawn(PrivacyRoomActor.create(identifier), actorName)
+        logger.info("PrivacyRoomActor created with identifier: $identifier")
+    }
+
+    private fun removePrivacyRoom(identifier: String) {
+        val actorName = "PrivacyRoomActor-${identifier}"
+        val actorRef = context.children.find { it.path().name() == actorName }
+        actorRef?.let { context.stop(it) }
+        logger.info("PrivacyRoomActor removed with identifier: $identifier")
+    }
+
+    private fun getPrivacyRoomActor(identifier: String): ActorRef<Any>? {
+        val actorName = "PrivacyRoomActor-${identifier}"
+        val actorRef = context.children.find { it.path().name() == actorName }?.unsafeUpcast<Any>()
+        return actorRef;
+    }
+
 }
