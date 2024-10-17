@@ -28,7 +28,7 @@ class PrivacyRoomActor private constructor(
     }
 
     init {
-        timers.startSingleTimer(AutoOnceProcess, Duration.ofSeconds(2))
+        timers.startSingleTimer(AutoOnceProcess, Duration.ofSeconds(5))
     }
 
     private val logger = LoggerFactory.getLogger(PrivacyRoomActor::class.java)
