@@ -149,6 +149,13 @@ class WebSocketSessionManagerActor private constructor(
 
     private fun createPrivacyRoom(identifier: String) {
         val actorName = "PrivacyRoomActor-${identifier}"
+
+        val roomActor = getPrivacyRoomActor(identifier)
+        if(roomActor != null) {
+            logger.info("PrivacyRoomActor already exists with identifier: $identifier")
+            return
+        }
+
         context.spawn(PrivacyRoomActor.create(identifier), actorName)
         logger.info("PrivacyRoomActor created with identifier: $identifier")
     }
