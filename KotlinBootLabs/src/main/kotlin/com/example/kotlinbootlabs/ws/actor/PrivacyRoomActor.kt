@@ -7,6 +7,7 @@ import com.example.kotlinbootlabs.actor.HelloActorResponse
 import com.example.kotlinbootlabs.actor.HelloResponse
 import org.slf4j.LoggerFactory
 import java.time.Duration
+import java.util.concurrent.ThreadLocalRandom
 
 sealed class PrivacyRoomCommand
 data class SendMessage(val message: String, val replyTo: ActorRef<HelloActorResponse>) : PrivacyRoomCommand()
@@ -28,7 +29,8 @@ class PrivacyRoomActor private constructor(
     }
 
     init {
-        timers.startSingleTimer(AutoOnceProcess, Duration.ofSeconds(5))
+        val randomDuration = Duration.ofSeconds(ThreadLocalRandom.current().nextLong(3, 6))
+        timers.startSingleTimer(AutoOnceProcess, randomDuration)
     }
 
     private val logger = LoggerFactory.getLogger(PrivacyRoomActor::class.java)
@@ -39,7 +41,7 @@ class PrivacyRoomActor private constructor(
         return newReceiveBuilder()
             .onMessage(SetTestProbe::class.java, this::onSetTestProbe)
             .onMessage(SendMessage::class.java, this::onSendMessage)
-            .onMessage(AutoOnceProcess::class.java, this::onAuthOnceProcess)
+            .onMessage(AutoOnceProcess::class.java, this::onAutoOnceProcess)
             .build()
     }
 
@@ -50,10 +52,10 @@ class PrivacyRoomActor private constructor(
         return this
     }
 
-    private fun onAuthOnceProcess(command: AutoOnceProcess): Behavior<PrivacyRoomCommand> {
+    private fun onAutoOnceProcess(command: AutoOnceProcess): Behavior<PrivacyRoomCommand> {
         logger.info("AutoOnceProcess received in PrivacyRoomActor $identifier")
         if (::testProbe.isInitialized) {
-            testProbe.tell(HelloResponse("Kotlin"))
+            testProbe.tell(HelloResponse("Hello World"))
         } else {
             logger.warn("testProbe is not initialized")
         }

@@ -52,7 +52,7 @@ class PrivacyRoomActorTest {
         }
 
         repeat(testCount) {
-            probe.expectMessage(Duration.ofSeconds(10), HelloResponse("Kotlin"))
+            probe.expectMessage(Duration.ofSeconds(10), HelloResponse("Hello World"))
         }
 
         // Measure memory and CPU usage after the test
