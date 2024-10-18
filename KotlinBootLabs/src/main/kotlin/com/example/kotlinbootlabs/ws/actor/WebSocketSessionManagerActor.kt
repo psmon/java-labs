@@ -79,7 +79,7 @@ class WebSocketSessionManagerActor private constructor(
     private fun onUpdateSession(command: UpdateSession): Behavior<WebSocketSessionManagerCommand> {
         command.session.sendMessage(TextMessage("Welcome ${command.claims.nick}"))
 
-        command.claims.identifier?.let { createPrivacyRoom(it) }
+        command.claims.identifier?.let { createPrivacyRoom(it, command.session) }
 
         return this
     }
@@ -147,16 +147,19 @@ class WebSocketSessionManagerActor private constructor(
         return this
     }
 
-    private fun createPrivacyRoom(identifier: String) {
+    private fun createPrivacyRoom(identifier: String, session: WebSocketSession) {
         val actorName = "PrivacyRoomActor-${identifier}"
-
-        val roomActor = getPrivacyRoomActor(identifier)
+        val roomActor = getPrivacyRoomActor(identifier, session)
         if(roomActor != null) {
             logger.info("PrivacyRoomActor already exists with identifier: $identifier")
+            // Update Socket Session
+            roomActor.tell(SetSocketSession(session))
             return
         }
 
-        context.spawn(PrivacyRoomActor.create(identifier), actorName)
+        val createRoomActor = context.spawn(PrivacyRoomActor.create(identifier), actorName)
+        // Update Socket Session
+        createRoomActor.tell(SetSocketSession(session))
         logger.info("PrivacyRoomActor created with identifier: $identifier")
     }
 
@@ -167,9 +170,9 @@ class WebSocketSessionManagerActor private constructor(
         logger.info("PrivacyRoomActor removed with identifier: $identifier")
     }
 
-    private fun getPrivacyRoomActor(identifier: String): ActorRef<Any>? {
+    private fun getPrivacyRoomActor(identifier: String, session : WebSocketSession): ActorRef<PrivacyRoomCommand>? {
         val actorName = "PrivacyRoomActor-${identifier}"
-        val actorRef = context.children.find { it.path().name() == actorName }?.unsafeUpcast<Any>()
+        val actorRef = context.children.find { it.path().name() == actorName }?.unsafeUpcast<PrivacyRoomCommand>()
         return actorRef;
     }
 

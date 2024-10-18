@@ -2,8 +2,6 @@ package com.example.kotlinbootlabs.ws.actor
 
 import akka.actor.testkit.typed.javadsl.ActorTestKit
 import akka.actor.typed.ActorRef
-import com.example.kotlinbootlabs.actor.HelloActorResponse
-import com.example.kotlinbootlabs.actor.HelloResponse
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -11,7 +9,6 @@ import java.time.Duration
 import java.lang.management.ManagementFactory
 import java.lang.management.OperatingSystemMXBean
 import java.lang.management.MemoryMXBean
-import java.lang.management.ThreadMXBean
 
 class PrivacyRoomActorTest {
 
@@ -33,7 +30,7 @@ class PrivacyRoomActorTest {
 
     @Test
     fun testSendMessage() {
-        val probe = testKit.createTestProbe<HelloActorResponse>()
+        val probe = testKit.createTestProbe<PrivacyRoomResponse>()
         val testCount:Int = 10000
 
         // Get memory and thread management beans
@@ -52,7 +49,7 @@ class PrivacyRoomActorTest {
         }
 
         repeat(testCount) {
-            probe.expectMessage(Duration.ofSeconds(10), HelloResponse("Hello World"))
+            probe.expectMessage(Duration.ofSeconds(10), PrivacyHelloResponse("Hello World"))
         }
 
         // Measure memory and CPU usage after the test
