@@ -2,10 +2,12 @@ package com.example.kotlinbootlabs.ws.actor
 
 import akka.actor.typed.ActorRef
 import akka.actor.typed.Behavior
+import akka.actor.typed.SupervisorStrategy
 import akka.actor.typed.javadsl.AbstractBehavior
 import akka.actor.typed.javadsl.ActorContext
 import akka.actor.typed.javadsl.Behaviors
 import akka.actor.typed.javadsl.Receive
+import com.example.kotlinbootlabs.actor.HelloActor
 import com.example.kotlinbootlabs.service.TokenClaims
 import org.springframework.web.socket.WebSocketSession
 import org.springframework.web.socket.TextMessage
@@ -169,9 +171,15 @@ class WebSocketSessionManagerActor private constructor(
             return
         }
 
-        val createRoomActor = context.spawn(PrivacyRoomActor.create(identifier), actorName)
+        val childRoomActor = context.spawn(
+            Behaviors.supervise(PrivacyRoomActor.create(identifier))
+                .onFailure(SupervisorStrategy.resume()),
+            actorName
+        )
+        context.watch(childRoomActor)
+
         // Update Socket Session
-        createRoomActor.tell(SetSocketSession(session))
+        childRoomActor.tell(SetSocketSession(session))
         logger.info("PrivacyRoomActor created with identifier: $identifier")
     }
 
