@@ -24,9 +24,13 @@ data class UnsubscribeFromTopic(val sessionId: String, val topic: String) : WebS
 data class UpdateSession(val session: WebSocketSession, val claims: TokenClaims) : WebSocketSessionManagerCommand()
 data class OnUserAction(val session: WebSocketSession, val action: String) : WebSocketSessionManagerCommand()
 
+// Server To Session
 data class SendMessageToSession(val sessionId: String, val message: String) : WebSocketSessionManagerCommand()
 data class SendMessageToTopic(val topic: String, val message: String) : WebSocketSessionManagerCommand()
 data class SendMessageToAll(val message: String) : WebSocketSessionManagerCommand()
+
+// Session To Server
+data class SendMessageToActor(val identifier: String, val message: String) : WebSocketSessionManagerCommand()
 
 data class GetSessions(val replyTo: ActorRef<WebSocketSessionManagerResponse>) : WebSocketSessionManagerCommand()
 data class SessionsResponse(val sessions: Map<String, WebSocketSession>) : WebSocketSessionManagerResponse()
@@ -58,10 +62,16 @@ class WebSocketSessionManagerActor private constructor(
             .onMessage(SendMessageToSession::class.java, this::onSendMessageToSession)
             .onMessage(SendMessageToTopic::class.java, this::onSendMessageToTopic)
             .onMessage(SendMessageToAll::class.java, this::onSendMessageToAll)
+            .onMessage(SendMessageToActor::class.java, this::onSendMessageToActor)
             .onMessage(GetSessions::class.java, this::onGetSessions)
             .onMessage(OnUserAction::class.java, this::onUserAction)
             .onMessage(Ping::class.java, this::onPing)
             .build()
+    }
+
+    private fun onSendMessageToActor(sendMessageToActor: SendMessageToActor): Behavior<WebSocketSessionManagerCommand> {
+        getPrivacyRoomActor(sendMessageToActor.identifier)?.tell(SendTextMessage(sendMessageToActor.message))
+        return this
     }
 
     private fun onUserAction(command: OnUserAction): Behavior<WebSocketSessionManagerCommand> {
@@ -113,6 +123,8 @@ class WebSocketSessionManagerActor private constructor(
             }
         }
 
+        getPrivacyRoomActor(command.session.id)?.tell(ClearSocketSession)
+
         return this
     }
 
@@ -149,7 +161,7 @@ class WebSocketSessionManagerActor private constructor(
 
     private fun createPrivacyRoom(identifier: String, session: WebSocketSession) {
         val actorName = "PrivacyRoomActor-${identifier}"
-        val roomActor = getPrivacyRoomActor(identifier, session)
+        val roomActor = getPrivacyRoomActor(identifier)
         if(roomActor != null) {
             logger.info("PrivacyRoomActor already exists with identifier: $identifier")
             // Update Socket Session
@@ -170,7 +182,7 @@ class WebSocketSessionManagerActor private constructor(
         logger.info("PrivacyRoomActor removed with identifier: $identifier")
     }
 
-    private fun getPrivacyRoomActor(identifier: String, session : WebSocketSession): ActorRef<PrivacyRoomCommand>? {
+    private fun getPrivacyRoomActor(identifier: String): ActorRef<PrivacyRoomCommand>? {
         val actorName = "PrivacyRoomActor-${identifier}"
         val actorRef = context.children.find { it.path().name() == actorName }?.unsafeUpcast<PrivacyRoomCommand>()
         return actorRef;

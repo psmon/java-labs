@@ -76,9 +76,15 @@ class SocketHandlerAuth(
                         }
                     }
                     "message" -> {
+
+                        session.attributes["identifier"]?.let { identifier ->
+                            sessionManagerActor.tell(SendMessageToActor(identifier.toString(), webSocketMessage.data.toString() ))
+                        }
+                        /*
                         webSocketMessage.data?.let { data ->
                             session.sendMessage(TextMessage("Echo: $data"))
-                        }
+                        }*/
+
                     }
                     else -> {
                         session.sendMessage(TextMessage("Unknown message type: ${webSocketMessage.type}"))

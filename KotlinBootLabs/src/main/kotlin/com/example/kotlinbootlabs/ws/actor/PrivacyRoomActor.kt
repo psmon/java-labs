@@ -13,6 +13,8 @@ import java.util.concurrent.ThreadLocalRandom
 
 sealed class PrivacyRoomCommand
 data class SendMessage(val message: String, val replyTo: ActorRef<HelloActorResponse>) : PrivacyRoomCommand()
+data class SendTextMessage(val message: String) : PrivacyRoomCommand()
+
 object AutoOnceProcess : PrivacyRoomCommand()
 data class SetTestProbe(val testProbe: ActorRef<PrivacyRoomResponse>) : PrivacyRoomCommand()
 data class SetSocketSession(val socketSession: WebSocketSession) : PrivacyRoomCommand()
@@ -37,8 +39,9 @@ class PrivacyRoomActor private constructor(
     }
 
     init {
-        val randomDuration = Duration.ofSeconds(ThreadLocalRandom.current().nextLong(3, 6))
-        timers.startSingleTimer(AutoOnceProcess, randomDuration)
+        val randomStartDuration = Duration.ofSeconds(ThreadLocalRandom.current().nextLong(3, 6))
+        //timers.startSingleTimer(AutoOnceProcess, randomDuration)
+        timers.startTimerAtFixedRate(AutoOnceProcess, randomStartDuration, Duration.ofSeconds(5))
     }
 
     private val logger = LoggerFactory.getLogger(PrivacyRoomActor::class.java)
@@ -52,10 +55,22 @@ class PrivacyRoomActor private constructor(
         return newReceiveBuilder()
             .onMessage(SetTestProbe::class.java, this::onSetTestProbe)
             .onMessage(SendMessage::class.java, this::onSendMessage)
+            .onMessage(SendTextMessage::class.java, this::onSendTextMessage)
             .onMessage(AutoOnceProcess::class.java, this::onAutoOnceProcess)
             .onMessage(SetSocketSession::class.java, this::onSetSocketSession)
             .onMessage(ClearSocketSession::class.java, this::onClearSocketSession)
             .build()
+    }
+
+    private fun onSendTextMessage(sendTextMessage: SendTextMessage): Behavior<PrivacyRoomCommand> {
+        logger.info("OnSendTextMessage received in PrivacyRoomActor ${sendTextMessage.message}")
+
+        if (socketSession != null) {
+            socketSession!!.sendMessage(TextMessage("Echo : $sendTextMessage.message"))
+        } else {
+            logger.warn("socketSession is not initialized")
+        }
+        return this
     }
 
     private fun onClearSocketSession(clearSocketSession: ClearSocketSession): Behavior<PrivacyRoomCommand> {
@@ -86,7 +101,7 @@ class PrivacyRoomActor private constructor(
         }
 
         if (socketSession != null) {
-            socketSession!!.sendMessage(TextMessage("Hello World by AutoOnceProcess"))
+            socketSession!!.sendMessage(TextMessage("Hello World by PrivacyRoomActor $identifier"))
         } else {
             logger.warn("socketSession is not initialized")
         }
