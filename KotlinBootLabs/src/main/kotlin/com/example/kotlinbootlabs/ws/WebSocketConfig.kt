@@ -1,6 +1,6 @@
 package com.example.kotlinbootlabs.ws
 
-import com.example.kotlinbootlabs.ws.handler.auth.SocketHandlerAuth
+import com.example.kotlinbootlabs.ws.handler.auth.SocketHandlerForPersnalRoom
 import com.example.kotlinbootlabs.ws.handler.basic.SocketHandlerWithActor
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -13,7 +13,7 @@ import org.springframework.web.socket.server.support.HttpSessionHandshakeInterce
 @EnableWebSocket
 class WebSocketConfig(private val webSocketHandler: MyWebSocketHandler,
                       private val actorWebSocketHandler: SocketHandlerWithActor,
-                      private var socketHandlerAuth: SocketHandlerAuth,
+                      private var socketHandlerForPersnalRoom: SocketHandlerForPersnalRoom,
                       private val sessionManager: WebSocketSessionManager
 ) : WebSocketConfigurer {
 
@@ -32,7 +32,7 @@ class WebSocketConfig(private val webSocketHandler: MyWebSocketHandler,
             .setAllowedOrigins("*")
 
         // Actor WebSocket handler
-        registry.addHandler(socketHandlerAuth, "/ws-auth")
+        registry.addHandler(socketHandlerForPersnalRoom, "/ws-user")
             .addInterceptors(HttpSessionHandshakeInterceptor())
             .setAllowedOrigins("*")
     }

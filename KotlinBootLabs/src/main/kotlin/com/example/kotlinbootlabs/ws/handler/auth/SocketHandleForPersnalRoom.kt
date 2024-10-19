@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component
 data class WebSocketMessageEx1(val type: String, val topic: String? = null, val data: String? = null)
 
 @Component
-class SocketHandlerAuth(
+class SocketHandlerForPersnalRoom(
     private val sessionManagerActor: ActorRef<WebSocketSessionManagerCommand>,
     private val authService: AuthService
 ) : TextWebSocketHandler() {
@@ -39,12 +39,20 @@ class SocketHandlerAuth(
                 if (token != null ) {
                     try {
                         val authResponse = authService.getClaimsFromToken(token)
-                        session.attributes["token"] = token;
-                        session.attributes["id"] = authResponse.id;
-                        session.attributes["nick"] = authResponse.nick;
-                        session.attributes["identifier"] = authResponse.identifier;
-                        session.sendMessage(TextMessage("Login successful"))
-                        sessionManagerActor.tell(UpdateSession(session, authResponse))
+
+                        if(authResponse.authType == "user") {
+                            session.attributes["authType"] = "user"
+                            session.attributes["token"] = token
+                            session.attributes["id"] = authResponse.id
+                            session.attributes["nick"] = authResponse.nick
+                            session.attributes["identifier"] = authResponse.identifier
+                            session.sendMessage(TextMessage("Login successful from User"))
+                            sessionManagerActor.tell(UpdateSession(session, authResponse))
+                        }
+                        else {
+                            session.sendMessage(TextMessage("Login failed: Invalid user type"))
+                        }
+
                     } catch (e: Exception) {
                         session.sendMessage(TextMessage("Login failed: ${e.message}"))
                     }

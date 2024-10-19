@@ -11,8 +11,9 @@ class AuthController(private val authService: AuthService) {
 
     @PostMapping("/login")
     fun login(@RequestParam id: String, @RequestParam password: String,
-              @RequestParam identifier: String): AuthResponse? {
-        return authService.authenticate(id, password, identifier)
+              @RequestParam identifier: String, @RequestParam nick: String,
+              @RequestParam authType: String): AuthResponse? {
+        return authService.authenticate(id, password, identifier, nick, authType)
     }
 
     @GetMapping("/claims")

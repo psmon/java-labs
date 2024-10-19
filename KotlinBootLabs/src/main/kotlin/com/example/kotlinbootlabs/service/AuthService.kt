@@ -14,25 +14,26 @@ class AuthService {
     private val secretKey: SecretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256)
     private val refreshTokenSecretKey: SecretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256)
 
-    fun authenticate(id: String, password: String, identifier: String): AuthResponse? {
+    fun authenticate(id: String, password: String, identifier: String, nick: String, authType: String): AuthResponse? {
         if (id != password) {
             throw LoginFailedException("Login failed: Invalid id or password")
         }
         else  {
-            val token = generateToken(id, identifier)
+            val token = generateToken(id, identifier, nick, authType)
             val refreshToken = generateRefreshToken(id)
             return AuthResponse(token, refreshToken)
         }
     }
 
-    private fun generateToken(id: String, identifier: String): String {
+    private fun generateToken(id: String, identifier: String, nick: String, authType: String): String {
         val now = Date()
         val expiryDate = Date(now.time + 1800000) // 30 minutes
 
         return Jwts.builder()
             .setSubject(id)
-            .claim("nick", "$id-NICK")
+            .claim("nick", nick)
             .claim("identifier", identifier)
+            .claim("authType", authType)
             .setIssuedAt(now)
             .setExpiration(expiryDate)
             .signWith(secretKey)
@@ -60,12 +61,13 @@ class AuthService {
 
         val id = claims.subject
         val nick = claims["nick"] as String
-        var identifier = claims["identifier"] as String
+        val identifier = claims["identifier"] as String
+        val authType = claims["authType"] as String
 
-        return TokenClaims(id, nick, identifier)
+        return TokenClaims(id, nick, identifier, authType)
     }
 }
 
 data class AuthResponse(val token: String, val refreshToken: String)
 
-data class TokenClaims(val id: String, val nick: String, var identifier: String? = null)
+data class TokenClaims(val id: String, val nick: String, var identifier: String? = null, val authType: String)

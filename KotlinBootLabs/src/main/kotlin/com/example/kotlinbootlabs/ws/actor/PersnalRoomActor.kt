@@ -66,10 +66,16 @@ class PersnalRoomActor private constructor(
         logger.info("OnSendTextMessage received in PrivacyRoomActor ${sendTextMessage.message}")
 
         if (socketSession != null) {
-            socketSession!!.sendMessage(TextMessage("Echo : $sendTextMessage.message"))
+            try {
+                socketSession!!.sendMessage(TextMessage("Echo : ${sendTextMessage.message}"))
+            } catch (e: Exception) {
+                logger.error("Error sending message: ${e.message}")
+                socketSession = null
+            }
         } else {
             logger.warn("socketSession is not initialized")
         }
+
         return this
     }
 
@@ -101,7 +107,12 @@ class PersnalRoomActor private constructor(
         }
 
         if (socketSession != null) {
-            socketSession!!.sendMessage(TextMessage("Hello World by PrivacyRoomActor $identifier"))
+            try {
+                socketSession!!.sendMessage(TextMessage("Hello World by PrivacyRoomActor $identifier"))
+            } catch (e: Exception) {
+                logger.error("Error sending message: ${e.message}")
+                socketSession = null
+            }
         } else {
             logger.warn("socketSession is not initialized")
         }

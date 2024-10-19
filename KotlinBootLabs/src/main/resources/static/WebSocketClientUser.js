@@ -93,7 +93,7 @@ class WebSocketClient {
     }
 }
 
-const client = new WebSocketClient("ws://localhost:8080/ws-auth");
+const client = new WebSocketClient("ws://localhost:8080/ws-user");
 
 
 function connectWebSocket() {
