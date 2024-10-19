@@ -51,7 +51,7 @@ class PersnalRoomActorTest {
     @Test
     fun testSendMessage() {
         val probe = testKit.createTestProbe<PersnalRoomResponse>()
-        val testCount:Int = 10000
+        val testCount:Int = 100000
 
         // Measure memory and CPU usage before the test
         val beforeMemoryUsage = takeMemorySnapshot()

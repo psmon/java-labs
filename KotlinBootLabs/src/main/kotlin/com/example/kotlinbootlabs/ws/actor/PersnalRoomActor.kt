@@ -48,6 +48,8 @@ class PersnalRoomActor private constructor(
 
     private lateinit var testProbe: ActorRef<PersnalRoomResponse>
 
+    private var isRunTimer: Boolean = true
+
     // TODO : StandAlone 에서 작동가능객체로 ~ 클러스터로 확장시 EventBus 개념적용필요
     private var socketSession: WebSocketSession? = null
 
@@ -88,6 +90,13 @@ class PersnalRoomActor private constructor(
     private fun onSetSocketSession(command: SetSocketSession): Behavior<PersnalRoomCommand> {
         logger.info("OnSetSocketSession received in PrivacyRoomActor $identifier")
         socketSession = command.socketSession
+
+        if(!isRunTimer){
+            val randomStartDuration = Duration.ofSeconds(ThreadLocalRandom.current().nextLong(3, 6))
+            timers.startTimerAtFixedRate(AutoOnceProcess, randomStartDuration, Duration.ofSeconds(5))
+            isRunTimer = true
+        }
+
         return this
     }
 
@@ -112,9 +121,13 @@ class PersnalRoomActor private constructor(
             } catch (e: Exception) {
                 logger.error("Error sending message: ${e.message}")
                 socketSession = null
+                timers.cancel(AutoOnceProcess)
+                isRunTimer = false
             }
         } else {
             logger.warn("socketSession is not initialized")
+            timers.cancel(AutoOnceProcess)
+            isRunTimer = false
         }
         return this
     }
