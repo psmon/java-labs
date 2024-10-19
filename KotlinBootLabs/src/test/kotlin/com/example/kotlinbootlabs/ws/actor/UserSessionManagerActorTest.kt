@@ -10,7 +10,7 @@ import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession
 import org.mockito.Mockito
 
-class WebSocketSessionManagerActorTest {
+class UserSessionManagerActorTest {
 
     companion object {
         private lateinit var testKit: ActorTestKit
@@ -33,7 +33,7 @@ class WebSocketSessionManagerActorTest {
         val session = Mockito.mock(WebSocketSession::class.java)
         Mockito.`when`(session.id).thenReturn("session1")
 
-        val actor = testKit.spawn(WebSocketSessionManagerActor.create())
+        val actor = testKit.spawn(UserSessionManagerActor.create())
 
         actor.tell(AddSession(session))
         // Verify session added (you can add more detailed checks if needed)
@@ -47,7 +47,7 @@ class WebSocketSessionManagerActorTest {
         val session = Mockito.mock(WebSocketSession::class.java)
         Mockito.`when`(session.id).thenReturn("session1")
 
-        val actor = testKit.spawn(WebSocketSessionManagerActor.create())
+        val actor = testKit.spawn(UserSessionManagerActor.create())
 
         actor.tell(AddSession(session))
         actor.tell(SubscribeToTopic("session1", "topic1"))
@@ -59,11 +59,11 @@ class WebSocketSessionManagerActorTest {
 
     @Test
     fun testSendMessageToSession() {
-        val probe = testKit.createTestProbe<WebSocketSessionManagerResponse>()
+        val probe = testKit.createTestProbe<UserSessionResponse>()
         val session = Mockito.mock(WebSocketSession::class.java)
         Mockito.`when`(session.id).thenReturn("session1")
 
-        val actor = testKit.spawn(WebSocketSessionManagerActor.create())
+        val actor = testKit.spawn(UserSessionManagerActor.create())
 
         actor.tell(AddSession(session))
         actor.tell(SendMessageToSession("session1", "Hello"))
@@ -78,13 +78,13 @@ class WebSocketSessionManagerActorTest {
 
     @Test
     fun testSendMessageToTopic() {
-        val probe = testKit.createTestProbe<WebSocketSessionManagerResponse>()
+        val probe = testKit.createTestProbe<UserSessionResponse>()
         val session1 = Mockito.mock(WebSocketSession::class.java)
         val session2 = Mockito.mock(WebSocketSession::class.java)
         Mockito.`when`(session1.id).thenReturn("session1")
         Mockito.`when`(session2.id).thenReturn("session2")
 
-        val actor = testKit.spawn(WebSocketSessionManagerActor.create())
+        val actor = testKit.spawn(UserSessionManagerActor.create())
 
         actor.tell(AddSession(session1))
         actor.tell(AddSession(session2))
@@ -108,8 +108,8 @@ class WebSocketSessionManagerActorTest {
         Mockito.`when`(session1.id).thenReturn("session1")
         Mockito.`when`(session2.id).thenReturn("session2")
 
-        val actor = testKit.spawn(WebSocketSessionManagerActor.create())
-        val probe = testKit.createTestProbe<WebSocketSessionManagerResponse>()
+        val actor = testKit.spawn(UserSessionManagerActor.create())
+        val probe = testKit.createTestProbe<UserSessionResponse>()
 
         actor.tell(AddSession(session1))
         actor.tell(AddSession(session2))
@@ -123,8 +123,8 @@ class WebSocketSessionManagerActorTest {
 
     @Test
     fun testPingPong() {
-        val actor = testKit.spawn(WebSocketSessionManagerActor.create())
-        val probe = testKit.createTestProbe<WebSocketSessionManagerResponse>()
+        val actor = testKit.spawn(UserSessionManagerActor.create())
+        val probe = testKit.createTestProbe<UserSessionResponse>()
 
         actor.tell(Ping(probe.ref()))
 

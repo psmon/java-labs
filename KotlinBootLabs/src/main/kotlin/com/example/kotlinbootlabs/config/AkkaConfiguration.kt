@@ -4,8 +4,7 @@ import akka.actor.typed.ActorRef
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.javadsl.AskPattern
 import com.example.kotlinbootlabs.actor.*
-import com.example.kotlinbootlabs.ws.actor.WebSocketSessionManagerActor
-import com.example.kotlinbootlabs.ws.actor.WebSocketSessionManagerCommand
+import com.example.kotlinbootlabs.ws.actor.UserSessionCommand
 import jakarta.annotation.PostConstruct
 import jakarta.annotation.PreDestroy
 import org.slf4j.LoggerFactory
@@ -13,7 +12,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.time.Duration
 import java.util.concurrent.CompletionStage
-import java.util.logging.Logger
 
 
 @Configuration
@@ -23,7 +21,7 @@ class AkkaConfiguration {
 
     private lateinit var actorSystem: ActorSystem<MainStageActorCommand>
 
-    private lateinit var sessionManagerActor: ActorRef<WebSocketSessionManagerCommand>
+    private lateinit var sessionManagerActor: ActorRef<UserSessionCommand>
 
     @PostConstruct
     fun init() {
@@ -53,7 +51,7 @@ class AkkaConfiguration {
     }
 
     @Bean
-    fun sessionManagerActor(): ActorRef<WebSocketSessionManagerCommand> {
+    fun sessionManagerActor(): ActorRef<UserSessionCommand> {
         return sessionManagerActor
     }
 }

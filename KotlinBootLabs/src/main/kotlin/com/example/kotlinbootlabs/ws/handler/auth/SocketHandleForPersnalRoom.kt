@@ -15,7 +15,7 @@ data class WebSocketMessageEx1(val type: String, val topic: String? = null, val 
 
 @Component
 class SocketHandlerForPersnalRoom(
-    private val sessionManagerActor: ActorRef<WebSocketSessionManagerCommand>,
+    private val sessionManagerActor: ActorRef<UserSessionCommand>,
     private val authService: AuthService
 ) : TextWebSocketHandler() {
 

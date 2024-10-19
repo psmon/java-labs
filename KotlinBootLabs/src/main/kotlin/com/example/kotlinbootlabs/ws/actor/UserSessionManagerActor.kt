@@ -13,47 +13,47 @@ import org.springframework.web.socket.TextMessage
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 
-sealed class WebSocketSessionManagerCommand
-sealed class WebSocketSessionManagerResponse
+sealed class UserSessionCommand
+sealed class UserSessionResponse
 
-data class AddSession(val session: WebSocketSession) : WebSocketSessionManagerCommand()
-data class RemoveSession(val session: WebSocketSession) : WebSocketSessionManagerCommand()
+data class AddSession(val session: WebSocketSession) : UserSessionCommand()
+data class RemoveSession(val session: WebSocketSession) : UserSessionCommand()
 
-data class SubscribeToTopic(val sessionId: String, val topic: String) : WebSocketSessionManagerCommand()
-data class UnsubscribeFromTopic(val sessionId: String, val topic: String) : WebSocketSessionManagerCommand()
+data class SubscribeToTopic(val sessionId: String, val topic: String) : UserSessionCommand()
+data class UnsubscribeFromTopic(val sessionId: String, val topic: String) : UserSessionCommand()
 
-data class UpdateSession(val session: WebSocketSession, val claims: TokenClaims) : WebSocketSessionManagerCommand()
-data class OnUserAction(val session: WebSocketSession, val action: String) : WebSocketSessionManagerCommand()
+data class UpdateSession(val session: WebSocketSession, val claims: TokenClaims) : UserSessionCommand()
+data class OnUserAction(val session: WebSocketSession, val action: String) : UserSessionCommand()
 
 // Server To Session
-data class SendMessageToSession(val sessionId: String, val message: String) : WebSocketSessionManagerCommand()
-data class SendMessageToTopic(val topic: String, val message: String) : WebSocketSessionManagerCommand()
-data class SendMessageToAll(val message: String) : WebSocketSessionManagerCommand()
+data class SendMessageToSession(val sessionId: String, val message: String) : UserSessionCommand()
+data class SendMessageToTopic(val topic: String, val message: String) : UserSessionCommand()
+data class SendMessageToAll(val message: String) : UserSessionCommand()
 
 // Session To Server
-data class SendMessageToActor(val identifier: String, val message: String) : WebSocketSessionManagerCommand()
+data class SendMessageToActor(val identifier: String, val message: String) : UserSessionCommand()
 
-data class GetSessions(val replyTo: ActorRef<WebSocketSessionManagerResponse>) : WebSocketSessionManagerCommand()
-data class SessionsResponse(val sessions: Map<String, WebSocketSession>) : WebSocketSessionManagerResponse()
+data class GetSessions(val replyTo: ActorRef<UserSessionResponse>) : UserSessionCommand()
+data class SessionsResponse(val sessions: Map<String, WebSocketSession>) : UserSessionResponse()
 
-data class Ping(val replyTo: ActorRef<WebSocketSessionManagerResponse>) : WebSocketSessionManagerCommand()
-data class Pong(val message: String) : WebSocketSessionManagerResponse()
+data class Ping(val replyTo: ActorRef<UserSessionResponse>) : UserSessionCommand()
+data class Pong(val message: String) : UserSessionResponse()
 
-class WebSocketSessionManagerActor private constructor(
-    context: ActorContext<WebSocketSessionManagerCommand>
-) : AbstractBehavior<WebSocketSessionManagerCommand>(context) {
+class UserSessionManagerActor private constructor(
+    context: ActorContext<UserSessionCommand>
+) : AbstractBehavior<UserSessionCommand>(context) {
 
     companion object {
-        fun create(): Behavior<WebSocketSessionManagerCommand> {
-            return Behaviors.setup { context -> WebSocketSessionManagerActor(context) }
+        fun create(): Behavior<UserSessionCommand> {
+            return Behaviors.setup { context -> UserSessionManagerActor(context) }
         }
     }
 
-    private val logger = LoggerFactory.getLogger(WebSocketSessionManagerActor::class.java)
+    private val logger = LoggerFactory.getLogger(UserSessionManagerActor::class.java)
     private val sessions = ConcurrentHashMap<String, WebSocketSession>()
     private val topicSubscriptions = ConcurrentHashMap<String, MutableSet<String>>()
 
-    override fun createReceive(): Receive<WebSocketSessionManagerCommand> {
+    override fun createReceive(): Receive<UserSessionCommand> {
         return newReceiveBuilder()
             .onMessage(AddSession::class.java, this::onAddSession)
             .onMessage(RemoveSession::class.java, this::onRemoveSession)
@@ -70,12 +70,12 @@ class WebSocketSessionManagerActor private constructor(
             .build()
     }
 
-    private fun onSendMessageToActor(sendMessageToActor: SendMessageToActor): Behavior<WebSocketSessionManagerCommand> {
+    private fun onSendMessageToActor(sendMessageToActor: SendMessageToActor): Behavior<UserSessionCommand> {
         getPrivacyRoomActor(sendMessageToActor.identifier)?.tell(SendTextMessage(sendMessageToActor.message))
         return this
     }
 
-    private fun onUserAction(command: OnUserAction): Behavior<WebSocketSessionManagerCommand> {
+    private fun onUserAction(command: OnUserAction): Behavior<UserSessionCommand> {
         when (command.action) {
             "cart" -> {
                 command.session.sendMessage(TextMessage("장바구니에 상품을 담으셨군요 00한 상품은 어떤가요?"))
@@ -87,7 +87,7 @@ class WebSocketSessionManagerActor private constructor(
         return this
     }
 
-    private fun onUpdateSession(command: UpdateSession): Behavior<WebSocketSessionManagerCommand> {
+    private fun onUpdateSession(command: UpdateSession): Behavior<UserSessionCommand> {
         command.session.sendMessage(TextMessage("Welcome ${command.claims.nick}"))
 
         command.claims.identifier?.let { createPrivacyRoom(it, command.session) }
@@ -95,24 +95,24 @@ class WebSocketSessionManagerActor private constructor(
         return this
     }
 
-    private fun onPing(command: Ping): Behavior<WebSocketSessionManagerCommand> {
+    private fun onPing(command: Ping): Behavior<UserSessionCommand> {
         command.replyTo.tell(Pong("Pong"))
         return this
     }
 
-    private fun onGetSessions(command: GetSessions): Behavior<WebSocketSessionManagerCommand> {
+    private fun onGetSessions(command: GetSessions): Behavior<UserSessionCommand> {
         command.replyTo.tell(SessionsResponse(sessions.toMap()))
         return this
     }
 
-    private fun onAddSession(command: AddSession): Behavior<WebSocketSessionManagerCommand> {
+    private fun onAddSession(command: AddSession): Behavior<UserSessionCommand> {
         sessions[command.session.id] = command.session
         logger.info("Connected: ${command.session.id}")
         command.session.sendMessage(TextMessage("{\"type\": \"sessionId\", \"id\": \"${command.session.id}\"}"))
         return this
     }
 
-    private fun onRemoveSession(command: RemoveSession): Behavior<WebSocketSessionManagerCommand> {
+    private fun onRemoveSession(command: RemoveSession): Behavior<UserSessionCommand> {
         sessions.remove(command.session.id)
         logger.info("Disconnected: ${command.session.id}")
 
@@ -129,31 +129,31 @@ class WebSocketSessionManagerActor private constructor(
         return this
     }
 
-    private fun onSendMessageToAll(command: SendMessageToAll): Behavior<WebSocketSessionManagerCommand> {
+    private fun onSendMessageToAll(command: SendMessageToAll): Behavior<UserSessionCommand> {
         sessions.values.forEach { session ->
             session.sendMessage(TextMessage(command.message))
         }
         return this
     }
 
-    private fun onSubscribeToTopic(command: SubscribeToTopic): Behavior<WebSocketSessionManagerCommand> {
+    private fun onSubscribeToTopic(command: SubscribeToTopic): Behavior<UserSessionCommand> {
         topicSubscriptions.computeIfAbsent(command.topic) { mutableSetOf() }.add(command.sessionId)
         logger.info("Session ${command.sessionId} subscribed to topic ${command.topic}")
         return this
     }
 
-    private fun onUnsubscribeFromTopic(command: UnsubscribeFromTopic): Behavior<WebSocketSessionManagerCommand> {
+    private fun onUnsubscribeFromTopic(command: UnsubscribeFromTopic): Behavior<UserSessionCommand> {
         topicSubscriptions[command.topic]?.remove(command.sessionId)
         logger.info("Session ${command.sessionId} unsubscribed from topic ${command.topic}")
         return this
     }
 
-    private fun onSendMessageToSession(command: SendMessageToSession): Behavior<WebSocketSessionManagerCommand> {
+    private fun onSendMessageToSession(command: SendMessageToSession): Behavior<UserSessionCommand> {
         sessions[command.sessionId]?.sendMessage(TextMessage(command.message))
         return this
     }
 
-    private fun onSendMessageToTopic(command: SendMessageToTopic): Behavior<WebSocketSessionManagerCommand> {
+    private fun onSendMessageToTopic(command: SendMessageToTopic): Behavior<UserSessionCommand> {
         topicSubscriptions[command.topic]?.forEach { sessionId ->
             sessions[sessionId]?.sendMessage(TextMessage(command.message))
         }

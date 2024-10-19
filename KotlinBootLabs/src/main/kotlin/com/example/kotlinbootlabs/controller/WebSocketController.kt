@@ -5,13 +5,13 @@ import com.example.kotlinbootlabs.ws.WebSocketSessionManager
 import com.example.kotlinbootlabs.ws.actor.SendMessageToAll
 import com.example.kotlinbootlabs.ws.actor.SendMessageToSession
 import com.example.kotlinbootlabs.ws.actor.SendMessageToTopic
-import com.example.kotlinbootlabs.ws.actor.WebSocketSessionManagerCommand
+import com.example.kotlinbootlabs.ws.actor.UserSessionCommand
 import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/websocket")
 class WebSocketController(private val sessionManager: WebSocketSessionManager,
-                          private val sessionManagerActor: ActorRef<WebSocketSessionManagerCommand>
+                          private val sessionManagerActor: ActorRef<UserSessionCommand>
 ) {
 
     @PostMapping("/send-to-session")

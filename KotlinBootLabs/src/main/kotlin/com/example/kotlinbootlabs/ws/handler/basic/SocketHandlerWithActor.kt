@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component
 data class WebSocketMessage(val type: String, val topic: String? = null, val data: String? = null)
 
 @Component
-class SocketHandlerWithActor(private val sessionManagerActor: ActorRef<WebSocketSessionManagerCommand>)
+class SocketHandlerWithActor(private val sessionManagerActor: ActorRef<UserSessionCommand>)
     : TextWebSocketHandler() {
 
     private val objectMapper = jacksonObjectMapper()
