@@ -11,29 +11,29 @@ import org.springframework.web.socket.WebSocketSession
 import java.time.Duration
 import java.util.concurrent.ThreadLocalRandom
 
-sealed class PrivacyRoomCommand
-data class SendMessage(val message: String, val replyTo: ActorRef<HelloActorResponse>) : PrivacyRoomCommand()
-data class SendTextMessage(val message: String) : PrivacyRoomCommand()
+sealed class PersnalRoomCommand
+data class SendMessage(val message: String, val replyTo: ActorRef<HelloActorResponse>) : PersnalRoomCommand()
+data class SendTextMessage(val message: String) : PersnalRoomCommand()
 
-object AutoOnceProcess : PrivacyRoomCommand()
-data class SetTestProbe(val testProbe: ActorRef<PrivacyRoomResponse>) : PrivacyRoomCommand()
-data class SetSocketSession(val socketSession: WebSocketSession) : PrivacyRoomCommand()
-object ClearSocketSession : PrivacyRoomCommand()
+object AutoOnceProcess : PersnalRoomCommand()
+data class SetTestProbe(val testProbe: ActorRef<PersnalRoomResponse>) : PersnalRoomCommand()
+data class SetSocketSession(val socketSession: WebSocketSession) : PersnalRoomCommand()
+object ClearSocketSession : PersnalRoomCommand()
 
-sealed class PrivacyRoomResponse
-data class PrivacyHelloResponse(val message: String) : PrivacyRoomResponse()
+sealed class PersnalRoomResponse
+data class PrivacyHelloResponse(val message: String) : PersnalRoomResponse()
 
 
-class PrivacyRoomActor private constructor(
-    context: ActorContext<PrivacyRoomCommand>,
+class PersnalRoomActor private constructor(
+    context: ActorContext<PersnalRoomCommand>,
     private val identifier: String,
-    private val timers: TimerScheduler<PrivacyRoomCommand>
-) : AbstractBehavior<PrivacyRoomCommand>(context) {
+    private val timers: TimerScheduler<PersnalRoomCommand>
+) : AbstractBehavior<PersnalRoomCommand>(context) {
 
     companion object {
-        fun create(identifier: String): Behavior<PrivacyRoomCommand> {
+        fun create(identifier: String): Behavior<PersnalRoomCommand> {
             return Behaviors.withTimers { timers ->
-                Behaviors.setup { context -> PrivacyRoomActor(context, identifier, timers) }
+                Behaviors.setup { context -> PersnalRoomActor(context, identifier, timers) }
             }
         }
     }
@@ -44,14 +44,14 @@ class PrivacyRoomActor private constructor(
         timers.startTimerAtFixedRate(AutoOnceProcess, randomStartDuration, Duration.ofSeconds(5))
     }
 
-    private val logger = LoggerFactory.getLogger(PrivacyRoomActor::class.java)
+    private val logger = LoggerFactory.getLogger(PersnalRoomActor::class.java)
 
-    private lateinit var testProbe: ActorRef<PrivacyRoomResponse>
+    private lateinit var testProbe: ActorRef<PersnalRoomResponse>
 
     // TODO : StandAlone 에서 작동가능객체로 ~ 클러스터로 확장시 EventBus 개념적용필요
     private var socketSession: WebSocketSession? = null
 
-    override fun createReceive(): Receive<PrivacyRoomCommand> {
+    override fun createReceive(): Receive<PersnalRoomCommand> {
         return newReceiveBuilder()
             .onMessage(SetTestProbe::class.java, this::onSetTestProbe)
             .onMessage(SendMessage::class.java, this::onSendMessage)
@@ -62,7 +62,7 @@ class PrivacyRoomActor private constructor(
             .build()
     }
 
-    private fun onSendTextMessage(sendTextMessage: SendTextMessage): Behavior<PrivacyRoomCommand> {
+    private fun onSendTextMessage(sendTextMessage: SendTextMessage): Behavior<PersnalRoomCommand> {
         logger.info("OnSendTextMessage received in PrivacyRoomActor ${sendTextMessage.message}")
 
         if (socketSession != null) {
@@ -73,26 +73,26 @@ class PrivacyRoomActor private constructor(
         return this
     }
 
-    private fun onClearSocketSession(clearSocketSession: ClearSocketSession): Behavior<PrivacyRoomCommand> {
+    private fun onClearSocketSession(clearSocketSession: ClearSocketSession): Behavior<PersnalRoomCommand> {
         logger.info("ClearSocketSession received in PrivacyRoomActor $identifier")
         socketSession = null
         return this
     }
 
-    private fun onSetSocketSession(command: SetSocketSession): Behavior<PrivacyRoomCommand> {
+    private fun onSetSocketSession(command: SetSocketSession): Behavior<PersnalRoomCommand> {
         logger.info("OnSetSocketSession received in PrivacyRoomActor $identifier")
         socketSession = command.socketSession
         return this
     }
 
-    private fun onSetTestProbe(command: SetTestProbe): Behavior<PrivacyRoomCommand> {
+    private fun onSetTestProbe(command: SetTestProbe): Behavior<PersnalRoomCommand> {
         logger.info("OnSetTestProbe received in PrivacyRoomActor $identifier")
         testProbe = command.testProbe
 
         return this
     }
 
-    private fun onAutoOnceProcess(command: AutoOnceProcess): Behavior<PrivacyRoomCommand> {
+    private fun onAutoOnceProcess(command: AutoOnceProcess): Behavior<PersnalRoomCommand> {
         logger.info("AutoOnceProcess received in PrivacyRoomActor $identifier")
         if (::testProbe.isInitialized) {
             testProbe.tell(PrivacyHelloResponse("Hello World"))
@@ -108,7 +108,7 @@ class PrivacyRoomActor private constructor(
         return this
     }
 
-    private fun onSendMessage(command: SendMessage): Behavior<PrivacyRoomCommand> {
+    private fun onSendMessage(command: SendMessage): Behavior<PersnalRoomCommand> {
         logger.info("Message received in PrivacyRoomActor $identifier: ${command.message}")
 
         command.replyTo.tell(HelloResponse("Kotlin"))

@@ -7,7 +7,6 @@ import akka.actor.typed.javadsl.AbstractBehavior
 import akka.actor.typed.javadsl.ActorContext
 import akka.actor.typed.javadsl.Behaviors
 import akka.actor.typed.javadsl.Receive
-import com.example.kotlinbootlabs.actor.HelloActor
 import com.example.kotlinbootlabs.service.TokenClaims
 import org.springframework.web.socket.WebSocketSession
 import org.springframework.web.socket.TextMessage
@@ -172,7 +171,7 @@ class WebSocketSessionManagerActor private constructor(
         }
 
         val childRoomActor = context.spawn(
-            Behaviors.supervise(PrivacyRoomActor.create(identifier))
+            Behaviors.supervise(PersnalRoomActor.create(identifier))
                 .onFailure(SupervisorStrategy.resume()),
             actorName
         )
@@ -190,9 +189,9 @@ class WebSocketSessionManagerActor private constructor(
         logger.info("PrivacyRoomActor removed with identifier: $identifier")
     }
 
-    private fun getPrivacyRoomActor(identifier: String): ActorRef<PrivacyRoomCommand>? {
+    private fun getPrivacyRoomActor(identifier: String): ActorRef<PersnalRoomCommand>? {
         val actorName = "PrivacyRoomActor-${identifier}"
-        val actorRef = context.children.find { it.path().name() == actorName }?.unsafeUpcast<PrivacyRoomCommand>()
+        val actorRef = context.children.find { it.path().name() == actorName }?.unsafeUpcast<PersnalRoomCommand>()
         return actorRef;
     }
 
