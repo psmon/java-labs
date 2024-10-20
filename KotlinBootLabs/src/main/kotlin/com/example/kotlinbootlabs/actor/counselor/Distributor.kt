@@ -1,6 +1,6 @@
 package com.example.kotlinbootlabs.actor.counselor
 
-import akka.actor.typed.ActorRef
+import org.apache.pekko.actor.typed.ActorRef
 
 data class Skill(val name: String, val priority: Int)
 

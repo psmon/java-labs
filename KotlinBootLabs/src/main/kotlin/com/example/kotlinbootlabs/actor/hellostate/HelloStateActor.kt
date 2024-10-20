@@ -1,21 +1,21 @@
 package com.example.kotlinbootlabs.actor.hellostate
 
-import akka.actor.typed.ActorRef
-import akka.actor.typed.Behavior
-import akka.actor.typed.javadsl.AbstractBehavior
-import akka.actor.typed.javadsl.ActorContext
-import akka.actor.typed.javadsl.Behaviors
-import akka.actor.typed.javadsl.Receive
+import org.apache.pekko.actor.typed.ActorRef
+import org.apache.pekko.actor.typed.Behavior
+import org.apache.pekko.actor.typed.javadsl.AbstractBehavior
+import org.apache.pekko.actor.typed.javadsl.ActorContext
+import org.apache.pekko.actor.typed.javadsl.Behaviors
+import org.apache.pekko.actor.typed.javadsl.Receive
 
-import akka.stream.javadsl.Source
-import akka.stream.javadsl.Sink
-import akka.stream.OverflowStrategy
-import akka.stream.Materializer
+import org.apache.pekko.stream.javadsl.Source
+import org.apache.pekko.stream.javadsl.Sink
+import org.apache.pekko.stream.OverflowStrategy
+import org.apache.pekko.stream.Materializer
 import java.time.Duration
 
-import akka.actor.typed.javadsl.TimerScheduler
-import akka.stream.QueueOfferResult
-import akka.stream.javadsl.SourceQueueWithComplete
+import org.apache.pekko.actor.typed.javadsl.TimerScheduler
+import org.apache.pekko.stream.QueueOfferResult
+import org.apache.pekko.stream.javadsl.SourceQueueWithComplete
 import java.io.Console
 
 /** HelloStateActor 처리할 수 있는 명령들 */

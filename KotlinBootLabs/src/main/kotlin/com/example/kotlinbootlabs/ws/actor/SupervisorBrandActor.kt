@@ -1,8 +1,8 @@
 package com.example.kotlinbootlabs.ws.actor
 
-import akka.actor.typed.ActorRef
-import akka.actor.typed.Behavior
-import akka.actor.typed.javadsl.*
+import org.apache.pekko.actor.typed.ActorRef
+import org.apache.pekko.actor.typed.Behavior
+import org.apache.pekko.actor.typed.javadsl.*
 
 sealed class SupervisorBrandCommand
 data class CreateCounselorManager(val brand: String, val replyTo: ActorRef<SupervisorBrandResponse>) : SupervisorBrandCommand()

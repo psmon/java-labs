@@ -20,6 +20,7 @@ repositories {
 
 val scalaVersion = "2.13"
 val akkaVersion = "2.7.0"
+val pekkoVersion = "1.1.2"
 
 dependencies {
 	// Core
@@ -42,25 +43,36 @@ dependencies {
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
 
 	// Akka
-	implementation(platform("com.typesafe.akka:akka-bom_$scalaVersion:$akkaVersion"))
+	//implementation(platform("com.typesafe.akka:akka-bom_$scalaVersion:$akkaVersion"))
+	implementation(platform("org.apache.pekko:pekko-bom_$scalaVersion:$pekkoVersion"))
 
 	// Akka UnTyped Actor
-	implementation("com.typesafe.akka:akka-actor_$scalaVersion:$akkaVersion")
-	implementation("com.typesafe.akka:akka-stream_$scalaVersion:$akkaVersion")
+	//implementation("com.typesafe.akka:akka-actor_$scalaVersion:$akkaVersion")
+	//implementation("com.typesafe.akka:akka-stream_$scalaVersion:$akkaVersion")
+	implementation("org.apache.pekko:pekko-actor_$scalaVersion:$pekkoVersion")
+	implementation("org.apache.pekko:pekko-stream_$scalaVersion:$pekkoVersion")
 
 	// Akka Typed Actor
-	implementation("com.typesafe.akka:akka-actor-typed_$scalaVersion:$akkaVersion")
-	testImplementation("com.typesafe.akka:akka-actor-testkit-typed_$scalaVersion:$akkaVersion")
+	//implementation("com.typesafe.akka:akka-actor-typed_$scalaVersion:$akkaVersion")
+	implementation("org.apache.pekko:pekko-actor-typed_$scalaVersion:$pekkoVersion")
+
+	// Actor TestKit
+	//testImplementation("com.typesafe.akka:akka-testkit_$scalaVersion:$akkaVersion")
+	//testImplementation("com.typesafe.akka:akka-actor-testkit-typed_$scalaVersion:$akkaVersion")
+	testImplementation("org.apache.pekko:pekko-testkit_$scalaVersion:$pekkoVersion")
+	testImplementation("org.apache.pekko:pekko-actor-testkit-typed_$scalaVersion:$pekkoVersion")
+
+	// Actor Logging
+	//implementation("com.typesafe.akka:akka-slf4j_$scalaVersion:$akkaVersion")
+	implementation("org.apache.pekko:pekko-slf4j_$scalaVersion:$pekkoVersion")
 
 	// Logging
 	implementation("ch.qos.logback:logback-classic:1.4.12")
-	implementation("com.typesafe.akka:akka-slf4j_$scalaVersion:$akkaVersion")
 
 	// Only RUNTIME
 	runtimeOnly("com.h2database:h2")
 
 	// Only TEST
-	testImplementation("com.typesafe.akka:akka-testkit_$scalaVersion:$akkaVersion")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("io.projectreactor:reactor-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")

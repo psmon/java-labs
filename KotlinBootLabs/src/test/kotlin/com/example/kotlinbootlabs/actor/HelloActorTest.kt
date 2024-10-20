@@ -1,6 +1,6 @@
 package com.example.kotlinbootlabs.actor
 
-import akka.actor.testkit.typed.javadsl.ActorTestKit
+import org.apache.pekko.actor.testkit.typed.javadsl.ActorTestKit
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test

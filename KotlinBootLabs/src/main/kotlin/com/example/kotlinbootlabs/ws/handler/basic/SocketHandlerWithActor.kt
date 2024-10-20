@@ -1,6 +1,6 @@
 package com.example.kotlinbootlabs.ws.handler.basic
 
-import akka.actor.typed.ActorRef
+import org.apache.pekko.actor.typed.ActorRef
 import com.example.kotlinbootlabs.ws.actor.*
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper

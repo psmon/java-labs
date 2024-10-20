@@ -1,7 +1,7 @@
 package com.example.kotlinbootlabs.actor.bulkprocessor
 
-import akka.actor.testkit.typed.javadsl.ActorTestKit
-import akka.actor.testkit.typed.javadsl.ManualTime
+import org.apache.pekko.actor.testkit.typed.javadsl.ActorTestKit
+import org.apache.pekko.actor.testkit.typed.javadsl.ManualTime
 import com.typesafe.config.ConfigFactory
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll

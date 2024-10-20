@@ -1,6 +1,6 @@
 package com.example.kotlinbootlabs.ws.handler.auth
 
-import akka.actor.typed.ActorRef
+import org.apache.pekko.actor.typed.ActorRef
 import com.example.kotlinbootlabs.service.AuthService
 import com.example.kotlinbootlabs.ws.actor.*
 

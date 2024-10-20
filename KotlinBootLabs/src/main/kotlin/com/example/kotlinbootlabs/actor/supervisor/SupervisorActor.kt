@@ -1,18 +1,18 @@
 package com.example.kotlinbootlabs.actor.supervisor
 
-import akka.actor.typed.ActorRef
-import akka.actor.typed.Behavior
-import akka.actor.typed.javadsl.AbstractBehavior
-import akka.actor.typed.javadsl.ActorContext
-import akka.actor.typed.javadsl.Behaviors
-import akka.actor.typed.javadsl.Receive
+import org.apache.pekko.actor.typed.ActorRef
+import org.apache.pekko.actor.typed.Behavior
+import org.apache.pekko.actor.typed.javadsl.AbstractBehavior
+import org.apache.pekko.actor.typed.javadsl.ActorContext
+import org.apache.pekko.actor.typed.javadsl.Behaviors
+import org.apache.pekko.actor.typed.javadsl.Receive
 
 import com.example.kotlinbootlabs.actor.Hello
 import com.example.kotlinbootlabs.actor.HelloActor
 import com.example.kotlinbootlabs.actor.HelloActorCommand
 import com.example.kotlinbootlabs.actor.HelloActorResponse
-import akka.actor.typed.SupervisorStrategy
-import akka.actor.typed.Terminated
+import org.apache.pekko.actor.typed.SupervisorStrategy
+import org.apache.pekko.actor.typed.Terminated
 
 /** SupervisorActor가 처리할 수 있는 명령들 */
 sealed class SupervisorCommand

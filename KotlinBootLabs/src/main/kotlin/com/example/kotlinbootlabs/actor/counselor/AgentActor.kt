@@ -1,8 +1,8 @@
 package com.example.kotlinbootlabs.actor.counselor
 
-import akka.actor.typed.ActorRef
-import akka.actor.typed.Behavior
-import akka.actor.typed.javadsl.*
+import org.apache.pekko.actor.typed.ActorRef
+import org.apache.pekko.actor.typed.Behavior
+import org.apache.pekko.actor.typed.javadsl.*
 
 /** AgentActor 클래스 */
 class AgentActor private constructor(
