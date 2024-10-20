@@ -22,6 +22,8 @@ val scalaVersion = "2.13"
 val akkaVersion = "2.7.0"
 val pekkoVersion = "1.1.2"
 
+val pekkoVersionLowVersion = "1.1.1"
+
 dependencies {
 	// Core
 	implementation("org.springframework.boot:spring-boot-starter-web")
@@ -42,35 +44,47 @@ dependencies {
 	// Swagger / OpenAPI
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
 
-	// Akka
+	// Actor System
 	//implementation(platform("com.typesafe.akka:akka-bom_$scalaVersion:$akkaVersion"))
 	implementation(platform("org.apache.pekko:pekko-bom_$scalaVersion:$pekkoVersion"))
 
-	// Akka UnTyped Actor
+	// Classic Actor
 	//implementation("com.typesafe.akka:akka-actor_$scalaVersion:$akkaVersion")
 	//implementation("com.typesafe.akka:akka-stream_$scalaVersion:$akkaVersion")
 	implementation("org.apache.pekko:pekko-actor_$scalaVersion:$pekkoVersion")
 	implementation("org.apache.pekko:pekko-stream_$scalaVersion:$pekkoVersion")
 
-	// Akka Typed Actor
+	// Typed Actor
 	//implementation("com.typesafe.akka:akka-actor-typed_$scalaVersion:$akkaVersion")
 	implementation("org.apache.pekko:pekko-actor-typed_$scalaVersion:$pekkoVersion")
 
-	// Actor TestKit
-	//testImplementation("com.typesafe.akka:akka-testkit_$scalaVersion:$akkaVersion")
-	//testImplementation("com.typesafe.akka:akka-actor-testkit-typed_$scalaVersion:$akkaVersion")
-	testImplementation("org.apache.pekko:pekko-testkit_$scalaVersion:$pekkoVersion")
-	testImplementation("org.apache.pekko:pekko-actor-testkit-typed_$scalaVersion:$pekkoVersion")
+	// Actor Persistence
+	//implementation("com.typesafe.akka:akka-persistence-typed_$scalaVersion:$akkaVersion")
+	implementation("org.apache.pekko:pekko-persistence-typed_$scalaVersion:$pekkoVersion")
+	implementation("org.fusesource.leveldbjni:leveldbjni-all:1.8")
+
+	implementation("io.github.alstanchev:pekko-persistence-inmemory_$scalaVersion:$pekkoVersionLowVersion")
 
 	// Actor Logging
 	//implementation("com.typesafe.akka:akka-slf4j_$scalaVersion:$akkaVersion")
 	implementation("org.apache.pekko:pekko-slf4j_$scalaVersion:$pekkoVersion")
 
+	// Actor TestKit
+	//testImplementation("com.typesafe.akka:akka-testkit_$scalaVersion:$akkaVersion")
+	//testImplementation("com.typesafe.akka:akka-actor-testkit-typed_$scalaVersion:$akkaVersion")
+	//testImplementation("com.typesafe.akka:akka-stream-testkit_$scalaVersion:$akkaVersion")
+	//testImplementation("com.typesafe.akka:akka-persistence-testkit_$scalaVersion:$akkaVersion")
+	testImplementation("org.apache.pekko:pekko-testkit_$scalaVersion:$pekkoVersion")
+	testImplementation("org.apache.pekko:pekko-actor-testkit-typed_$scalaVersion:$pekkoVersion")
+	testImplementation("org.apache.pekko:pekko-stream-testkit_$scalaVersion:$pekkoVersion")
+	testImplementation("org.apache.pekko:pekko-persistence-testkit_$scalaVersion:$pekkoVersion")
+
+
 	// Logging
 	implementation("ch.qos.logback:logback-classic:1.4.12")
 
-	// Only RUNTIME
-	runtimeOnly("com.h2database:h2")
+	// Test Local DB
+	implementation("com.h2database:h2:2.2.220")
 
 	// Only TEST
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -79,7 +93,7 @@ dependencies {
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.3")
 	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.3")
-	testImplementation("com.squareup.okhttp3:okhttp:4.9.3")
+	testImplementation("com.squareup.okhttp3:okhttp:4.12.0")
 
 }
 
