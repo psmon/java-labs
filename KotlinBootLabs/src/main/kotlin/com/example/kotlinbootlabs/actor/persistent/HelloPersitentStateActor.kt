@@ -1,5 +1,8 @@
 package com.example.kotlinbootlabs.actor.persistent
 
+
+import com.fasterxml.jackson.databind.JsonSerializable
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import org.apache.pekko.actor.typed.ActorRef
 import org.apache.pekko.actor.typed.Behavior
 import org.apache.pekko.actor.typed.javadsl.AbstractBehavior
@@ -23,16 +26,18 @@ object StopResetTimer : HelloPersistentStateActorCommand()
 
 sealed class HelloPersistentStateActorResponse
 data class HelloResponse(val message: String) : HelloPersistentStateActorResponse()
-data class HelloCountResponse(val count: Int) : HelloPersistentStateActorResponse()
+data class HelloCountResponse(val count: Long) : HelloPersistentStateActorResponse()
 
 enum class State {
-    HAPPY, ANGRY
+    HAPPY,
+    ANGRY
 }
 
-data class HelloState(
+@JsonSerialize
+data class HelloState (
     val state: State,
-    val helloCount: Int,
-    val helloTotalCount: Int
+    val helloCount: Long,
+    val helloTotalCount: Long
 )
 
 class HelloPersistentStateActor private constructor(
@@ -64,8 +69,8 @@ class HelloPersistentStateActor private constructor(
             State.HAPPY -> {
                 if (command.message == "Hello") {
                     val newState = state.copy(
-                        helloCount = state.helloCount + 1,
-                        helloTotalCount = state.helloTotalCount + 1
+                        helloCount = state.helloCount + 1L,
+                        helloTotalCount = state.helloTotalCount + 1L
                     )
                     Effect().persist(newState).thenRun {
                         command.replyTo.tell(HelloResponse("Kotlin"))
@@ -100,7 +105,7 @@ class HelloPersistentStateActor private constructor(
 
     private fun onResetHelloCount(state: HelloState): Effect<HelloState> {
         context.log.info("Resetting hello count")
-        val newState = state.copy(helloCount = 0)
+        val newState = state.copy(helloCount = 0L)
         return Effect().persist(newState)
     }
 }

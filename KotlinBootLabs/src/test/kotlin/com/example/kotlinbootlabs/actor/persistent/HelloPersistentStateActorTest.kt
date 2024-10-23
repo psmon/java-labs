@@ -52,7 +52,7 @@ class HelloPersistentStateActorTest {
     @Test
     fun testResetHelloCount() {
         val probe: TestProbe<Any> = testKit.createTestProbe()
-        val persistenceId = PersistenceId.ofUniqueId("hello-persistent-actor")
+        val persistenceId = PersistenceId.ofUniqueId("hello-persistent-actor22")
         val helloPersistentStateActor = testKit.spawn(HelloPersistentStateActor.create(persistenceId))
 
         // Send Hello messages
