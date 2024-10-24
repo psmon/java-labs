@@ -39,6 +39,11 @@ data class SessionsResponse(val sessions: Map<String, WebSocketSession>) : UserS
 data class Ping(val replyTo: ActorRef<UserSessionResponse>) : UserSessionCommand()
 data class Pong(val message: String) : UserSessionResponse()
 
+data class GetPersonalRoomActor(val identifier: String, val replyTo: ActorRef<UserSessionResponse>) : UserSessionCommand()
+
+data class FoundPersonalRoomActor(val actorRef: ActorRef<PersnalRoomCommand>) : UserSessionResponse()
+
+
 class UserSessionManagerActor private constructor(
     context: ActorContext<UserSessionCommand>
 ) : AbstractBehavior<UserSessionCommand>(context) {
@@ -66,6 +71,7 @@ class UserSessionManagerActor private constructor(
             .onMessage(SendMessageToActor::class.java, this::onSendMessageToActor)
             .onMessage(GetSessions::class.java, this::onGetSessions)
             .onMessage(OnUserAction::class.java, this::onUserAction)
+            .onMessage(GetPersonalRoomActor::class.java, this::onGetPersonalRoomActor)
             .onMessage(Ping::class.java, this::onPing)
             .build()
     }
@@ -193,6 +199,12 @@ class UserSessionManagerActor private constructor(
         val actorName = "PrivacyRoomActor-${identifier}"
         val actorRef = context.children.find { it.path().name() == actorName }?.unsafeUpcast<PersnalRoomCommand>()
         return actorRef;
+    }
+
+    private fun onGetPersonalRoomActor(getPersonalRoomActor: GetPersonalRoomActor): Behavior<UserSessionCommand> {
+        val actorRef = getPrivacyRoomActor(getPersonalRoomActor.identifier)
+        getPersonalRoomActor.replyTo.tell(actorRef?.let { FoundPersonalRoomActor(it) })
+        return this
     }
 
 }

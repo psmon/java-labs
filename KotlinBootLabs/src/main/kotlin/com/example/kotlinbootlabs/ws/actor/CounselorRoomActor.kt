@@ -13,6 +13,7 @@ enum class CounselorRoomStatus {
 sealed class CounselorRoomCommand
 data class InvitePersnalRoomActor(val persnalRoomActor: ActorRef<PersnalRoomCommand>, val replyTo: ActorRef<CounselorRoomResponse>) : CounselorRoomCommand()
 data class ChangeStatus(val status: CounselorRoomStatus, val replyTo: ActorRef<CounselorRoomResponse>) : CounselorRoomCommand()
+data class AsingCounselor(val counselorActor: ActorRef<CounselorCommand>) : CounselorRoomCommand()
 
 sealed class CounselorRoomResponse
 object InvitationCompleted : CounselorRoomResponse()
@@ -27,6 +28,8 @@ class CounselorRoomActor private constructor(
 
     private lateinit var persnalRoom: ActorRef<PersnalRoomCommand>
 
+    private lateinit var counselor: ActorRef<CounselorCommand>
+
     companion object {
         fun create(name: String): Behavior<CounselorRoomCommand> {
             return Behaviors.setup { context -> CounselorRoomActor(context, name) }
@@ -37,13 +40,20 @@ class CounselorRoomActor private constructor(
         return newReceiveBuilder()
             .onMessage(InvitePersnalRoomActor::class.java, this::onInvitePersnalRoomActor)
             .onMessage(ChangeStatus::class.java, this::onChangeStatus)
+            .onMessage(AsingCounselor::class.java, this::onAsingCounselor)
             .build()
+    }
+
+    private fun onAsingCounselor(asingCounselor: AsingCounselor): Behavior<CounselorRoomCommand> {
+        counselor = asingCounselor.counselorActor
+        return this
     }
 
     private fun onInvitePersnalRoomActor(command: InvitePersnalRoomActor): Behavior<CounselorRoomCommand> {
         // Logic to handle the invitation of PersnalRoomActor
         context.log.info("Invited PersnalRoomActor: ${command.persnalRoomActor}")
         persnalRoom = command.persnalRoomActor
+
         command.replyTo.tell(InvitationCompleted)
         return this
     }

@@ -15,14 +15,14 @@ data class CreateCounselor(val name: String, val replyTo: ActorRef<CounselorMana
 data class CreateRoom(val roomName: String, val replyTo: ActorRef<CounselorManagerResponse>) : CounselorManagerCommand()
 data class RequestCounseling(val roomName: String, val persnalRoomActor: ActorRef<PersnalRoomCommand>, val replyTo: ActorRef<CounselorRoomResponse>) : CounselorManagerCommand()
 data class GetCounselor(val name: String, val replyTo: ActorRef<CounselorManagerResponse>) : CounselorManagerCommand()
-
+data class GetCounselorRoom(val roomName: String, val replyTo: ActorRef<CounselorManagerResponse>) : CounselorManagerCommand()
 
 sealed class CounselorManagerResponse
 data class CounselorCreated(val name: String) : CounselorManagerResponse()
 data class RoomCreated(val room: ActorRef<PersnalRoomCommand>) : CounselorManagerResponse()
 data class ErrorResponse(val message: String) : CounselorManagerResponse()
 data class CounselorFound(val name: String, val actorRef: ActorRef<CounselorCommand>) : CounselorManagerResponse()
-
+data class CounselorRoomFound(val roomName: String, val actorRef: ActorRef<CounselorRoomCommand>) : CounselorManagerResponse()
 
 class CounselorManagerActor private constructor(
     context: ActorContext<CounselorManagerCommand>
@@ -43,8 +43,10 @@ class CounselorManagerActor private constructor(
             .onMessage(CreateRoom::class.java, this::onCreateRoom)
             .onMessage(RequestCounseling::class.java, this::onRequestCounseling)
             .onMessage(GetCounselor::class.java, this::onGetCounselor)
+            .onMessage(GetCounselorRoom::class.java, this::onGetCounselorRoom)
             .build()
     }
+
 
     private fun onCreateCounselor(command: CreateCounselor): Behavior<CounselorManagerCommand> {
         if (counselors.containsKey(command.name)) {
@@ -119,6 +121,18 @@ class CounselorManagerActor private constructor(
 
         command.replyTo.tell(counselorActor?.let { CounselorFound(command.name, it) })
 
+        return this
+    }
+
+    private fun onGetCounselorRoom(command: GetCounselorRoom): Behavior<CounselorManagerCommand> {
+
+        var counselorRoomActor = counselorRooms[command.roomName]
+        if(counselorRoomActor == null) {
+            counselorRoomActor = context.spawn(CounselorRoomActor.create(command.roomName), command.roomName)
+            counselorRooms[command.roomName] = counselorRoomActor
+        }
+
+        command.replyTo.tell(counselorRoomActor?.let { CounselorRoomFound(command.roomName, it) })
         return this
     }
 
