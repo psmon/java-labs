@@ -1,19 +1,19 @@
 package com.example.kotlinbootlabs.actor.persistent
 
 
-import com.fasterxml.jackson.databind.JsonSerializable
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.JsonDeserializer
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import org.apache.pekko.actor.typed.ActorRef
 import org.apache.pekko.actor.typed.Behavior
-import org.apache.pekko.actor.typed.javadsl.AbstractBehavior
 import org.apache.pekko.actor.typed.javadsl.ActorContext
 import org.apache.pekko.actor.typed.javadsl.Behaviors
-import org.apache.pekko.actor.typed.javadsl.Receive
-import org.apache.pekko.persistence.typed.state.javadsl.DurableStateBehavior
-import org.apache.pekko.persistence.typed.state.javadsl.Effect
 import org.apache.pekko.persistence.typed.PersistenceId
 import org.apache.pekko.persistence.typed.state.javadsl.CommandHandler
-import java.time.Duration
+import org.apache.pekko.persistence.typed.state.javadsl.DurableStateBehavior
+import org.apache.pekko.persistence.typed.state.javadsl.Effect
 
 sealed class HelloPersistentStateActorCommand
 data class Hello(val message: String, val replyTo: ActorRef<Any>) : HelloPersistentStateActorCommand()
@@ -26,7 +26,14 @@ object StopResetTimer : HelloPersistentStateActorCommand()
 
 sealed class HelloPersistentStateActorResponse
 data class HelloResponse(val message: String) : HelloPersistentStateActorResponse()
-data class HelloCountResponse(val count: Long) : HelloPersistentStateActorResponse()
+data class HelloCountResponse(val count: Int) : HelloPersistentStateActorResponse()
+
+
+class LongToIntDeserializer : JsonDeserializer<Int>() {
+    override fun deserialize(p: JsonParser, ctxt: DeserializationContext): Int {
+        return p.longValue.toInt()
+    }
+}
 
 enum class State {
     HAPPY,
@@ -36,8 +43,10 @@ enum class State {
 @JsonSerialize
 data class HelloState (
     val state: State,
-    val helloCount: Long,
-    val helloTotalCount: Long
+    @field:JsonDeserialize(using = LongToIntDeserializer::class)
+    val helloCount: Int,
+    @field:JsonDeserialize(using = LongToIntDeserializer::class)
+    val helloTotalCount: Int
 )
 
 class HelloPersistentStateActor private constructor(
@@ -49,6 +58,10 @@ class HelloPersistentStateActor private constructor(
         fun create(persistenceId: PersistenceId): Behavior<HelloPersistentStateActorCommand> {
             return Behaviors.setup { context -> HelloPersistentStateActor(context, persistenceId) }
         }
+    }
+
+    override fun tag(): String {
+        return "tag1"
     }
 
     override fun emptyState(): HelloState = HelloState(State.HAPPY, 0, 0)
@@ -69,8 +82,8 @@ class HelloPersistentStateActor private constructor(
             State.HAPPY -> {
                 if (command.message == "Hello") {
                     val newState = state.copy(
-                        helloCount = state.helloCount + 1L,
-                        helloTotalCount = state.helloTotalCount + 1L
+                        helloCount = state.helloCount + 1,
+                        helloTotalCount = state.helloTotalCount + 1
                     )
                     Effect().persist(newState).thenRun {
                         command.replyTo.tell(HelloResponse("Kotlin"))
@@ -105,7 +118,7 @@ class HelloPersistentStateActor private constructor(
 
     private fun onResetHelloCount(state: HelloState): Effect<HelloState> {
         context.log.info("Resetting hello count")
-        val newState = state.copy(helloCount = 0L)
+        val newState = state.copy(helloCount = 0)
         return Effect().persist(newState)
     }
 }

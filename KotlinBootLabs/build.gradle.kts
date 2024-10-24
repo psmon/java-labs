@@ -21,8 +21,8 @@ repositories {
 val scalaVersion = "2.13"
 val akkaVersion = "2.7.0"
 val pekkoVersion = "1.1.2"
-
-val pekkoPersistenceVersion = "1.0.0"
+val pekkoPersistenceVersion = "1.1.2"
+val pekkoJdbc = "1.0.0"
 
 dependencies {
 	// Core
@@ -61,7 +61,7 @@ dependencies {
 	// Actor Persistence
 	//implementation("com.typesafe.akka:akka-persistence-typed_$scalaVersion:$akkaVersion")
 	implementation("org.apache.pekko:pekko-persistence-typed_$scalaVersion:$pekkoVersion")
-	implementation("org.apache.pekko:pekko-persistence-r2dbc_$scalaVersion:$pekkoPersistenceVersion")
+	implementation("org.apache.pekko:pekko-persistence-r2dbc_$scalaVersion:$pekkoJdbc")
 
 	implementation("org.apache.pekko:pekko-serialization-jackson_$scalaVersion:$pekkoVersion")
 

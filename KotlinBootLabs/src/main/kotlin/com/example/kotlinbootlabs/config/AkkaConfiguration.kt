@@ -4,6 +4,7 @@ import org.apache.pekko.actor.typed.ActorRef
 import org.apache.pekko.actor.typed.ActorSystem
 import org.apache.pekko.actor.typed.javadsl.AskPattern
 import com.example.kotlinbootlabs.actor.*
+import com.example.kotlinbootlabs.ws.actor.SupervisorChannelCommand
 import com.example.kotlinbootlabs.ws.actor.UserSessionCommand
 import jakarta.annotation.PostConstruct
 import jakarta.annotation.PreDestroy
@@ -22,6 +23,8 @@ class AkkaConfiguration {
     private lateinit var actorSystem: ActorSystem<MainStageActorCommand>
 
     private lateinit var sessionManagerActor: ActorRef<UserSessionCommand>
+
+    private lateinit var supervisorChannelActor: ActorRef<SupervisorChannelCommand>
 
     @PostConstruct
     fun init() {
@@ -43,6 +46,24 @@ class AkkaConfiguration {
                 ex?.printStackTrace()
             }
         }
+
+        // Send CreateSupervisorChannelActor event and handle the response
+        val response2: CompletionStage<MainStageActorResponse> = AskPattern.ask(
+            actorSystem,
+            { replyTo: ActorRef<MainStageActorResponse> -> CreateSupervisorChannelActor(replyTo) },
+            Duration.ofSeconds(3),
+            actorSystem.scheduler()
+        )
+
+        response2.whenComplete { res, ex ->
+            if (res is SupervisorChannelActorCreated) {
+                supervisorChannelActor = res.actorRef
+                logger.info("SupervisorChannelActor created: ${supervisorChannelActor.path()}")
+            } else {
+                ex?.printStackTrace()
+            }
+        }
+
     }
 
     @PreDestroy
@@ -51,7 +72,17 @@ class AkkaConfiguration {
     }
 
     @Bean
+    fun actorSystem(): ActorSystem<MainStageActorCommand> {
+        return actorSystem
+    }
+
+    @Bean
     fun sessionManagerActor(): ActorRef<UserSessionCommand> {
         return sessionManagerActor
+    }
+
+    @Bean
+    fun supervisorChannelActor(): ActorRef<SupervisorChannelCommand> {
+        return supervisorChannelActor
     }
 }

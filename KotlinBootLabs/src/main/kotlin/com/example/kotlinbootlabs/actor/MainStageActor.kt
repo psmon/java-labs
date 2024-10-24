@@ -1,5 +1,7 @@
 package com.example.kotlinbootlabs.actor
 
+import com.example.kotlinbootlabs.ws.actor.SupervisorChannelCommand
+import com.example.kotlinbootlabs.ws.actor.SupervisorChannelActor
 import org.apache.pekko.actor.typed.ActorRef
 import org.apache.pekko.actor.typed.Behavior
 import org.apache.pekko.actor.typed.SupervisorStrategy
@@ -12,9 +14,12 @@ import com.example.kotlinbootlabs.ws.actor.UserSessionCommand
 
 sealed class MainStageActorCommand
 data class CreateSocketSessionManager(val replyTo: ActorRef<MainStageActorResponse>) : MainStageActorCommand()
+data class CreateSupervisorChannelActor(val replyTo: ActorRef<MainStageActorResponse>) : MainStageActorCommand()
 
 sealed class MainStageActorResponse
 data class SocketSessionManagerCreated(val actorRef: ActorRef<UserSessionCommand>) : MainStageActorResponse()
+data class SupervisorChannelActorCreated(val actorRef: ActorRef<SupervisorChannelCommand>) : MainStageActorResponse()
+
 
 class MainStageActor private constructor(
     private val context: ActorContext<MainStageActorCommand>,
@@ -29,6 +34,7 @@ class MainStageActor private constructor(
     override fun createReceive(): Receive<MainStageActorCommand> {
         return newReceiveBuilder()
             .onMessage(CreateSocketSessionManager::class.java, this::onSocketSessionManager)
+            .onMessage(CreateSupervisorChannelActor::class.java, this::onCreateSupervisorChannelActor)
             .build()
     }
 
@@ -36,7 +42,7 @@ class MainStageActor private constructor(
         val sessionManagerActor = context.spawn(
             Behaviors.supervise(UserSessionManagerActor.create())
                 .onFailure(SupervisorStrategy.resume()),
-            "socketSessionManager"
+            "sessionManagerActor"
         )
         context.watch(sessionManagerActor)
 
@@ -44,4 +50,18 @@ class MainStageActor private constructor(
 
         return this
     }
+
+    private fun onCreateSupervisorChannelActor(command: CreateSupervisorChannelActor): Behavior<MainStageActorCommand> {
+        val supervisorChannelActor = context.spawn(
+            Behaviors.supervise(SupervisorChannelActor.create())
+                .onFailure(SupervisorStrategy.resume()),
+            "supervisorChannelActor"
+        )
+        context.watch(supervisorChannelActor)
+
+        command.replyTo.tell(SupervisorChannelActorCreated(supervisorChannelActor))
+
+        return this
+    }
+
 }
