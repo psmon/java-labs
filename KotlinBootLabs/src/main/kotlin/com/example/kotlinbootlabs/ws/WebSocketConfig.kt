@@ -1,5 +1,6 @@
 package com.example.kotlinbootlabs.ws
 
+import com.example.kotlinbootlabs.ws.handler.auth.SocketHandleForCounselor
 import com.example.kotlinbootlabs.ws.handler.auth.SocketHandlerForPersnalRoom
 import com.example.kotlinbootlabs.ws.handler.basic.SocketHandlerWithActor
 import org.springframework.context.annotation.Bean
@@ -14,13 +15,15 @@ import org.springframework.web.socket.server.support.HttpSessionHandshakeInterce
 class WebSocketConfig(private val webSocketHandler: MyWebSocketHandler,
                       private val actorWebSocketHandler: SocketHandlerWithActor,
                       private var socketHandlerForPersnalRoom: SocketHandlerForPersnalRoom,
-                      private val sessionManager: WebSocketSessionManager
+                      private val sessionManager: WebSocketSessionManager,
+                      private val socketHandlerForCounselor: SocketHandleForCounselor
 ) : WebSocketConfigurer {
 
     @Bean
     fun webSocketHandler() = MyWebSocketHandler(sessionManager)
 
     override fun registerWebSocketHandlers(registry: WebSocketHandlerRegistry) {
+
         // Local WebSocket handler
         registry.addHandler(webSocketHandler, "/ws")
             .addInterceptors(HttpSessionHandshakeInterceptor())
@@ -31,9 +34,15 @@ class WebSocketConfig(private val webSocketHandler: MyWebSocketHandler,
             .addInterceptors(HttpSessionHandshakeInterceptor())
             .setAllowedOrigins("*")
 
-        // Actor WebSocket handler
+        // Actor WebSocket handler for User
         registry.addHandler(socketHandlerForPersnalRoom, "/ws-user")
             .addInterceptors(HttpSessionHandshakeInterceptor())
             .setAllowedOrigins("*")
+
+        // Actor WebSocket handler for Counselor
+        registry.addHandler(socketHandlerForCounselor, "/ws-counselor")
+            .addInterceptors(HttpSessionHandshakeInterceptor())
+            .setAllowedOrigins("*")
+
     }
 }

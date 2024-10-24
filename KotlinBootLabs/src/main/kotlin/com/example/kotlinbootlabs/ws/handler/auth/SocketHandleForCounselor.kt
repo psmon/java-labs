@@ -56,13 +56,10 @@ class SocketHandleForCounselor(
                             session.sendMessage(TextMessage("Login successful from Counselor"))
                             //sessionManagerActor.tell(UpdateSession(session, authResponse))
 
-                            // Todo : verify channel
-                            var testChannel = "testChannel"
-
                             val response: CompletionStage<SupervisorChannelResponse> = AskPattern.ask(
                                 supervisorChannelActor,
                                 { replyTo: ActorRef<SupervisorChannelResponse> ->
-                                    GetCounselorFromManager(testChannel, authResponse.nick, replyTo)
+                                    authResponse.identifier?.let { GetCounselorFromManager(it, authResponse.nick, replyTo) }
                                 },
                                 Duration.ofSeconds(3),
                                 actorSystem.scheduler()
@@ -71,7 +68,7 @@ class SocketHandleForCounselor(
                             response.whenComplete { res, ex ->
                                 if (res is CounselorActorFound) {
                                     counselorActor = res.actorRef
-                                    session.sendMessage(TextMessage("CounselorRoomActor reference obtained."))
+                                    session.sendMessage(TextMessage("CounselorActor reference obtained."))
                                 } else {
                                     session.sendMessage(TextMessage("Failed to obtain CounselorRoomActor reference."))
                                 }
