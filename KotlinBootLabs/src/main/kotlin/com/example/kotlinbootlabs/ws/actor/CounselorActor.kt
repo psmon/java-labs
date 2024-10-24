@@ -22,6 +22,8 @@ sealed class CounselorCommand
 data class AssignTask(val task: String, val replyTo: ActorRef<CounselorResponse>) : CounselorCommand()
 data class GoOffline(val awayStatus: AwayStatus, val replyTo: ActorRef<CounselorResponse>) : CounselorCommand()
 data class GoOnline(val replyTo: ActorRef<CounselorResponse>) : CounselorCommand()
+data class AsignRoom(val customer: ActorRef<PersnalRoomCommand>, val room:ActorRef<CounselorRoomCommand> ) : CounselorCommand()
+
 
 sealed class CounselorResponse
 data class TaskAssigned(val task: String) : CounselorResponse()
@@ -46,7 +48,13 @@ class CounselorActor private constructor(
             .onMessage(AssignTask::class.java, this::onAssignTask)
             .onMessage(GoOffline::class.java, this::onGoOffline)
             .onMessage(GoOnline::class.java, this::onGoOnline)
+            .onMessage(AsignRoom::class.java, this::onAsignRoom)
             .build()
+    }
+
+    private fun onAsignRoom(asignRoom: AsignRoom): Behavior<CounselorCommand> {
+
+        return this
     }
 
     private fun onAssignTask(command: AssignTask): Behavior<CounselorCommand> {

@@ -25,6 +25,8 @@ class CounselorRoomActor private constructor(
 
     private var status: CounselorRoomStatus = CounselorRoomStatus.WAITING
 
+    private lateinit var persnalRoom: ActorRef<PersnalRoomCommand>
+
     companion object {
         fun create(name: String): Behavior<CounselorRoomCommand> {
             return Behaviors.setup { context -> CounselorRoomActor(context, name) }
@@ -41,6 +43,7 @@ class CounselorRoomActor private constructor(
     private fun onInvitePersnalRoomActor(command: InvitePersnalRoomActor): Behavior<CounselorRoomCommand> {
         // Logic to handle the invitation of PersnalRoomActor
         context.log.info("Invited PersnalRoomActor: ${command.persnalRoomActor}")
+        persnalRoom = command.persnalRoomActor
         command.replyTo.tell(InvitationCompleted)
         return this
     }

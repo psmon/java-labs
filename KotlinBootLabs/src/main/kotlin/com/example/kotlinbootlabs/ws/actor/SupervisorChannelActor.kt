@@ -3,17 +3,23 @@ package com.example.kotlinbootlabs.ws.actor
 import org.apache.pekko.actor.typed.ActorRef
 import org.apache.pekko.actor.typed.Behavior
 import org.apache.pekko.actor.typed.javadsl.*
+import java.time.Duration
+import java.util.concurrent.CompletionStage
 
 sealed class SupervisorChannelCommand
 data class CreateCounselorManager(val channel: String, val replyTo: ActorRef<SupervisorChannelResponse>) : SupervisorChannelCommand()
 data class GetCounselorManager(val channel: String, val replyTo: ActorRef<SupervisorChannelResponse>) : SupervisorChannelCommand()
 data class GetAllCounselorManagers(val replyTo: ActorRef<SupervisorChannelResponse>) : SupervisorChannelCommand()
+data class GetCounselorFromManager(val channel: String, val counselorName: String, val replyTo: ActorRef<SupervisorChannelResponse>) : SupervisorChannelCommand()
+
 
 sealed class SupervisorChannelResponse
 data class CounselorManagerCreated(val channel: String) : SupervisorChannelResponse()
 data class CounselorManagerFound(val channel: String, val actorRef: ActorRef<CounselorManagerCommand>) : SupervisorChannelResponse()
 data class AllCounselorManagers(val channels: List<String>) : SupervisorChannelResponse()
 data class SupervisorErrorStringResponse(val message: String) : SupervisorChannelResponse()
+data class CounselorActorFound(val counselorName: String, val actorRef: ActorRef<CounselorCommand>) : SupervisorChannelResponse()
+
 
 
 class SupervisorChannelActor private constructor(
@@ -33,6 +39,7 @@ class SupervisorChannelActor private constructor(
             .onMessage(CreateCounselorManager::class.java, this::onCreateCounselorManager)
             .onMessage(GetCounselorManager::class.java, this::onGetCounselorManager)
             .onMessage(GetAllCounselorManagers::class.java, this::onGetAllCounselorManagers)
+            .onMessage(GetCounselorFromManager::class.java, this::onGetCounselorFromManager)
             .build()
     }
 
@@ -60,6 +67,29 @@ class SupervisorChannelActor private constructor(
     private fun onGetAllCounselorManagers(command: GetAllCounselorManagers): Behavior<SupervisorChannelCommand> {
         val channels = counselorManagers.keys.toList()
         command.replyTo.tell(AllCounselorManagers(channels))
+        return this
+    }
+
+    private fun onGetCounselorFromManager(command: GetCounselorFromManager): Behavior<SupervisorChannelCommand> {
+        val counselorManagerActor = counselorManagers[command.channel]
+        if (counselorManagerActor != null) {
+            val response: CompletionStage<CounselorManagerResponse> = AskPattern.ask(
+                counselorManagerActor,
+                { replyTo: ActorRef<CounselorManagerResponse> -> GetCounselor(command.counselorName, replyTo) },
+                Duration.ofSeconds(3),
+                context.system.scheduler()
+            )
+
+            response.whenComplete { res, ex ->
+                if (res is CounselorFound) {
+                    command.replyTo.tell(CounselorActorFound(res.name, res.actorRef))
+                } else {
+                    command.replyTo.tell(SupervisorErrorStringResponse("Counselor ${command.counselorName} not found."))
+                }
+            }
+        } else {
+            command.replyTo.tell(SupervisorErrorStringResponse("CounselorManager for channel ${command.channel} not found."))
+        }
         return this
     }
 

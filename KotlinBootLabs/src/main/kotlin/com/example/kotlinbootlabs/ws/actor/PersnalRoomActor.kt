@@ -23,6 +23,8 @@ object ClearSocketSession : PersnalRoomCommand()
 sealed class PersnalRoomResponse
 data class PrivacyHelloResponse(val message: String) : PersnalRoomResponse()
 
+data class SetCounselorRoom(val counselorRoomActor: ActorRef<CounselorRoomCommand>) : PersnalRoomCommand()
+
 
 class PersnalRoomActor private constructor(
     context: ActorContext<PersnalRoomCommand>,
@@ -48,6 +50,8 @@ class PersnalRoomActor private constructor(
 
     private lateinit var testProbe: ActorRef<PersnalRoomResponse>
 
+    private lateinit var counselorRoomActor: ActorRef<CounselorRoomCommand>
+
     private var isRunTimer: Boolean = true
 
     // TODO : StandAlone 에서 작동가능객체로 ~ 클러스터로 확장시 EventBus 개념적용필요
@@ -61,7 +65,17 @@ class PersnalRoomActor private constructor(
             .onMessage(AutoOnceProcess::class.java, this::onAutoOnceProcess)
             .onMessage(SetSocketSession::class.java, this::onSetSocketSession)
             .onMessage(ClearSocketSession::class.java, this::onClearSocketSession)
+            .onMessage(SetCounselorRoom::class.java, this::onSetCounselorRoom)
             .build()
+    }
+
+    private fun onSetCounselorRoom(setCounselorRoom: SetCounselorRoom): Behavior<PersnalRoomCommand> {
+        counselorRoomActor = setCounselorRoom.counselorRoomActor
+
+        if(socketSession!=null){
+            socketSession!!.sendMessage(TextMessage("상담방이 시작됨 ${counselorRoomActor.path()}"))
+        }
+        return this
     }
 
     private fun onSendTextMessage(sendTextMessage: SendTextMessage): Behavior<PersnalRoomCommand> {
