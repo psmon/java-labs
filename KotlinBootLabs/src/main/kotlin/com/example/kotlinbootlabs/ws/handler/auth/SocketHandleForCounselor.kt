@@ -73,7 +73,7 @@ class SocketHandleForCounselor(
                     counselorActor.tell(SetCounselorSocketSession(session))
                     session.sendMessage(TextMessage("CounselorActor reference obtained."))
                 } else {
-                    session.sendMessage(TextMessage("Failed to obtain CounselorRoomActor reference."))
+                    session.sendMessage(TextMessage("Failed to obtain CounselorActor reference."))
                 }
             }
         } catch (e: Exception) {
