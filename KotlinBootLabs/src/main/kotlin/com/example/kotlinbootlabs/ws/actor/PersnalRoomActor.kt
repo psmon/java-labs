@@ -55,6 +55,7 @@ class PersnalRoomActor private constructor(
     private var isRunTimer: Boolean = true
 
     // TODO : StandAlone 에서 작동가능객체로 ~ 클러스터로 확장시 EventBus 개념적용필요
+    // Option2 : SockerHandler와 Persnal액터(로컬전략)를 같은 공간에 배치 유도
     private var socketSession: WebSocketSession? = null
 
     override fun createReceive(): Receive<PersnalRoomCommand> {

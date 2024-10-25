@@ -4,14 +4,15 @@ import org.apache.pekko.actor.typed.ActorRef
 import org.apache.pekko.actor.typed.ActorSystem
 import org.apache.pekko.actor.typed.javadsl.AskPattern
 import com.example.kotlinbootlabs.actor.*
-import com.example.kotlinbootlabs.ws.actor.SupervisorChannelCommand
-import com.example.kotlinbootlabs.ws.actor.UserSessionCommand
+import com.example.kotlinbootlabs.ws.actor.*
 import jakarta.annotation.PostConstruct
 import jakarta.annotation.PreDestroy
+import kotlinx.coroutines.delay
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.time.Duration
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
 
 
@@ -22,45 +23,39 @@ class AkkaConfiguration {
 
     private lateinit var actorSystem: ActorSystem<MainStageActorCommand>
 
-    private lateinit var sessionManagerActor: ActorRef<UserSessionCommand>
+    private lateinit var sessionManagerActor: CompletableFuture<ActorRef<UserSessionCommand>>
 
-    private lateinit var supervisorChannelActor: ActorRef<SupervisorChannelCommand>
+    private lateinit var supervisorChannelActor: CompletableFuture<ActorRef<SupervisorChannelCommand>>
 
     @PostConstruct
     fun init() {
         actorSystem = ActorSystem.create(MainStageActor.create(), "MainStageActor")
 
-        // Send CreateSocketSessionManager event and handle the response
-        val response: CompletionStage<MainStageActorResponse> = AskPattern.ask(
+        sessionManagerActor = AskPattern.ask(
             actorSystem,
             { replyTo: ActorRef<MainStageActorResponse> -> CreateSocketSessionManager(replyTo) },
             Duration.ofSeconds(3),
             actorSystem.scheduler()
-        )
-
-        response.whenComplete { res, ex ->
+        ).toCompletableFuture().thenApply { res ->
             if (res is SocketSessionManagerCreated) {
-                sessionManagerActor = res.actorRef
-                logger.info("SocketSessionManager created: ${sessionManagerActor.path()}")
+                logger.info("SocketSessionManager created: ${res.actorRef.path()}")
+                res.actorRef
             } else {
-                ex?.printStackTrace()
+                throw IllegalStateException("Failed to create SocketSessionManager")
             }
         }
 
-        // Send CreateSupervisorChannelActor event and handle the response
-        val response2: CompletionStage<MainStageActorResponse> = AskPattern.ask(
+        supervisorChannelActor = AskPattern.ask(
             actorSystem,
             { replyTo: ActorRef<MainStageActorResponse> -> CreateSupervisorChannelActor(replyTo) },
             Duration.ofSeconds(3),
             actorSystem.scheduler()
-        )
-
-        response2.whenComplete { res, ex ->
+        ).toCompletableFuture().thenApply { res ->
             if (res is SupervisorChannelActorCreated) {
-                supervisorChannelActor = res.actorRef
-                logger.info("SupervisorChannelActor created: ${supervisorChannelActor.path()}")
+                logger.info("SupervisorChannelActor created: ${res.actorRef.path()}")
+                res.actorRef
             } else {
-                ex?.printStackTrace()
+                throw IllegalStateException("Failed to create SupervisorChannelActor")
             }
         }
 
@@ -78,11 +73,11 @@ class AkkaConfiguration {
 
     @Bean
     fun sessionManagerActor(): ActorRef<UserSessionCommand> {
-        return sessionManagerActor
+        return sessionManagerActor.get()
     }
 
     @Bean
     fun supervisorChannelActor(): ActorRef<SupervisorChannelCommand> {
-        return supervisorChannelActor
+        return supervisorChannelActor.get()
     }
 }

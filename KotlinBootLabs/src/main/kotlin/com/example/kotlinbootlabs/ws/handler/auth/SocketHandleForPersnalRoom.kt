@@ -106,35 +106,27 @@ class SocketHandlerForPersnalRoom(
         }
 
         if (channel != null) {
-            val response: CompletionStage<SupervisorChannelResponse> = AskPattern.ask(
+            AskPattern.ask(
                 supervisorChannelActor,
                 { replyTo: ActorRef<SupervisorChannelResponse> -> GetCounselorManager(channel, replyTo) },
                 Duration.ofSeconds(3),
                 actorSystem.scheduler()
-            )
-
-            response.whenComplete { res, ex ->
+            ).thenAccept { res ->
                 if (res is CounselorManagerFound) {
                     counselorManager = res.actorRef
-                    //counselorManager.tell(RequestCounseling(session.id, persnalRoomActor))
 
-                    val response2 : CompletionStage<CounselorManagerResponse> = AskPattern.ask(
+                    AskPattern.ask(
                         counselorManager,
-                        { replyTo: ActorRef<CounselorManagerResponse> ->
-                            roomName?.let { GetCounselorRoom(it, replyTo) } },
+                        { replyTo: ActorRef<CounselorManagerResponse> -> roomName?.let { GetCounselorRoom(it, replyTo) } },
                         Duration.ofSeconds(3),
                         actorSystem.scheduler()
-                    )
-
-                    response2.whenComplete() { res2, ex2 ->
+                    ).thenAccept { res2 ->
                         if (res2 is CounselorRoomFound) {
                             counselorRoomActor = res2.actorRef
-
                         } else {
                             session.sendMessage(TextMessage("Counselor room not found for roomName: $roomName"))
                         }
                     }
-
                 } else {
                     session.sendMessage(TextMessage("Counselor manager not found for channel: $channel"))
                 }

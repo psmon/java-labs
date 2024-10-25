@@ -7,6 +7,7 @@ import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession
 
 enum class CounselorStatus {
+    Connecting,
     ONLINE,
     OFFLINE
 }
@@ -37,7 +38,7 @@ class CounselorActor private constructor(
     private val name: String
 ) : AbstractBehavior<CounselorCommand>(context) {
 
-    private var status: CounselorStatus = CounselorStatus.ONLINE
+    private var status: CounselorStatus = CounselorStatus.OFFLINE
     private var awayStatus: AwayStatus? = null
 
     private var socketSession: WebSocketSession? = null
@@ -70,6 +71,7 @@ class CounselorActor private constructor(
     private fun onSetCounselorSocketSession(setCounselorSocketSession: SetCounselorSocketSession?): Behavior<CounselorCommand>? {
         context.log.info("Counselor $name socket session set: ${setCounselorSocketSession?.socketSession}")
         socketSession = setCounselorSocketSession?.socketSession
+        socketSession?.sendMessage(TextMessage("Counselor $name is now connected"))
         return this
     }
 

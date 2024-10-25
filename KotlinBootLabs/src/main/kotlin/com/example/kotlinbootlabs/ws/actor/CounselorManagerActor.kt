@@ -85,25 +85,19 @@ class CounselorManagerActor private constructor(
 
         // Invite PersnalRoomActor
         //counselorRoomActor.tell(InvitePersnalRoomActor(command.persnalRoomActor, context.self.narrow() ))
-
-        // Send CreateSocketSessionManager event and handle the response
-        val response: CompletionStage<CounselorRoomResponse> = AskPattern.ask(
+        AskPattern.ask(
             counselorRoomActor,
             { replyTo: ActorRef<CounselorRoomResponse> -> InvitePersnalRoomActor(command.persnalRoomActor, replyTo) },
             Duration.ofSeconds(3),
             context.system.scheduler()
-        )
-
-        response.whenComplete { res, ex ->
-            if (res is CounselorRoomResponse) {
+        ).thenAccept { res2 ->
+            if (res2 is CounselorRoomResponse) {
                 //command.replyTo.tell(RoomCreated(command.persnalRoomActor))
                 //command.persnalRoomActor.tell(SetTestProbe(context.self.narrow()))
                 command.persnalRoomActor.tell(SendTextMessage("Invitation to counseling room completed."))
 
                 availableCounselor.tell(AsignRoom(command.persnalRoomActor, counselorRoomActor))
 
-            } else {
-                ex?.printStackTrace()
             }
         }
 

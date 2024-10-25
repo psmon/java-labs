@@ -21,110 +21,79 @@ data class CounselorWsMessage(val type: String, val channel: String? = null, val
 class SocketHandleForCounselor(
     private val supervisorChannelActor: ActorRef<SupervisorChannelCommand>,
     private val authService: AuthService,
-    private val actorSystem : ActorSystem<MainStageActorCommand>
+    private val actorSystem: ActorSystem<MainStageActorCommand>
 ) : TextWebSocketHandler() {
 
     private val objectMapper = jacksonObjectMapper()
-
     private lateinit var counselorActor: ActorRef<CounselorCommand>
 
-    override fun afterConnectionEstablished(session: WebSocketSession) {
-        // Handle connection established logic if needed
-    }
-
-    override fun afterConnectionClosed(session: WebSocketSession, status: org.springframework.web.socket.CloseStatus) {
-        // Handle connection closed logic if needed
-    }
-
     override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
-        val payload = message.payload
-        val webSocketMessage: PersnalWsMessage = objectMapper.readValue(payload)
+        val webSocketMessage: CounselorWsMessage = objectMapper.readValue(message.payload)
 
         when (webSocketMessage.type) {
-            "login" -> {
-                val token = webSocketMessage.data
-                if (token != null ) {
-                    try {
-                        val authResponse = authService.getClaimsFromToken(token)
+            "login" -> handleLogin(session, webSocketMessage.data)
+            else -> handleOtherMessages(session, webSocketMessage)
+        }
+    }
 
-                        if(authResponse.authType == "counselor") {
-                            session.attributes["authType"] = "counselor"
-                            session.attributes["token"] = token
-                            session.attributes["id"] = authResponse.id
-                            session.attributes["nick"] = authResponse.nick
-                            session.attributes["identifier"] = authResponse.identifier
-                            session.sendMessage(TextMessage("Login successful from Counselor"))
-                            //sessionManagerActor.tell(UpdateSession(session, authResponse))
+    private fun handleLogin(session: WebSocketSession, token: String?) {
+        if (token == null) {
+            session.sendMessage(TextMessage("Login failed: Missing id or password"))
+            return
+        }
 
-                            val response: CompletionStage<SupervisorChannelResponse> = AskPattern.ask(
-                                supervisorChannelActor,
-                                { replyTo: ActorRef<SupervisorChannelResponse> ->
-                                    authResponse.identifier?.let { GetCounselorFromManager(it, authResponse.nick, replyTo) }
-                                },
-                                Duration.ofSeconds(3),
-                                actorSystem.scheduler()
-                            )
+        try {
+            val authResponse = authService.getClaimsFromToken(token)
+            if (authResponse.authType != "counselor") {
+                session.sendMessage(TextMessage("Login failed: Invalid user type"))
+                return
+            }
 
-                            response.whenComplete { res, ex ->
-                                if (res is CounselorActorFound) {
-                                    counselorActor = res.actorRef
-                                    counselorActor.tell(SetCounselorSocketSession(session))
-                                    session.sendMessage(TextMessage("CounselorActor reference obtained."))
-                                } else {
-                                    session.sendMessage(TextMessage("Failed to obtain CounselorRoomActor reference."))
-                                }
-                            }
-                        }
-                        else {
-                            session.sendMessage(TextMessage("Login failed: Invalid user type"))
-                        }
+            session.attributes.apply {
+                put("authType", "counselor")
+                put("token", token)
+                put("id", authResponse.id)
+                put("nick", authResponse.nick)
+                put("identifier", authResponse.identifier)
+            }
+            session.sendMessage(TextMessage("Login successful from Counselor"))
 
-                    } catch (e: Exception) {
-                        session.sendMessage(TextMessage("Login failed: ${e.message}"))
-                    }
+            val response: CompletionStage<SupervisorChannelResponse> = AskPattern.ask(
+                supervisorChannelActor,
+                { replyTo: ActorRef<SupervisorChannelResponse> ->
+                    authResponse.identifier?.let { GetCounselorFromManager(it, authResponse.nick, replyTo) }
+                },
+                Duration.ofSeconds(3),
+                actorSystem.scheduler()
+            )
+
+            response.whenComplete { res, _ ->
+                if (res is CounselorActorFound) {
+                    counselorActor = res.actorRef
+                    counselorActor.tell(SetCounselorSocketSession(session))
+                    session.sendMessage(TextMessage("CounselorActor reference obtained."))
                 } else {
-                    session.sendMessage(TextMessage("Login failed: Missing id or password"))
+                    session.sendMessage(TextMessage("Failed to obtain CounselorRoomActor reference."))
                 }
             }
-            else -> {
-                val token = session.attributes["token"] as String?
-                if (token == null || !isValidToken(token)) {
-                    session.sendMessage(TextMessage("Invalid or missing token"))
-                    return
-                }
+        } catch (e: Exception) {
+            session.sendMessage(TextMessage("Login failed: ${e.message}"))
+        }
+    }
 
-                when (webSocketMessage.type) {
-                    "action" -> {
-                        webSocketMessage.data?.let { data ->
-                            //sessionManagerActor.tell(OnUserAction(session, data))
-                        }
-                    }
-                    "subscribe" -> {
-                        webSocketMessage.topic?.let { topic ->
-                            //sessionManagerActor.tell(SubscribeToTopic(session.id, topic))
-                        }
-                    }
-                    "unsubscribe" -> {
-                        webSocketMessage.topic?.let { topic ->
-                            //sessionManagerActor.tell(UnsubscribeFromTopic(session.id, topic))
-                        }
-                    }
-                    "message" -> {
+    private fun handleOtherMessages(session: WebSocketSession, webSocketMessage: CounselorWsMessage) {
+        val token = session.attributes["token"] as String?
+        if (token == null || !isValidToken(token)) {
+            session.sendMessage(TextMessage("Invalid or missing token"))
+            return
+        }
 
-                        session.attributes["identifier"]?.let { identifier ->
-                            //sessionManagerActor.tell(SendMessageToActor(identifier.toString(), webSocketMessage.data.toString() ))
-                        }
-                        /*
-                        webSocketMessage.data?.let { data ->
-                            session.sendMessage(TextMessage("Echo: $data"))
-                        }*/
-
-                    }
-                    else -> {
-                        session.sendMessage(TextMessage("Unknown message type: ${webSocketMessage.type}"))
-                    }
-                }
-            }
+        when (webSocketMessage.type) {
+            "action" -> webSocketMessage.data?.let { /* Handle action */ }
+            "subscribe" -> webSocketMessage.channel?.let { /* Handle subscribe */ }
+            "unsubscribe" -> webSocketMessage.channel?.let { /* Handle unsubscribe */ }
+            "message" -> session.attributes["identifier"]?.let { /* Handle message */ }
+            else -> session.sendMessage(TextMessage("Unknown message type: ${webSocketMessage.type}"))
         }
     }
 
