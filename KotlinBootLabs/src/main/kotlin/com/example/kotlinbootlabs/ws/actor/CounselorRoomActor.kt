@@ -11,12 +11,14 @@ enum class CounselorRoomStatus {
 }
 
 sealed class CounselorRoomCommand
-data class InvitePersnalRoomActor(val persnalRoomActor: ActorRef<PersnalRoomCommand>, val replyTo: ActorRef<CounselorRoomResponse>) : CounselorRoomCommand()
+data class InvitePersonalRoomActor(val personalRoomActor: ActorRef<PersonalRoomCommand>, val replyTo: ActorRef<CounselorRoomResponse>) : CounselorRoomCommand()
 data class ChangeStatus(val status: CounselorRoomStatus, val replyTo: ActorRef<CounselorRoomResponse>) : CounselorRoomCommand()
-data class AsingCounselor(val counselorActor: ActorRef<CounselorCommand>) : CounselorRoomCommand()
+data class AssignCounselor(val counselorActor: ActorRef<CounselorCommand>) : CounselorRoomCommand()
+data class SendMessageToPersonalRoom(val message: String) : CounselorRoomCommand()
+data class SendToCounselor(val message: String) : CounselorRoomCommand()
 
 sealed class CounselorRoomResponse
-object InvitationCompleted : CounselorRoomResponse()
+data object InvitationCompleted : CounselorRoomResponse()
 data class StatusChangeCompleted(val status: CounselorRoomStatus) : CounselorRoomResponse()
 
 class CounselorRoomActor private constructor(
@@ -26,7 +28,7 @@ class CounselorRoomActor private constructor(
 
     private var status: CounselorRoomStatus = CounselorRoomStatus.WAITING
 
-    private lateinit var persnalRoom: ActorRef<PersnalRoomCommand>
+    private lateinit var personalRoom: ActorRef<PersonalRoomCommand>
 
     private lateinit var counselor: ActorRef<CounselorCommand>
 
@@ -38,21 +40,45 @@ class CounselorRoomActor private constructor(
 
     override fun createReceive(): Receive<CounselorRoomCommand> {
         return newReceiveBuilder()
-            .onMessage(InvitePersnalRoomActor::class.java, this::onInvitePersnalRoomActor)
+            .onMessage(InvitePersonalRoomActor::class.java, this::onInvitePersonalRoomActor)
             .onMessage(ChangeStatus::class.java, this::onChangeStatus)
-            .onMessage(AsingCounselor::class.java, this::onAsingCounselor)
+            .onMessage(AssignCounselor::class.java, this::onAssignCounselor)
+            .onMessage(SendMessageToPersonalRoom::class.java, this::onSendMessageToPersonalRoom)
+            .onMessage(SendToCounselor::class.java, this::onSendToCounselor)
             .build()
     }
 
-    private fun onAsingCounselor(asingCounselor: AsingCounselor): Behavior<CounselorRoomCommand> {
-        counselor = asingCounselor.counselorActor
+    private fun onSendToCounselor(sendToCounselor: SendToCounselor?): Behavior<CounselorRoomCommand>? {
+        if(::counselor.isInitialized){
+            counselor.tell(SendToCounselorHandlerTextMessage(sendToCounselor!!.message))
+        }
+        else{
+            context.log.error("CounselorActor is not initialized")
+        }
         return this
     }
 
-    private fun onInvitePersnalRoomActor(command: InvitePersnalRoomActor): Behavior<CounselorRoomCommand> {
-        // Logic to handle the invitation of PersnalRoomActor
-        context.log.info("Invited PersnalRoomActor: ${command.persnalRoomActor}")
-        persnalRoom = command.persnalRoomActor
+    private fun onSendMessageToPersonalRoom(sendMessageToPersonalRoom: SendMessageToPersonalRoom): Behavior<CounselorRoomCommand> {
+        if(::personalRoom.isInitialized){
+            personalRoom.tell(SendTextMessage(sendMessageToPersonalRoom.message))
+        }
+        else
+        {
+            context.log.error("PersonalRoomActor is not initialized")
+        }
+
+        return this
+    }
+
+    private fun onAssignCounselor(command: AssignCounselor): Behavior<CounselorRoomCommand> {
+        counselor = command.counselorActor
+        return this
+    }
+
+    private fun onInvitePersonalRoomActor(command: InvitePersonalRoomActor): Behavior<CounselorRoomCommand> {
+        // Logic to handle the invitation of PersonalRoomActor
+        context.log.info("Invited PersonalRoomActor: ${command.personalRoomActor}")
+        personalRoom = command.personalRoomActor
 
         command.replyTo.tell(InvitationCompleted)
         return this

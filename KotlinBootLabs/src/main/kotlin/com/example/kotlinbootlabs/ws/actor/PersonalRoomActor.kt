@@ -11,31 +11,30 @@ import org.springframework.web.socket.WebSocketSession
 import java.time.Duration
 import java.util.concurrent.ThreadLocalRandom
 
-sealed class PersnalRoomCommand
-data class SendMessage(val message: String, val replyTo: ActorRef<HelloActorResponse>) : PersnalRoomCommand()
-data class SendTextMessage(val message: String) : PersnalRoomCommand()
+sealed class PersonalRoomCommand
+data class SendMessage(val message: String, val replyTo: ActorRef<HelloActorResponse>) : PersonalRoomCommand()
+data class SendTextMessage(val message: String) : PersonalRoomCommand()
+data object AutoOnceProcess : PersonalRoomCommand()
+data class SetTestProbe(val testProbe: ActorRef<PersonalRoomResponse>) : PersonalRoomCommand()
+data class SetSocketSession(val socketSession: WebSocketSession) : PersonalRoomCommand()
+data object ClearSocketSession : PersonalRoomCommand()
+data class SendToCounselorRoomForCounseling(val message: String) : PersonalRoomCommand()
 
-object AutoOnceProcess : PersnalRoomCommand()
-data class SetTestProbe(val testProbe: ActorRef<PersnalRoomResponse>) : PersnalRoomCommand()
-data class SetSocketSession(val socketSession: WebSocketSession) : PersnalRoomCommand()
-object ClearSocketSession : PersnalRoomCommand()
-
-sealed class PersnalRoomResponse
-data class PrivacyHelloResponse(val message: String) : PersnalRoomResponse()
-
-data class SetCounselorRoom(val counselorRoomActor: ActorRef<CounselorRoomCommand>) : PersnalRoomCommand()
+sealed class PersonalRoomResponse
+data class PrivacyHelloResponse(val message: String) : PersonalRoomResponse()
+data class SetCounselorRoom(val counselorRoomActor: ActorRef<CounselorRoomCommand>) : PersonalRoomCommand()
 
 
-class PersnalRoomActor private constructor(
-    context: ActorContext<PersnalRoomCommand>,
+class PersonalRoomActor private constructor(
+    context: ActorContext<PersonalRoomCommand>,
     private val identifier: String,
-    private val timers: TimerScheduler<PersnalRoomCommand>
-) : AbstractBehavior<PersnalRoomCommand>(context) {
+    private val timers: TimerScheduler<PersonalRoomCommand>
+) : AbstractBehavior<PersonalRoomCommand>(context) {
 
     companion object {
-        fun create(identifier: String): Behavior<PersnalRoomCommand> {
+        fun create(identifier: String): Behavior<PersonalRoomCommand> {
             return Behaviors.withTimers { timers ->
-                Behaviors.setup { context -> PersnalRoomActor(context, identifier, timers) }
+                Behaviors.setup { context -> PersonalRoomActor(context, identifier, timers) }
             }
         }
     }
@@ -43,22 +42,20 @@ class PersnalRoomActor private constructor(
     init {
         val randomStartDuration = Duration.ofSeconds(ThreadLocalRandom.current().nextLong(3, 6))
         //timers.startSingleTimer(AutoOnceProcess, randomDuration)
-        timers.startTimerAtFixedRate(AutoOnceProcess, randomStartDuration, Duration.ofSeconds(5))
+        timers.startTimerAtFixedRate(AutoOnceProcess, randomStartDuration, Duration.ofSeconds(60))
     }
 
-    private val logger = LoggerFactory.getLogger(PersnalRoomActor::class.java)
+    private val logger = LoggerFactory.getLogger(PersonalRoomActor::class.java)
 
-    private lateinit var testProbe: ActorRef<PersnalRoomResponse>
+    private lateinit var testProbe: ActorRef<PersonalRoomResponse>
 
     private lateinit var counselorRoomActor: ActorRef<CounselorRoomCommand>
 
     private var isRunTimer: Boolean = true
 
-    // TODO : StandAlone 에서 작동가능객체로 ~ 클러스터로 확장시 EventBus 개념적용필요
-    // Option2 : SockerHandler와 Persnal액터(로컬전략)를 같은 공간에 배치 유도
     private var socketSession: WebSocketSession? = null
 
-    override fun createReceive(): Receive<PersnalRoomCommand> {
+    override fun createReceive(): Receive<PersonalRoomCommand> {
         return newReceiveBuilder()
             .onMessage(SetTestProbe::class.java, this::onSetTestProbe)
             .onMessage(SendMessage::class.java, this::onSendMessage)
@@ -67,10 +64,22 @@ class PersnalRoomActor private constructor(
             .onMessage(SetSocketSession::class.java, this::onSetSocketSession)
             .onMessage(ClearSocketSession::class.java, this::onClearSocketSession)
             .onMessage(SetCounselorRoom::class.java, this::onSetCounselorRoom)
+            .onMessage(SendToCounselorRoomForCounseling::class.java, this::onSendToCounselorRoomForCounseling)
             .build()
     }
 
-    private fun onSetCounselorRoom(setCounselorRoom: SetCounselorRoom): Behavior<PersnalRoomCommand> {
+    private fun onSendToCounselorRoomForCounseling(sendToCounselorRoomForCounseling: SendToCounselorRoomForCounseling): Behavior<PersonalRoomCommand> {
+        if(::counselorRoomActor.isInitialized){
+            counselorRoomActor.tell(SendToCounselor(sendToCounselorRoomForCounseling.message))
+        }
+        else {
+            socketSession?.sendMessage(TextMessage("상담방이 없습니다."))
+        }
+
+        return this
+    }
+
+    private fun onSetCounselorRoom(setCounselorRoom: SetCounselorRoom): Behavior<PersonalRoomCommand> {
         counselorRoomActor = setCounselorRoom.counselorRoomActor
 
         if(socketSession!=null){
@@ -79,7 +88,7 @@ class PersnalRoomActor private constructor(
         return this
     }
 
-    private fun onSendTextMessage(sendTextMessage: SendTextMessage): Behavior<PersnalRoomCommand> {
+    private fun onSendTextMessage(sendTextMessage: SendTextMessage): Behavior<PersonalRoomCommand> {
         logger.info("OnSendTextMessage received in PrivacyRoomActor ${sendTextMessage.message}")
 
         if (socketSession != null) {
@@ -96,13 +105,13 @@ class PersnalRoomActor private constructor(
         return this
     }
 
-    private fun onClearSocketSession(clearSocketSession: ClearSocketSession): Behavior<PersnalRoomCommand> {
+    private fun onClearSocketSession(clearSocketSession: ClearSocketSession): Behavior<PersonalRoomCommand> {
         logger.info("ClearSocketSession received in PrivacyRoomActor $identifier")
         socketSession = null
         return this
     }
 
-    private fun onSetSocketSession(command: SetSocketSession): Behavior<PersnalRoomCommand> {
+    private fun onSetSocketSession(command: SetSocketSession): Behavior<PersonalRoomCommand> {
         logger.info("OnSetSocketSession received in PrivacyRoomActor $identifier")
         socketSession = command.socketSession
 
@@ -115,14 +124,14 @@ class PersnalRoomActor private constructor(
         return this
     }
 
-    private fun onSetTestProbe(command: SetTestProbe): Behavior<PersnalRoomCommand> {
+    private fun onSetTestProbe(command: SetTestProbe): Behavior<PersonalRoomCommand> {
         logger.info("OnSetTestProbe received in PrivacyRoomActor $identifier")
         testProbe = command.testProbe
 
         return this
     }
 
-    private fun onAutoOnceProcess(command: AutoOnceProcess): Behavior<PersnalRoomCommand> {
+    private fun onAutoOnceProcess(command: AutoOnceProcess): Behavior<PersonalRoomCommand> {
         logger.info("AutoOnceProcess received in PrivacyRoomActor $identifier")
         if (::testProbe.isInitialized) {
             testProbe.tell(PrivacyHelloResponse("Hello World"))
@@ -147,7 +156,7 @@ class PersnalRoomActor private constructor(
         return this
     }
 
-    private fun onSendMessage(command: SendMessage): Behavior<PersnalRoomCommand> {
+    private fun onSendMessage(command: SendMessage): Behavior<PersonalRoomCommand> {
         logger.info("Message received in PrivacyRoomActor $identifier: ${command.message}")
 
         command.replyTo.tell(HelloResponse("Kotlin"))

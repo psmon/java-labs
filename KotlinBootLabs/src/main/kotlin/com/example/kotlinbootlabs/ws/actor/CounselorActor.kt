@@ -25,9 +25,10 @@ sealed class CounselorCommand
 data class AssignTask(val task: String, val replyTo: ActorRef<CounselorResponse>) : CounselorCommand()
 data class GoOffline(val awayStatus: AwayStatus, val replyTo: ActorRef<CounselorResponse>) : CounselorCommand()
 data class GoOnline(val replyTo: ActorRef<CounselorResponse>) : CounselorCommand()
-data class AsignRoom(val customer: ActorRef<PersnalRoomCommand>, val room:ActorRef<CounselorRoomCommand> ) : CounselorCommand()
+data class AssignRoom(var roomName:String, val customer: ActorRef<PersonalRoomCommand>, val room:ActorRef<CounselorRoomCommand> ) : CounselorCommand()
 data class SetCounselorSocketSession(val socketSession: WebSocketSession) : CounselorCommand()
-data class SendToCounselorHandelerTextMessage(val message: String) : CounselorCommand()
+data class SendToCounselorHandlerTextMessage(val message: String) : CounselorCommand()
+data class SendToRoomForPersonalTextMessage(val roomName: String, val message: String) : CounselorCommand()
 
 sealed class CounselorResponse
 data class TaskAssigned(val task: String) : CounselorResponse()
@@ -39,9 +40,14 @@ class CounselorActor private constructor(
 ) : AbstractBehavior<CounselorCommand>(context) {
 
     private var status: CounselorStatus = CounselorStatus.OFFLINE
+
     private var awayStatus: AwayStatus? = null
 
     private var socketSession: WebSocketSession? = null
+
+    private val counselorRooms = mutableMapOf<String, ActorRef<CounselorRoomCommand>>()
+
+    private val personalRooms = mutableMapOf<String, ActorRef<PersonalRoomCommand>>()
 
     companion object {
         fun create(name: String): Behavior<CounselorCommand> {
@@ -54,29 +60,45 @@ class CounselorActor private constructor(
             .onMessage(AssignTask::class.java, this::onAssignTask)
             .onMessage(GoOffline::class.java, this::onGoOffline)
             .onMessage(GoOnline::class.java, this::onGoOnline)
-            .onMessage(AsignRoom::class.java, this::onAsignRoom)
+            .onMessage(AssignRoom::class.java, this::onAssignRoom)
             .onMessage(SetCounselorSocketSession::class.java, this::onSetCounselorSocketSession)
-            .onMessage(SendToCounselorHandelerTextMessage::class.java, this::onSendToCounselorTextMessage)
+            .onMessage(SendToCounselorHandlerTextMessage::class.java, this::onSendToCounselorTextMessage)
+            .onMessage(SendToRoomForPersonalTextMessage::class.java, this::onSendToRoomForPersonalTextMessage)
             .build()
     }
 
-    private fun onSendToCounselorTextMessage(command: SendToCounselorHandelerTextMessage): Behavior<CounselorCommand> {
-
-        if(socketSession!=null){
-            socketSession!!.sendMessage(TextMessage("${command.message}"))
+    private fun onSendToRoomForPersonalTextMessage(sendToRoomForPersonalTextMessage: SendToRoomForPersonalTextMessage): Behavior<CounselorCommand> {
+        if(counselorRooms.containsKey(sendToRoomForPersonalTextMessage.roomName)){
+            counselorRooms[sendToRoomForPersonalTextMessage.roomName]?.tell(SendMessageToPersonalRoom(sendToRoomForPersonalTextMessage.message))
+        }
+        else{
+            context.log.error("Room ${sendToRoomForPersonalTextMessage.roomName} not found")
         }
         return this
     }
 
-    private fun onSetCounselorSocketSession(setCounselorSocketSession: SetCounselorSocketSession?): Behavior<CounselorCommand>? {
-        context.log.info("Counselor $name socket session set: ${setCounselorSocketSession?.socketSession}")
-        socketSession = setCounselorSocketSession?.socketSession
-        socketSession?.sendMessage(TextMessage("Counselor $name is now connected"))
+    private fun onSendToCounselorTextMessage(command: SendToCounselorHandlerTextMessage): Behavior<CounselorCommand> {
+        if(socketSession != null){
+            socketSession?.sendMessage(TextMessage("$command.message"))
+        }
+        else{
+            context.log.error("Counselor socketSession  is not initialized - ${context.self.path()}")
+        }
         return this
     }
 
-    private fun onAsignRoom(asignRoom: AsignRoom): Behavior<CounselorCommand> {
+    private fun onSetCounselorSocketSession(setCounselorSocketSession: SetCounselorSocketSession): Behavior<CounselorCommand> {
+        context.log.info("Counselor ${context.self.path()} socket session set:  ${setCounselorSocketSession.socketSession}")
+        socketSession = setCounselorSocketSession.socketSession
+        socketSession!!.sendMessage(TextMessage("Counselor $name is now connected"))
+        status = CounselorStatus.ONLINE
+        return this
+    }
 
+    private fun onAssignRoom(assignRoom: AssignRoom): Behavior<CounselorCommand> {
+        context.log.info("Room assigned to counselor $name: ${assignRoom.roomName}")
+        counselorRooms[assignRoom.roomName] = assignRoom.room
+        personalRooms[assignRoom.roomName] = assignRoom.customer
         return this
     }
 

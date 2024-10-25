@@ -41,7 +41,7 @@ data class Pong(val message: String) : UserSessionResponse()
 
 data class GetPersonalRoomActor(val identifier: String, val replyTo: ActorRef<UserSessionResponse>) : UserSessionCommand()
 
-data class FoundPersonalRoomActor(val actorRef: ActorRef<PersnalRoomCommand>) : UserSessionResponse()
+data class FoundPersonalRoomActor(val actorRef: ActorRef<PersonalRoomCommand>) : UserSessionResponse()
 
 
 class UserSessionManagerActor private constructor(
@@ -177,7 +177,7 @@ class UserSessionManagerActor private constructor(
         }
 
         val childRoomActor = context.spawn(
-            Behaviors.supervise(PersnalRoomActor.create(identifier))
+            Behaviors.supervise(PersonalRoomActor.create(identifier))
                 .onFailure(SupervisorStrategy.resume()),
             actorName
         )
@@ -195,10 +195,10 @@ class UserSessionManagerActor private constructor(
         logger.info("PrivacyRoomActor removed with identifier: $identifier")
     }
 
-    private fun getPrivacyRoomActor(identifier: String): ActorRef<PersnalRoomCommand>? {
+    private fun getPrivacyRoomActor(identifier: String): ActorRef<PersonalRoomCommand>? {
         val actorName = "PrivacyRoomActor-${identifier}"
-        val actorRef = context.children.find { it.path().name() == actorName }?.unsafeUpcast<PersnalRoomCommand>()
-        return actorRef;
+        val actorRef = context.children.find { it.path().name() == actorName }?.unsafeUpcast<PersonalRoomCommand>()
+        return actorRef
     }
 
     private fun onGetPersonalRoomActor(getPersonalRoomActor: GetPersonalRoomActor): Behavior<UserSessionCommand> {

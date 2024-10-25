@@ -14,9 +14,10 @@ import org.springframework.web.socket.WebSocketSession
 import org.springframework.web.socket.handler.TextWebSocketHandler
 import org.springframework.stereotype.Component
 import java.time.Duration
+import java.util.*
 import java.util.concurrent.CompletionStage
 
-data class PersnalWsMessage(val type: String, val topic: String? = null, val data: String? = null)
+data class PersnalWsMessage(val type: String,val channel: String? ,val topic: String? = null, val data: String? = null)
 
 @Component
 class SocketHandlerForPersnalRoom(
@@ -28,7 +29,7 @@ class SocketHandlerForPersnalRoom(
 
     private val objectMapper = jacksonObjectMapper()
 
-    private lateinit var persnalRoomActor: ActorRef<PersnalRoomCommand>
+    private lateinit var persnalRoomActor: ActorRef<PersonalRoomCommand>
 
     private lateinit var counselorManager: ActorRef<CounselorManagerCommand>
 
@@ -48,8 +49,8 @@ class SocketHandlerForPersnalRoom(
 
         when (webSocketMessage.type) {
             "login" -> handleLogin(session, webSocketMessage.data)
-            "requestCounseling" -> handleCounselingRequest(session, webSocketMessage.topic,
-                webSocketMessage.data)
+            "requestCounseling" -> handleCounselingRequest(session, webSocketMessage.channel)
+            "sendchat" -> handleSendChat(session, webSocketMessage.data)
             else -> handleOtherMessages(session, webSocketMessage)
         }
     }
@@ -97,8 +98,7 @@ class SocketHandlerForPersnalRoom(
         }
     }
 
-    private fun handleCounselingRequest(session: WebSocketSession, channel: String?
-                                        , roomName: String?) {
+    private fun handleCounselingRequest(session: WebSocketSession, channel: String?) {
         val token = session.attributes["token"] as String?
         if (token == null || !isValidToken(token)) {
             session.sendMessage(TextMessage("Invalid or missing token"))
@@ -106,6 +106,8 @@ class SocketHandlerForPersnalRoom(
         }
 
         if (channel != null) {
+            val roomName = "${channel}_${UUID.randomUUID()}"
+
             AskPattern.ask(
                 supervisorChannelActor,
                 { replyTo: ActorRef<SupervisorChannelResponse> -> GetCounselorManager(channel, replyTo) },
@@ -114,25 +116,37 @@ class SocketHandlerForPersnalRoom(
             ).thenAccept { res ->
                 if (res is CounselorManagerFound) {
                     counselorManager = res.actorRef
+                    session.sendMessage(TextMessage("Counseling CounselorManagerFound : ${res.channel}"))
 
                     AskPattern.ask(
                         counselorManager,
-                        { replyTo: ActorRef<CounselorManagerResponse> -> roomName?.let { GetCounselorRoom(it, replyTo) } },
+                        { replyTo: ActorRef<CounselorManagerResponse> -> RequestCounseling(roomName, persnalRoomActor, replyTo) },
                         Duration.ofSeconds(3),
                         actorSystem.scheduler()
-                    ).thenAccept { res2 ->
+                    ).thenAccept() { res2 ->
                         if (res2 is CounselorRoomFound) {
+                            session.sendMessage(TextMessage("Counseling room created: $roomName"))
                             counselorRoomActor = res2.actorRef
                         } else {
-                            session.sendMessage(TextMessage("Counselor room not found for roomName: $roomName"))
+                            session.sendMessage(TextMessage("Counseling request failed: $roomName"))
                         }
                     }
+
                 } else {
                     session.sendMessage(TextMessage("Counselor manager not found for channel: $channel"))
                 }
             }
         } else {
             session.sendMessage(TextMessage("Counseling request failed: Missing channel"))
+        }
+    }
+
+    private fun handleSendChat(session: WebSocketSession, chatMessage: String?) {
+        if (chatMessage != null) {
+            persnalRoomActor.tell(SendToCounselorRoomForCounseling(chatMessage))
+            //session.sendMessage(TextMessage("Chat message sent: $chatMessage"))
+        } else {
+            session.sendMessage(TextMessage("Chat message is missing"))
         }
     }
 

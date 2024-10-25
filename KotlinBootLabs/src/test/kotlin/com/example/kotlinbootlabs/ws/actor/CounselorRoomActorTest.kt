@@ -28,8 +28,8 @@ class CounselorRoomActorTest {
         val probe = testKit.createTestProbe<CounselorRoomResponse>()
         val counselorRoomActor = testKit.spawn(CounselorRoomActor.create("Room1"))
 
-        val persnalRoomActor = testKit.createTestProbe<PersnalRoomCommand>().ref
-        counselorRoomActor.tell(InvitePersnalRoomActor(persnalRoomActor, probe.ref))
+        val persnalRoomActor = testKit.createTestProbe<PersonalRoomCommand>().ref
+        counselorRoomActor.tell(InvitePersonalRoomActor(persnalRoomActor, probe.ref))
         probe.expectMessage(InvitationCompleted)
     }
 

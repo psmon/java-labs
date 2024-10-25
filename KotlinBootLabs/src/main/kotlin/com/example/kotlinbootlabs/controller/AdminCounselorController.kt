@@ -19,7 +19,7 @@ class AdminCounselorController(private val actorSystem: ActorSystem<MainStageAct
     private val timeout: Duration = Duration.ofSeconds(5)
 
     @PostMapping("/add-counselor")
-    fun addCounselor(@RequestParam channel: String, @RequestParam name: String): CompletionStage<String>? {
+    fun addCounselor(@RequestParam channel: String, @RequestParam id: String): CompletionStage<String>? {
         return AskPattern.ask(
             supervisorChannelActor,
             { replyTo: ActorRef<SupervisorChannelResponse> -> GetCounselorManager(channel, replyTo) },
@@ -30,12 +30,12 @@ class AdminCounselorController(private val actorSystem: ActorSystem<MainStageAct
                 is CounselorManagerFound -> {
                     AskPattern.ask(
                         response.actorRef,
-                        { replyTo: ActorRef<CounselorManagerResponse> -> CreateCounselor(name, replyTo) },
+                        { replyTo: ActorRef<CounselorManagerResponse> -> CreateCounselor(id, replyTo) },
                         timeout,
                         actorSystem.scheduler()
                     ).thenApply { counselorResponse ->
                         when (counselorResponse) {
-                            is CounselorCreated -> "Counselor $name created successfully."
+                            is CounselorCreated -> "Counselor $id created successfully."
                             else -> "Unknown error occurred."
                         }
                     }

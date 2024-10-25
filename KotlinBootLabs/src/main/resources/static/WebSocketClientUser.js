@@ -57,6 +57,18 @@ class WebSocketClient {
         this.addEvent("Try Login....");
     }
 
+    requestCounseling(channel) {
+        const jsonMessage = JSON.stringify({ type: "requestCounseling", channel: channel });
+        this.socket.send(jsonMessage);
+        this.addEvent("Counseling requested for channel: " + channel);
+    }
+
+    sendChat(chatMessage) {
+        const jsonMessage = JSON.stringify({ type: "sendchat", data: chatMessage });
+        this.socket.send(jsonMessage);
+        this.addEvent("Chat sent: " + chatMessage);
+    }
+
     sendAction(action) {
         const jsonMessage = JSON.stringify({ type: "action", data: action });
         this.socket.send(jsonMessage);
@@ -95,7 +107,6 @@ class WebSocketClient {
 
 const client = new WebSocketClient("ws://localhost:8080/ws-user");
 
-
 function connectWebSocket() {
     client.connect();
 }
@@ -107,6 +118,16 @@ function disconnectWebSocket() {
 function login() {
     const token = document.getElementById('token').value;
     client.login(token);
+}
+
+function requestCounseling() {
+    const channel = document.getElementById('channel').value;
+    client.requestCounseling(channel);
+}
+
+function sendChat() {
+    const chatMessage = document.getElementById('chatMessage').value;
+    client.sendChat(chatMessage);
 }
 
 function sendMessage() {

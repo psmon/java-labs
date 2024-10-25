@@ -14,6 +14,10 @@ class AuthService {
     private val secretKey: SecretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256)
     private val refreshTokenSecretKey: SecretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256)
 
+    init {
+
+    }
+
     fun authenticate(id: String, password: String, identifier: String, nick: String, authType: String): AuthResponse? {
         if (id != password) {
             throw LoginFailedException("Login failed: Invalid id or password")

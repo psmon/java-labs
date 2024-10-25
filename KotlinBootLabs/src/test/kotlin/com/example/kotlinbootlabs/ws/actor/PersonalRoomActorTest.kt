@@ -10,7 +10,7 @@ import java.lang.management.ManagementFactory
 import java.lang.management.OperatingSystemMXBean
 import java.lang.management.MemoryMXBean
 
-class PersnalRoomActorTest {
+class PersonalRoomActorTest {
 
     companion object {
         private val testKit = ActorTestKit.create()
@@ -50,7 +50,7 @@ class PersnalRoomActorTest {
 
     @Test
     fun testSendMessage() {
-        val probe = testKit.createTestProbe<PersnalRoomResponse>()
+        val probe = testKit.createTestProbe<PersonalRoomResponse>()
         val testCount:Int = 100000
 
         // Measure memory and CPU usage before the test
@@ -60,8 +60,8 @@ class PersnalRoomActorTest {
 
         repeat(testCount) { i ->
             val identifier = "testIdentifier-$i"
-            val persnalRoomActor: ActorRef<PersnalRoomCommand> = testKit.spawn(PersnalRoomActor.create(identifier))
-            persnalRoomActor.tell(SetTestProbe(probe.ref))
+            val personalRoomActor: ActorRef<PersonalRoomCommand> = testKit.spawn(PersonalRoomActor.create(identifier))
+            personalRoomActor.tell(SetTestProbe(probe.ref))
         }
 
         repeat(testCount) {
