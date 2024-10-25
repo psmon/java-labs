@@ -40,4 +40,5 @@ class MainStageActorTest {
         mainStageActor.tell(CreateSupervisorChannelActor(probe.ref))
         probe.expectMessageClass(SupervisorChannelActorCreated::class.java)
     }
+
 }

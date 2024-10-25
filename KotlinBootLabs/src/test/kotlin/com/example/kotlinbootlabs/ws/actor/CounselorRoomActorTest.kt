@@ -44,4 +44,20 @@ class CounselorRoomActorTest {
         counselorRoomActor.tell(ChangeStatus(CounselorRoomStatus.COMPLETED, probe.ref))
         probe.expectMessage(StatusChangeCompleted(CounselorRoomStatus.COMPLETED))
     }
+
+    @Test
+    fun testSendMessageToPersonalRoom() {
+        val probe = testKit.createTestProbe<CounselorRoomResponse>()
+        val counselorRoomActor = testKit.spawn(CounselorRoomActor.create("Room1"))
+
+        val personalRoomActor = testKit.createTestProbe<PersonalRoomCommand>().ref
+        counselorRoomActor.tell(InvitePersonalRoomActor(personalRoomActor, probe.ref))
+        probe.expectMessage(InvitationCompleted)
+
+        counselorRoomActor.tell(SendMessageToPersonalRoom("Hello Personal Room"))
+        // Add verification logic if needed
+    }
+
+
+
 }

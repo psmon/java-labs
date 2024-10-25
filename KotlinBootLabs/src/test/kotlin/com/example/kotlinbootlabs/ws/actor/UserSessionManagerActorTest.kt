@@ -131,4 +131,5 @@ class UserSessionManagerActorTest {
         val response = probe.expectMessageClass(Pong::class.java)
         assertEquals("Pong", response.message)
     }
+
 }

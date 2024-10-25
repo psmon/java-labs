@@ -65,4 +65,17 @@ class SupervisorChannelActorTest {
         supervisorChannelActor.tell(GetCounselorManager("NonExistentBrand", probe.ref))
         probe.expectMessage(SupervisorErrorStringResponse("CounselorManager for channel NonExistentBrand not found."))
     }
+
+    @Test
+    fun testRemoveCounselorManager() {
+        val probe = testKit.createTestProbe<SupervisorChannelResponse>()
+        val supervisorChannelActor = testKit.spawn(SupervisorChannelActor.create())
+
+        supervisorChannelActor.tell(CreateCounselorManager("channel1", probe.ref))
+        probe.expectMessage(CounselorManagerCreated("channel1"))
+
+        supervisorChannelActor.tell(RemoveCounselorManager("channel1", probe.ref))
+        probe.expectMessage(CounselorManagerRemoved("channel1"))
+    }
+
 }

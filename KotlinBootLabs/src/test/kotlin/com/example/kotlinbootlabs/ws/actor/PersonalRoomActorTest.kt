@@ -76,4 +76,13 @@ class PersonalRoomActorTest {
         reportResults(beforeMemoryUsage, afterMemoryUsage, beforeCpuLoad, afterCpuLoad)
 
     }
+
+    @Test
+    fun testSetTestProbe() {
+        val probe = testKit.createTestProbe<PersonalRoomResponse>()
+        val personalRoomActor: ActorRef<PersonalRoomCommand> = testKit.spawn(PersonalRoomActor.create("testIdentifier"))
+
+        personalRoomActor.tell(SetTestProbe(probe.ref))
+        probe.expectMessage(Duration.ofSeconds(10),PrivacyHelloResponse("Hello World"))
+    }
 }

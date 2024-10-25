@@ -29,6 +29,7 @@ data class AssignRoom(var roomName:String, val customer: ActorRef<PersonalRoomCo
 data class SetCounselorSocketSession(val socketSession: WebSocketSession) : CounselorCommand()
 data class SendToCounselorHandlerTextMessage(val message: String) : CounselorCommand()
 data class SendToRoomForPersonalTextMessage(val roomName: String, val message: String) : CounselorCommand()
+data class SetCounselorTestProbe(val testProbe: ActorRef<CounselorResponse>) : CounselorCommand()
 
 sealed class CounselorResponse
 data class TaskAssigned(val task: String) : CounselorResponse()
@@ -49,6 +50,8 @@ class CounselorActor private constructor(
 
     private val personalRooms = mutableMapOf<String, ActorRef<PersonalRoomCommand>>()
 
+    private lateinit var testProbe: ActorRef<CounselorResponse>
+
     companion object {
         fun create(name: String): Behavior<CounselorCommand> {
             return Behaviors.setup { context -> CounselorActor(context, name) }
@@ -64,7 +67,13 @@ class CounselorActor private constructor(
             .onMessage(SetCounselorSocketSession::class.java, this::onSetCounselorSocketSession)
             .onMessage(SendToCounselorHandlerTextMessage::class.java, this::onSendToCounselorTextMessage)
             .onMessage(SendToRoomForPersonalTextMessage::class.java, this::onSendToRoomForPersonalTextMessage)
+            .onMessage(SetCounselorTestProbe::class.java, this::onSetCounselorTestProbe)
             .build()
+    }
+
+    private fun onSetCounselorTestProbe(setCounselorTestProbe: SetCounselorTestProbe): Behavior<CounselorCommand> {
+        testProbe = setCounselorTestProbe.testProbe
+        return this
     }
 
     private fun onSendToRoomForPersonalTextMessage(sendToRoomForPersonalTextMessage: SendToRoomForPersonalTextMessage): Behavior<CounselorCommand> {
@@ -99,6 +108,11 @@ class CounselorActor private constructor(
         context.log.info("Room assigned to counselor $name: ${assignRoom.roomName}")
         counselorRooms[assignRoom.roomName] = assignRoom.room
         personalRooms[assignRoom.roomName] = assignRoom.customer
+
+        if(::testProbe.isInitialized){
+            testProbe.tell(TaskAssigned("Room assigned to counselor $name: ${assignRoom.roomName}"))
+        }
+
         return this
     }
 

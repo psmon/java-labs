@@ -11,7 +11,7 @@ data class CreateCounselorManager(val channel: String, val replyTo: ActorRef<Sup
 data class GetCounselorManager(val channel: String, val replyTo: ActorRef<SupervisorChannelResponse>) : SupervisorChannelCommand()
 data class GetAllCounselorManagers(val replyTo: ActorRef<SupervisorChannelResponse>) : SupervisorChannelCommand()
 data class GetCounselorFromManager(val channel: String, val counselorName: String, val replyTo: ActorRef<SupervisorChannelResponse>) : SupervisorChannelCommand()
-
+data class RemoveCounselorManager(val channel: String, val replyTo: ActorRef<SupervisorChannelResponse>) : SupervisorChannelCommand()
 
 sealed class SupervisorChannelResponse
 data class CounselorManagerCreated(val channel: String) : SupervisorChannelResponse()
@@ -19,7 +19,7 @@ data class CounselorManagerFound(val channel: String, val actorRef: ActorRef<Cou
 data class AllCounselorManagers(val channels: List<String>) : SupervisorChannelResponse()
 data class SupervisorErrorStringResponse(val message: String) : SupervisorChannelResponse()
 data class CounselorActorFound(val counselorName: String, val actorRef: ActorRef<CounselorCommand>) : SupervisorChannelResponse()
-
+data class CounselorManagerRemoved(val channel: String) : SupervisorChannelResponse()
 
 
 class SupervisorChannelActor private constructor(
@@ -40,6 +40,7 @@ class SupervisorChannelActor private constructor(
             .onMessage(GetCounselorManager::class.java, this::onGetCounselorManager)
             .onMessage(GetAllCounselorManagers::class.java, this::onGetAllCounselorManagers)
             .onMessage(GetCounselorFromManager::class.java, this::onGetCounselorFromManager)
+            .onMessage(RemoveCounselorManager::class.java, this::onRemoveCounselorManager)
             .build()
     }
 
@@ -50,6 +51,16 @@ class SupervisorChannelActor private constructor(
             val counselorManagerActor = context.spawn(CounselorManagerActor.create(), "CounselorManager-${command.channel}")
             counselorManagers[command.channel] = counselorManagerActor
             command.replyTo.tell(CounselorManagerCreated(command.channel))
+        }
+        return this
+    }
+
+    private fun onRemoveCounselorManager(removeCounselorManager: RemoveCounselorManager): Behavior<SupervisorChannelCommand> {
+        val counselorManagerActor = counselorManagers.remove(removeCounselorManager.channel)
+        if (counselorManagerActor != null) {
+            removeCounselorManager.replyTo.tell(CounselorManagerRemoved(removeCounselorManager.channel))
+        } else {
+            removeCounselorManager.replyTo.tell(SupervisorErrorStringResponse("CounselorManager for channel ${removeCounselorManager.channel} not found."))
         }
         return this
     }
