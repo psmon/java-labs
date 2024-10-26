@@ -27,6 +27,7 @@ data class HelloState @JsonCreator constructor(
     val helloTotalCount: Int,
 ) : PersitenceSerializable
 
+
 data class HelloState2 (
     val state: State,
     val helloCount: Long,
@@ -34,11 +35,18 @@ data class HelloState2 (
 ) : PersitenceSerializable
 
 
-sealed class HelloPersistentStateActorCommand
+sealed class HelloPersistentStateActorCommand :PersitenceSerializable
 data class Hello(val message: String, val replyTo: ActorRef<Any>) : HelloPersistentStateActorCommand()
 data class GetHelloCount(val replyTo: ActorRef<Any>) : HelloPersistentStateActorCommand()
 data class GetHelloTotalCount(val replyTo: ActorRef<Any>) : HelloPersistentStateActorCommand()
-data class ChangeState(val newState: State) : HelloPersistentStateActorCommand()
+
+//val newState: State
+data class ChangeState @JsonCreator constructor(
+    @JsonProperty("newState")
+    val newState: State,
+) : HelloPersistentStateActorCommand()
+
+
 data class HelloLimit(val message: String, val replyTo: ActorRef<Any>) : HelloPersistentStateActorCommand()
 object ResetHelloCount : HelloPersistentStateActorCommand()
 object StopResetTimer : HelloPersistentStateActorCommand()

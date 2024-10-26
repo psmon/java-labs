@@ -59,6 +59,9 @@ dependencies {
 	//implementation("com.typesafe.akka:akka-actor-typed_$scalaVersion:$akkaVersion")
 	implementation("org.apache.pekko:pekko-actor-typed_$scalaVersion:$pekkoVersion")
 
+	implementation("org.apache.pekko:pekko-serialization-jackson_$scalaVersion:$pekkoVersion")
+
+
 	// Actor Persistence
 	//implementation("com.typesafe.akka:akka-persistence-typed_$scalaVersion:$akkaVersion")
 	implementation("org.apache.pekko:pekko-persistence-typed_$scalaVersion:$pekkoVersion")
@@ -66,14 +69,11 @@ dependencies {
 	implementation("org.apache.pekko:pekko-persistence-r2dbc_$scalaVersion:$pekkoJ2dbc")
 	implementation("org.apache.pekko:pekko-persistence-jdbc_$scalaVersion:$pekkoJdbc")
 
-	implementation("org.apache.pekko:pekko-serialization-jackson_$scalaVersion:$pekkoVersion")
 
 	implementation("com.typesafe.slick:slick_$scalaVersion:$slickVersion")
 	implementation("com.typesafe.slick:slick-hikaricp_$scalaVersion:$slickVersion")
 	implementation("com.h2database:h2:2.2.220")
-
 	implementation("org.postgresql:postgresql:42.7.2")
-
 	implementation("org.postgresql:r2dbc-postgresql:1.0.7.RELEASE")
 
 	// Actor Logging
