@@ -18,7 +18,7 @@ enum class State {
     ANGRY
 }
 
-data class HelloState @JsonCreator constructor(
+data class HelloState2 @JsonCreator constructor(
     @JsonProperty("state")
     val state: State,
     @JsonProperty("helloCount")
@@ -28,7 +28,7 @@ data class HelloState @JsonCreator constructor(
 ) : PersitenceSerializable
 
 
-data class HelloState2 (
+data class HelloState (
     val state: State,
     val helloCount: Long,
     val helloTotalCount: Long,
@@ -36,9 +36,9 @@ data class HelloState2 (
 
 
 sealed class HelloPersistentStateActorCommand :PersitenceSerializable
-data class Hello(val message: String, val replyTo: ActorRef<Any>) : HelloPersistentStateActorCommand()
-data class GetHelloCount(val replyTo: ActorRef<Any>) : HelloPersistentStateActorCommand()
-data class GetHelloTotalCount(val replyTo: ActorRef<Any>) : HelloPersistentStateActorCommand()
+data class HelloPersistentDurable(val message: String, val replyTo: ActorRef<Any>) : HelloPersistentStateActorCommand()
+data class GetHelloCountPersistentDurable(val replyTo: ActorRef<Any>) : HelloPersistentStateActorCommand()
+data class GetHelloTotalCountPersitentDurable(val replyTo: ActorRef<Any>) : HelloPersistentStateActorCommand()
 
 //val newState: State
 data class ChangeState @JsonCreator constructor(
@@ -47,23 +47,21 @@ data class ChangeState @JsonCreator constructor(
 ) : HelloPersistentStateActorCommand()
 
 
-data class HelloLimit(val message: String, val replyTo: ActorRef<Any>) : HelloPersistentStateActorCommand()
 object ResetHelloCount : HelloPersistentStateActorCommand()
-object StopResetTimer : HelloPersistentStateActorCommand()
 
 sealed class HelloPersistentStateActorResponse
 data class HelloResponse(val message: String) : HelloPersistentStateActorResponse()
 data class HelloCountResponse(val count: Number) : HelloPersistentStateActorResponse()
 
 
-class HelloPersistentStateActor private constructor(
+class HelloPersistentDurableStateActor private constructor(
     private val context: ActorContext<HelloPersistentStateActorCommand>,
     private val persistenceId: PersistenceId
 ) : DurableStateBehavior<HelloPersistentStateActorCommand, HelloState>(persistenceId) {
 
     companion object {
         fun create(persistenceId: PersistenceId): Behavior<HelloPersistentStateActorCommand> {
-            return Behaviors.setup { context -> HelloPersistentStateActor(context, persistenceId) }
+            return Behaviors.setup { context -> HelloPersistentDurableStateActor(context, persistenceId) }
         }
     }
 
@@ -76,15 +74,15 @@ class HelloPersistentStateActor private constructor(
     override fun commandHandler(): CommandHandler<HelloPersistentStateActorCommand, HelloState> {
         return newCommandHandlerBuilder()
             .forAnyState()
-            .onCommand(Hello::class.java) { state, command -> onHello(state, command) }
-            .onCommand(GetHelloCount::class.java) { state, command -> onGetHelloCount(state, command) }
-            .onCommand(GetHelloTotalCount::class.java) { state, command -> onGetHelloTotalCount(state, command) }
+            .onCommand(HelloPersistentDurable::class.java) { state, command -> onHello(state, command) }
+            .onCommand(GetHelloCountPersistentDurable::class.java) { state, command -> onGetHelloCount(state, command) }
+            .onCommand(GetHelloTotalCountPersitentDurable::class.java) { state, command -> onGetHelloTotalCount(state, command) }
             .onCommand(ChangeState::class.java) { state, command -> onChangeState(state, command) }
             .onCommand(ResetHelloCount::class.java) { state, _ -> onResetHelloCount(state) }
             .build()
     }
 
-    private fun onHello(state: HelloState, command: Hello): Effect<HelloState> {
+    private fun onHello(state: HelloState, command: HelloPersistentDurable): Effect<HelloState> {
         return when (state.state) {
             State.HAPPY -> {
                 if (command.message == "Hello") {
@@ -109,13 +107,13 @@ class HelloPersistentStateActor private constructor(
         }
     }
 
-    private fun onGetHelloCount(state: HelloState, command: GetHelloCount): Effect<HelloState> {
+    private fun onGetHelloCount(state: HelloState, command: GetHelloCountPersistentDurable): Effect<HelloState> {
         command.replyTo.tell(HelloCountResponse(state.helloCount))
         context.log.info("onGetHelloCount-helloCount: ${state.helloCount}")
         return Effect().none()
     }
 
-    private fun onGetHelloTotalCount(state: HelloState, command: GetHelloTotalCount): Effect<HelloState> {
+    private fun onGetHelloTotalCount(state: HelloState, command: GetHelloTotalCountPersitentDurable): Effect<HelloState> {
         command.replyTo.tell(HelloCountResponse(state.helloTotalCount))
         return Effect().none()
     }

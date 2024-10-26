@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-class HelloPersistentStateActorTest {
+class PersitentDurableHelloPersistentDurableStateActorTest {
 
     companion object {
 
@@ -55,24 +55,24 @@ class HelloPersistentStateActorTest {
 
         val probe: TestProbe<Any> = testKit.createTestProbe()
         val persistenceId = PersistenceId.ofUniqueId("HelloPersistentStateActor1")
-        val helloPersistentStateActor = testKit.spawn(HelloPersistentStateActor.create(persistenceId))
+        val helloPersistentDurableStateActor = testKit.spawn(HelloPersistentDurableStateActor.create(persistenceId))
 
         // Test in HAPPY state
-        helloPersistentStateActor.tell(ChangeState(State.HAPPY))
-        helloPersistentStateActor.tell(Hello("Hello", probe.ref()))
+        helloPersistentDurableStateActor.tell(ChangeState(State.HAPPY))
+        helloPersistentDurableStateActor.tell(HelloPersistentDurable("Hello", probe.ref()))
         probe.expectMessage(HelloResponse("Kotlin"))
 
-        helloPersistentStateActor.tell(GetHelloTotalCount(probe.ref()))
+        helloPersistentDurableStateActor.tell(GetHelloTotalCountPersitentDurable(probe.ref()))
         probe.expectMessage(HelloCountResponse(1))
 
         // Change state to ANGRY
-        helloPersistentStateActor.tell(ChangeState(State.ANGRY))
+        helloPersistentDurableStateActor.tell(ChangeState(State.ANGRY))
 
         // Test in ANGRY state
-        helloPersistentStateActor.tell(Hello("Hello", probe.ref()))
+        helloPersistentDurableStateActor.tell(HelloPersistentDurable("Hello", probe.ref()))
         probe.expectMessage(HelloResponse("Don't talk to me!"))
 
-        helloPersistentStateActor.tell(GetHelloTotalCount(probe.ref()))
+        helloPersistentDurableStateActor.tell(GetHelloTotalCountPersitentDurable(probe.ref()))
         probe.expectMessage(HelloCountResponse(1)) // Count should not change
     }
 
@@ -80,24 +80,24 @@ class HelloPersistentStateActorTest {
     fun testResetHelloCount() {
         val probe: TestProbe<Any> = testKit.createTestProbe()
         val persistenceId = PersistenceId.ofUniqueId("HelloPersistentStateActor2")
-        val helloPersistentStateActor = testKit.spawn(HelloPersistentStateActor.create(persistenceId))
+        val helloPersistentDurableStateActor = testKit.spawn(HelloPersistentDurableStateActor.create(persistenceId))
 
         // Send Hello messages
-        helloPersistentStateActor.tell(Hello("Hello", probe.ref()))
-        helloPersistentStateActor.tell(Hello("Hello", probe.ref()))
+        helloPersistentDurableStateActor.tell(HelloPersistentDurable("Hello", probe.ref()))
+        helloPersistentDurableStateActor.tell(HelloPersistentDurable("Hello", probe.ref()))
 
         probe.expectMessage(HelloResponse("Kotlin"))
         probe.expectMessage(HelloResponse("Kotlin"))
 
         // Verify the hello count
-        helloPersistentStateActor.tell(GetHelloCount(probe.ref()))
+        helloPersistentDurableStateActor.tell(GetHelloCountPersistentDurable(probe.ref()))
         probe.expectMessage(HelloCountResponse(2))
 
         // Reset the hello count
-        helloPersistentStateActor.tell(ResetHelloCount)
+        helloPersistentDurableStateActor.tell(ResetHelloCount)
 
         // Verify the hello count is reset
-        helloPersistentStateActor.tell(GetHelloCount(probe.ref()))
+        helloPersistentDurableStateActor.tell(GetHelloCountPersistentDurable(probe.ref()))
         probe.expectMessage(HelloCountResponse(0))
     }
 }

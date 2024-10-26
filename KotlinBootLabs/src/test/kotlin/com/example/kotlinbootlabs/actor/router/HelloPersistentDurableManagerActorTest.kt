@@ -9,7 +9,7 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-class HelloManagerActorTest {
+class HelloPersistentDurableManagerActorTest {
 
     companion object {
         private val testKit = ActorTestKit.create()

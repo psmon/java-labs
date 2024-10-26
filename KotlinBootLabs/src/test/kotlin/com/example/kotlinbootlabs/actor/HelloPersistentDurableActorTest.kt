@@ -5,7 +5,7 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-class HelloActorTest {
+class HelloPersistentDurableActorTest {
 
     companion object {
         private lateinit var testKit: ActorTestKit
