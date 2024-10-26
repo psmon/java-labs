@@ -1,12 +1,12 @@
 package com.example.kotlinbootlabs.controller
 
 import com.example.kotlinbootlabs.actor.MainStageActorCommand
-import org.apache.pekko.actor.typed.ActorRef
-import org.apache.pekko.actor.typed.javadsl.AskPattern
-import org.apache.pekko.util.Timeout
+import akka.actor.typed.ActorRef
+import akka.actor.typed.javadsl.AskPattern
+import akka.util.Timeout
 import org.springframework.web.bind.annotation.*
 import com.example.kotlinbootlabs.ws.actor.*
-import org.apache.pekko.actor.typed.ActorSystem
+import akka.actor.typed.ActorSystem
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage

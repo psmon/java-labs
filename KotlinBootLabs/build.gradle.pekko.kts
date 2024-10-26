@@ -20,7 +20,10 @@ repositories {
 
 val scalaVersion = "2.13"
 val akkaVersion = "2.7.0"
-val akkaR2DBC = "1.1.2"
+val pekkoVersion = "1.1.2"
+val pekkoJdbc = "1.1.0"
+val pekkoJ2dbc = "1.1.0-M0"
+val slickVersion = "3.5.1"
 
 dependencies {
 	// Core
@@ -43,31 +46,33 @@ dependencies {
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
 
 	// Actor System
-	implementation(platform("com.typesafe.akka:akka-bom_$scalaVersion:$akkaVersion"))
+	//implementation(platform("com.typesafe.akka:akka-bom_$scalaVersion:$akkaVersion"))
+	implementation(platform("org.apache.pekko:pekko-bom_$scalaVersion:$pekkoVersion"))
 
 	// Classic Actor
-	implementation("com.typesafe.akka:akka-actor_$scalaVersion:$akkaVersion")
-	implementation("com.typesafe.akka:akka-stream_$scalaVersion:$akkaVersion")
+	//implementation("com.typesafe.akka:akka-actor_$scalaVersion:$akkaVersion")
+	//implementation("com.typesafe.akka:akka-stream_$scalaVersion:$akkaVersion")
+	implementation("org.apache.pekko:pekko-actor_$scalaVersion:$pekkoVersion")
+	implementation("org.apache.pekko:pekko-stream_$scalaVersion:$pekkoVersion")
 
 	// Typed Actor
-	implementation("com.typesafe.akka:akka-actor-typed_$scalaVersion:$akkaVersion")
-	implementation("com.typesafe.akka:akka-serialization-jackson_$scalaVersion:$akkaVersion")
+	implementation("org.apache.pekko:pekko-actor-typed_$scalaVersion:$pekkoVersion")
+	implementation("org.apache.pekko:pekko-serialization-jackson_$scalaVersion:$pekkoVersion")
 
 
 	// Actor Persistence
-	implementation("com.typesafe.akka:akka-persistence-typed_$scalaVersion:$akkaVersion")
-	implementation("com.typesafe.akka:akka-persistence-query_$scalaVersion:$akkaVersion")
-	implementation("com.lightbend.akka:akka-persistence-r2dbc_$scalaVersion:$akkaR2DBC")
+	implementation("org.apache.pekko:pekko-persistence-typed_$scalaVersion:$pekkoVersion")
+	implementation("org.apache.pekko:pekko-persistence-query_$scalaVersion:$pekkoVersion")
+	implementation("org.apache.pekko:pekko-persistence-r2dbc_$scalaVersion:$pekkoJ2dbc")
 
 	// Actor Logging
-	implementation("com.typesafe.akka:akka-slf4j_$scalaVersion:$akkaVersion")
+	implementation("org.apache.pekko:pekko-slf4j_$scalaVersion:$pekkoVersion")
 
 	// Actor TestKit
-	testImplementation("com.typesafe.akka:akka-testkit_$scalaVersion:$akkaVersion")
-	testImplementation("com.typesafe.akka:akka-actor-testkit-typed_$scalaVersion:$akkaVersion")
-	testImplementation("com.typesafe.akka:akka-stream-testkit_$scalaVersion:$akkaVersion")
-	testImplementation("com.typesafe.akka:akka-persistence-testkit_$scalaVersion:$akkaVersion")
-
+	testImplementation("org.apache.pekko:pekko-testkit_$scalaVersion:$pekkoVersion")
+	testImplementation("org.apache.pekko:pekko-actor-testkit-typed_$scalaVersion:$pekkoVersion")
+	testImplementation("org.apache.pekko:pekko-stream-testkit_$scalaVersion:$pekkoVersion")
+	testImplementation("org.apache.pekko:pekko-persistence-testkit_$scalaVersion:$pekkoVersion")
 
 	// Logging
 	implementation("ch.qos.logback:logback-classic:1.4.12")

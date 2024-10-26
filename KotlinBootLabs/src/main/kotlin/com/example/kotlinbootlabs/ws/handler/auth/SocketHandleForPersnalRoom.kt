@@ -1,14 +1,14 @@
 package com.example.kotlinbootlabs.ws.handler.auth
 
 import com.example.kotlinbootlabs.actor.MainStageActorCommand
-import org.apache.pekko.actor.typed.ActorRef
+import akka.actor.typed.ActorRef
 import com.example.kotlinbootlabs.service.AuthService
 import com.example.kotlinbootlabs.ws.actor.*
 
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import org.apache.pekko.actor.typed.ActorSystem
-import org.apache.pekko.actor.typed.javadsl.AskPattern
+import akka.actor.typed.ActorSystem
+import akka.actor.typed.javadsl.AskPattern
 import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession
 import org.springframework.web.socket.handler.TextWebSocketHandler

@@ -1,8 +1,8 @@
 package com.example.kotlinbootlabs.config
 
-import org.apache.pekko.actor.typed.ActorRef
-import org.apache.pekko.actor.typed.ActorSystem
-import org.apache.pekko.actor.typed.javadsl.AskPattern
+import akka.actor.typed.ActorRef
+import akka.actor.typed.ActorSystem
+import akka.actor.typed.javadsl.AskPattern
 import com.example.kotlinbootlabs.actor.*
 import com.example.kotlinbootlabs.ws.actor.*
 import jakarta.annotation.PostConstruct

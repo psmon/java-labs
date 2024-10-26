@@ -2,10 +2,10 @@ package com.example.kotlinbootlabs.actor.persistent
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.apache.pekko.actor.testkit.typed.javadsl.ActorTestKit
-import org.apache.pekko.actor.testkit.typed.javadsl.TestProbe
+import akka.actor.testkit.typed.javadsl.ActorTestKit
+import akka.actor.testkit.typed.javadsl.TestProbe
 
-import org.apache.pekko.persistence.typed.PersistenceId
+import akka.persistence.typed.PersistenceId
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
@@ -57,13 +57,21 @@ class PersitentDurableHelloPersistentDurableStateActorTest {
         val persistenceId = PersistenceId.ofUniqueId("HelloPersistentStateActor1")
         val helloPersistentDurableStateActor = testKit.spawn(HelloPersistentDurableStateActor.create(persistenceId))
 
+        helloPersistentDurableStateActor.tell(GetHelloTotalCountPersitentDurable(probe.ref()))
+
+        val response = probe.expectMessageClass(HelloCountResponse::class.java)
+
+        val totalCount: Number = response.count
+
         // Test in HAPPY state
         helloPersistentDurableStateActor.tell(ChangeState(State.HAPPY))
         helloPersistentDurableStateActor.tell(HelloPersistentDurable("Hello", probe.ref()))
         probe.expectMessage(HelloResponse("Kotlin"))
 
+        val increaseCount :Number = totalCount.toInt() + 1
+
         helloPersistentDurableStateActor.tell(GetHelloTotalCountPersitentDurable(probe.ref()))
-        probe.expectMessage(HelloCountResponse(1))
+        probe.expectMessage(HelloCountResponse(increaseCount))
 
         // Change state to ANGRY
         helloPersistentDurableStateActor.tell(ChangeState(State.ANGRY))
@@ -73,7 +81,7 @@ class PersitentDurableHelloPersistentDurableStateActorTest {
         probe.expectMessage(HelloResponse("Don't talk to me!"))
 
         helloPersistentDurableStateActor.tell(GetHelloTotalCountPersitentDurable(probe.ref()))
-        probe.expectMessage(HelloCountResponse(1)) // Count should not change
+        probe.expectMessage(HelloCountResponse(increaseCount)) // Count should not change
     }
 
     @Test
@@ -82,6 +90,10 @@ class PersitentDurableHelloPersistentDurableStateActorTest {
         val persistenceId = PersistenceId.ofUniqueId("HelloPersistentStateActor2")
         val helloPersistentDurableStateActor = testKit.spawn(HelloPersistentDurableStateActor.create(persistenceId))
 
+        helloPersistentDurableStateActor.tell(GetHelloTotalCountPersitentDurable(probe.ref()))
+        val response = probe.expectMessageClass(HelloCountResponse::class.java)
+        val totalCount: Number = response.count
+
         // Send Hello messages
         helloPersistentDurableStateActor.tell(HelloPersistentDurable("Hello", probe.ref()))
         helloPersistentDurableStateActor.tell(HelloPersistentDurable("Hello", probe.ref()))
@@ -89,15 +101,19 @@ class PersitentDurableHelloPersistentDurableStateActorTest {
         probe.expectMessage(HelloResponse("Kotlin"))
         probe.expectMessage(HelloResponse("Kotlin"))
 
+        val increaseCount :Number = totalCount.toInt() + 2
+
         // Verify the hello count
         helloPersistentDurableStateActor.tell(GetHelloCountPersistentDurable(probe.ref()))
-        probe.expectMessage(HelloCountResponse(2))
+        val updatedResponse = probe.expectMessageClass(HelloCountResponse::class.java)
+        assertEquals(increaseCount.toInt(), updatedResponse.count)
 
         // Reset the hello count
         helloPersistentDurableStateActor.tell(ResetHelloCount)
 
         // Verify the hello count is reset
         helloPersistentDurableStateActor.tell(GetHelloCountPersistentDurable(probe.ref()))
-        probe.expectMessage(HelloCountResponse(0))
+        val resetResponse = probe.expectMessageClass(HelloCountResponse::class.java)
+        assertEquals(HelloCountResponse(0), resetResponse)
     }
 }

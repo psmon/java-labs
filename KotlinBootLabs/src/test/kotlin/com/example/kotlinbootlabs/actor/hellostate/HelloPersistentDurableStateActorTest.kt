@@ -1,12 +1,12 @@
 package com.example.kotlinbootlabs.actor.hellostate
 
-import org.apache.pekko.actor.ActorSystem
-import org.apache.pekko.actor.testkit.typed.javadsl.ActorTestKit
-import org.apache.pekko.actor.testkit.typed.javadsl.ManualTime
-import org.apache.pekko.stream.Materializer
-import org.apache.pekko.stream.OverflowStrategy
-import org.apache.pekko.stream.javadsl.Sink
-import org.apache.pekko.stream.javadsl.Source
+import akka.actor.ActorSystem
+import akka.actor.testkit.typed.javadsl.ActorTestKit
+import akka.actor.testkit.typed.javadsl.ManualTime
+import akka.stream.Materializer
+import akka.stream.OverflowStrategy
+import akka.stream.javadsl.Sink
+import akka.stream.javadsl.Source
 import com.typesafe.config.ConfigFactory
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll

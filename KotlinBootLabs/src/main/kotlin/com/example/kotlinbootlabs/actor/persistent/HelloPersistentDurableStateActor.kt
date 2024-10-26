@@ -1,55 +1,32 @@
 package com.example.kotlinbootlabs.actor.persistent
 
 
+import akka.actor.typed.ActorRef
+import akka.actor.typed.Behavior
+import akka.actor.typed.javadsl.ActorContext
+import akka.actor.typed.javadsl.Behaviors
+import akka.persistence.typed.PersistenceId
+import akka.persistence.typed.state.javadsl.CommandHandler
+import akka.persistence.typed.state.javadsl.DurableStateBehavior
+import akka.persistence.typed.state.javadsl.Effect
 import com.example.kotlinbootlabs.actor.PersitenceSerializable
-import com.fasterxml.jackson.annotation.JsonCreator
-import com.fasterxml.jackson.annotation.JsonProperty
-import org.apache.pekko.actor.typed.ActorRef
-import org.apache.pekko.actor.typed.Behavior
-import org.apache.pekko.actor.typed.javadsl.ActorContext
-import org.apache.pekko.actor.typed.javadsl.Behaviors
-import org.apache.pekko.persistence.typed.PersistenceId
-import org.apache.pekko.persistence.typed.state.javadsl.CommandHandler
-import org.apache.pekko.persistence.typed.state.javadsl.DurableStateBehavior
-import org.apache.pekko.persistence.typed.state.javadsl.Effect
 
 enum class State {
     HAPPY,
     ANGRY
 }
 
-data class HelloState2 @JsonCreator constructor(
-    @JsonProperty("state")
-    val state: State,
-    @JsonProperty("helloCount")
-    val helloCount: Int,
-    @JsonProperty("helloTotalCount")
-    val helloTotalCount: Int,
-) : PersitenceSerializable
+data class HelloState(val state: State, val helloCount: Long, val helloTotalCount: Long) : PersitenceSerializable
 
-
-data class HelloState (
-    val state: State,
-    val helloCount: Long,
-    val helloTotalCount: Long,
-) : PersitenceSerializable
-
-
-sealed class HelloPersistentStateActorCommand :PersitenceSerializable
+sealed class HelloPersistentStateActorCommand : PersitenceSerializable
 data class HelloPersistentDurable(val message: String, val replyTo: ActorRef<Any>) : HelloPersistentStateActorCommand()
 data class GetHelloCountPersistentDurable(val replyTo: ActorRef<Any>) : HelloPersistentStateActorCommand()
 data class GetHelloTotalCountPersitentDurable(val replyTo: ActorRef<Any>) : HelloPersistentStateActorCommand()
-
-//val newState: State
-data class ChangeState @JsonCreator constructor(
-    @JsonProperty("newState")
-    val newState: State,
-) : HelloPersistentStateActorCommand()
-
+data class ChangeState(val state:State) : HelloPersistentStateActorCommand()
 
 object ResetHelloCount : HelloPersistentStateActorCommand()
 
-sealed class HelloPersistentStateActorResponse
+sealed class HelloPersistentStateActorResponse : PersitenceSerializable
 data class HelloResponse(val message: String) : HelloPersistentStateActorResponse()
 data class HelloCountResponse(val count: Number) : HelloPersistentStateActorResponse()
 
@@ -81,6 +58,7 @@ class HelloPersistentDurableStateActor private constructor(
             .onCommand(ResetHelloCount::class.java) { state, _ -> onResetHelloCount(state) }
             .build()
     }
+
 
     private fun onHello(state: HelloState, command: HelloPersistentDurable): Effect<HelloState> {
         return when (state.state) {
@@ -119,7 +97,7 @@ class HelloPersistentDurableStateActor private constructor(
     }
 
     private fun onChangeState(state: HelloState, command: ChangeState): Effect<HelloState> {
-        val newState = state.copy(state = command.newState)
+        val newState = state.copy(state = state.state )
         return Effect().persist(newState)
     }
 

@@ -41,19 +41,18 @@ CREATE TABLE IF NOT EXISTS snapshot(
     );
 
 CREATE TABLE IF NOT EXISTS durable_state (
-                                             slice INT NOT NULL,
-                                             entity_type VARCHAR(255) NOT NULL,
+    slice INT NOT NULL,
+    entity_type VARCHAR(255) NOT NULL,
     persistence_id VARCHAR(255) NOT NULL,
     revision BIGINT NOT NULL,
     db_timestamp timestamp with time zone NOT NULL,
-
-                               state_ser_id INTEGER NOT NULL,
-                               state_ser_manifest VARCHAR(255),
+    state_ser_id INTEGER NOT NULL,
+    state_ser_manifest VARCHAR(255),
     state_payload BYTEA NOT NULL,
     tags TEXT ARRAY,
 
-    PRIMARY KEY(persistence_id, revision)
-    );
+PRIMARY KEY(persistence_id, revision)
+);
 
 -- `durable_state_slice_idx` is only needed if the slice based queries are used
 CREATE INDEX IF NOT EXISTS durable_state_slice_idx ON durable_state(slice, entity_type, db_timestamp, revision);

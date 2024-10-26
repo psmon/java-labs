@@ -2,10 +2,10 @@ package com.example.kotlinbootlabs.actor
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import org.apache.pekko.serialization.JSerializer
-import org.apache.pekko.serialization.Serializer
-import org.apache.pekko.serialization.jackson.JacksonObjectMapperFactory
-import org.apache.pekko.serialization.jackson.JacksonObjectMapperProvider
+import akka.serialization.JSerializer
+import akka.serialization.Serializer
+import akka.serialization.jackson.JacksonObjectMapperFactory
+import akka.serialization.jackson.JacksonObjectMapperProvider
 import java.nio.charset.StandardCharsets
 
 

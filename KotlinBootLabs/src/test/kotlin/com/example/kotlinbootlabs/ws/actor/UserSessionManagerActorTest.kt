@@ -1,6 +1,6 @@
 package com.example.kotlinbootlabs.ws.actor
 
-import org.apache.pekko .actor.testkit.typed.javadsl.ActorTestKit
+import akka .actor.testkit.typed.javadsl.ActorTestKit
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue

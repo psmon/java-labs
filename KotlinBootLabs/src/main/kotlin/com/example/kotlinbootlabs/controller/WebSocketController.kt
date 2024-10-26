@@ -1,6 +1,6 @@
 package com.example.kotlinbootlabs.controller
 
-import org.apache.pekko.actor.typed.ActorRef
+import akka.actor.typed.ActorRef
 import com.example.kotlinbootlabs.ws.WebSocketSessionManager
 import com.example.kotlinbootlabs.ws.actor.SendMessageToAll
 import com.example.kotlinbootlabs.ws.actor.SendMessageToSession
