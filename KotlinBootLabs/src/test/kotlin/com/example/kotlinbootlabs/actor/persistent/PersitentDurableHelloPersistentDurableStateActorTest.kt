@@ -57,7 +57,7 @@ class PersitentDurableHelloPersistentDurableStateActorTest {
         val persistenceId = PersistenceId.ofUniqueId("HelloPersistentStateActor1")
         val helloPersistentDurableStateActor = testKit.spawn(HelloPersistentDurableStateActor.create(persistenceId))
 
-        helloPersistentDurableStateActor.tell(GetHelloTotalCountPersitentDurable(probe.ref()))
+        helloPersistentDurableStateActor.tell(GetHelloCountPersistentDurable(probe.ref()))
 
         val response = probe.expectMessageClass(HelloCountResponse::class.java)
 
@@ -70,8 +70,10 @@ class PersitentDurableHelloPersistentDurableStateActorTest {
 
         val increaseCount :Number = totalCount.toInt() + 1
 
-        helloPersistentDurableStateActor.tell(GetHelloTotalCountPersitentDurable(probe.ref()))
-        probe.expectMessage(HelloCountResponse(increaseCount))
+        helloPersistentDurableStateActor.tell(GetHelloCountPersistentDurable(probe.ref()))
+
+        val updatedResponse = probe.expectMessageClass(HelloCountResponse::class.java)
+        assertEquals(increaseCount.toInt(), updatedResponse.count.toInt())
 
         // Change state to ANGRY
         helloPersistentDurableStateActor.tell(ChangeState(State.ANGRY))
@@ -80,8 +82,12 @@ class PersitentDurableHelloPersistentDurableStateActorTest {
         helloPersistentDurableStateActor.tell(HelloPersistentDurable("Hello", probe.ref()))
         probe.expectMessage(HelloResponse("Don't talk to me!"))
 
-        helloPersistentDurableStateActor.tell(GetHelloTotalCountPersitentDurable(probe.ref()))
-        probe.expectMessage(HelloCountResponse(increaseCount)) // Count should not change
+        helloPersistentDurableStateActor.tell(GetHelloCountPersistentDurable(probe.ref()))
+
+        // Count should not increase
+        val updatedResponse2 = probe.expectMessageClass(HelloCountResponse::class.java)
+        assertEquals(increaseCount.toInt(), updatedResponse2.count.toInt())
+
     }
 
     @Test
@@ -90,7 +96,7 @@ class PersitentDurableHelloPersistentDurableStateActorTest {
         val persistenceId = PersistenceId.ofUniqueId("HelloPersistentStateActor2")
         val helloPersistentDurableStateActor = testKit.spawn(HelloPersistentDurableStateActor.create(persistenceId))
 
-        helloPersistentDurableStateActor.tell(GetHelloTotalCountPersitentDurable(probe.ref()))
+        helloPersistentDurableStateActor.tell(GetHelloCountPersistentDurable(probe.ref()))
         val response = probe.expectMessageClass(HelloCountResponse::class.java)
         val totalCount: Number = response.count
 
@@ -106,7 +112,7 @@ class PersitentDurableHelloPersistentDurableStateActorTest {
         // Verify the hello count
         helloPersistentDurableStateActor.tell(GetHelloCountPersistentDurable(probe.ref()))
         val updatedResponse = probe.expectMessageClass(HelloCountResponse::class.java)
-        assertEquals(increaseCount.toInt(), updatedResponse.count)
+        assertEquals(increaseCount.toInt(), updatedResponse.count.toInt())
 
         // Reset the hello count
         helloPersistentDurableStateActor.tell(ResetHelloCount)
@@ -114,6 +120,6 @@ class PersitentDurableHelloPersistentDurableStateActorTest {
         // Verify the hello count is reset
         helloPersistentDurableStateActor.tell(GetHelloCountPersistentDurable(probe.ref()))
         val resetResponse = probe.expectMessageClass(HelloCountResponse::class.java)
-        assertEquals(HelloCountResponse(0), resetResponse)
+        assertEquals(0, resetResponse.count.toInt())
     }
 }

@@ -97,7 +97,7 @@ class HelloPersistentDurableStateActor private constructor(
     }
 
     private fun onChangeState(state: HelloState, command: ChangeState): Effect<HelloState> {
-        val newState = state.copy(state = state.state )
+        val newState = state.copy(state = command.state )
         return Effect().persist(newState)
     }
 
