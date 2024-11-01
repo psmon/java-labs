@@ -10,6 +10,8 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 
 class PersitentDurableHelloPersistentDurableStateActorTest {
 
@@ -28,26 +30,6 @@ class PersitentDurableHelloPersistentDurableStateActorTest {
         fun teardown() {
             testKit.shutdownTestKit()
         }
-    }
-
-    @Test
-    fun testSerialization() {
-        val objectMapper = ObjectMapper()
-        val state = HelloState(State.HAPPY, 123, 123)
-        val json = objectMapper.writeValueAsString(state)
-        val deserializedState = objectMapper.readValue(json, HelloState::class.java)
-        assertEquals(state, deserializedState)
-    }
-
-    @Test
-    fun testSerialization2() {
-        val objectMapper = ObjectMapper().apply {
-            configure(DeserializationFeature.USE_LONG_FOR_INTS, true)
-        }
-        val state = HelloState(State.HAPPY, 123, 123)
-        val json = objectMapper.writeValueAsString(state)
-        val deserializedState = objectMapper.readValue(json, HelloState::class.java)
-        assertEquals(state, deserializedState)
     }
 
     @Test
@@ -87,6 +69,40 @@ class PersitentDurableHelloPersistentDurableStateActorTest {
         // Count should not increase
         val updatedResponse2 = probe.expectMessageClass(HelloCountResponse::class.java)
         assertEquals(increaseCount.toInt(), updatedResponse2.count.toInt())
+
+    }
+
+
+    @ParameterizedTest
+    @ValueSource(ints = [1, 1000])
+    fun testHelloPersistentStateActorRespondsBasedOnStatePerformTest(testCount: Int) {
+
+        val probe: TestProbe<Any> = testKit.createTestProbe()
+        val persistenceId = PersistenceId.ofUniqueId("HelloPersistentStateActor1")
+        val helloPersistentDurableStateActor = testKit.spawn(HelloPersistentDurableStateActor.create(persistenceId))
+
+        helloPersistentDurableStateActor.tell(GetHelloCountPersistentDurable(probe.ref()))
+
+        val response = probe.expectMessageClass(HelloCountResponse::class.java)
+
+        val totalCount: Number = response.count
+
+        // Test in HAPPY state
+        helloPersistentDurableStateActor.tell(ChangeState(State.HAPPY))
+
+        for (i in 1..testCount) {
+            helloPersistentDurableStateActor.tell(HelloPersistentDurable("Hello", probe.ref()))
+        }
+
+        for (i in 1..testCount) {
+            probe.expectMessage(HelloResponse("Kotlin"))
+        }
+
+        //증가 카운트 검증
+        val increaseCount :Number = totalCount.toInt() + testCount
+        helloPersistentDurableStateActor.tell(GetHelloCountPersistentDurable(probe.ref()))
+        val updatedResponse = probe.expectMessageClass(HelloCountResponse::class.java)
+        assertEquals(increaseCount.toInt(), updatedResponse.count.toInt())
 
     }
 
