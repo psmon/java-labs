@@ -1,63 +1,69 @@
 package com.example.kotlinbootlabs.actor.cluster
 
 import akka.actor.testkit.typed.javadsl.ActorTestKit
-import akka.actor.testkit.typed.javadsl.ManualTime
+import akka.actor.testkit.typed.javadsl.TestProbe
+import akka.actor.typed.ActorRef
+import akka.actor.typed.ActorSystem
+import akka.actor.typed.javadsl.AskPattern
+import akka.cluster.typed.Cluster
+import akka.cluster.typed.Join
+import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.time.Duration
+import java.util.concurrent.CompletionStage
 
 class ClusterActorTest {
 
     companion object {
-        private lateinit var testKit: ActorTestKit
-        private lateinit var manualTime: ManualTime
+        private lateinit var testKitA: ActorTestKit
+        private lateinit var testKitB: ActorTestKit
+        private lateinit var systemA: ActorSystem<*>
+        private lateinit var systemB: ActorSystem<*>
+        private lateinit var actorA: ActorRef<HelloActorACommand>
+        private lateinit var actorB: ActorRef<HelloActorBCommand>
 
         @BeforeAll
         @JvmStatic
         fun setup() {
-            val config = ManualTime.config().withFallback(ConfigFactory.defaultApplication())
-            testKit = ActorTestKit.create(config)
-            manualTime = ManualTime.get(testKit.system())
+            val configA = ConfigFactory.load("cluster1.conf")
+            val configB = ConfigFactory.load("cluster2.conf")
+
+            testKitA = ActorTestKit.create(configA)
+            testKitB = ActorTestKit.create(configB)
+
+            systemA = testKitA.system()
+            systemB = testKitB.system()
+
+            Cluster.get(systemA).manager().tell(Join(Cluster.get(systemA).selfMember().address()))
+            Cluster.get(systemB).manager().tell(Join(Cluster.get(systemA).selfMember().address()))
+
+            actorA = testKitA.spawn(ClusterHelloActorA.create())
+            actorB = testKitB.spawn(ClusterHelloActorB.create())
+
         }
 
         @AfterAll
         @JvmStatic
         fun teardown() {
-            testKit.shutdownTestKit()
+            testKitA.shutdownTestKit()
+            testKitB.shutdownTestKit()
         }
     }
 
     @Test
-    fun testClusterHelloActorA() {
-        val probe = testKit.createTestProbe<HelloActorAResponse>()
-        val actorA = testKit.spawn(ClusterHelloActorA.create())
+    fun testClusterHelloActorAandBCommunication() {
+        val probeA = testKitA.createTestProbe<HelloActorAResponse>()
+        val probeB = testKitB.createTestProbe<HelloActorBResponse>()
 
-        actorA.tell(HelloA("Hello", probe.ref))
-        probe.expectMessage(HelloAResponse("Kotlin"))
-    }
-
-    @Test
-    fun testClusterHelloActorB() {
-        val probe = testKit.createTestProbe<HelloActorBResponse>()
-        val actorB = testKit.spawn(ClusterHelloActorB.create())
-
-        actorB.tell(HelloB("Hello", probe.ref))
-        probe.expectMessage(HelloBResponse("Kotlin"))
-    }
-
-    @Test
-    fun testClusterHelloActorAandB() {
-        val probeA = testKit.createTestProbe<HelloActorAResponse>()
-        val probeB = testKit.createTestProbe<HelloActorBResponse>()
-        val actorA = testKit.spawn(ClusterHelloActorA.create())
-        val actorB = testKit.spawn(ClusterHelloActorB.create())
-
+        // HelloActorA sends a message to HelloActorB
         actorA.tell(HelloA("Hello", probeA.ref))
         probeA.expectMessage(HelloAResponse("Kotlin"))
 
         actorB.tell(HelloB("Hello", probeB.ref))
         probeB.expectMessage(HelloBResponse("Kotlin"))
+
     }
 }

@@ -51,6 +51,7 @@ dependencies {
 
 	// Typed Actor
 	implementation("com.typesafe.akka:akka-actor-typed_$scalaVersion:$akkaVersion")
+	implementation("com.typesafe.akka:akka-cluster-typed_$scalaVersion:$akkaVersion")
 	implementation("com.typesafe.akka:akka-serialization-jackson_$scalaVersion:$akkaVersion")
 
 
