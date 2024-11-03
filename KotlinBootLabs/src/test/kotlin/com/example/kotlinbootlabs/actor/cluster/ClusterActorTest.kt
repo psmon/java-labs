@@ -21,24 +21,33 @@ class ClusterActorTest {
         private lateinit var testKitA: ActorTestKit
         private lateinit var testKitB: ActorTestKit
 
+        private lateinit var standAlone: ActorTestKit
+
         private lateinit var actorA: ActorRef<HelloActorACommand>
         private lateinit var actorB: ActorRef<HelloActorBCommand>
 
+        private lateinit var actorAO: ActorRef<HelloActorACommand>
+        private lateinit var actorBO: ActorRef<HelloActorBCommand>
 
         @BeforeAll
         @JvmStatic
         fun setup() {
-            val configA = ConfigFactory.load("cluster1.conf")
-            val configB = ConfigFactory.load("cluster2.conf")
+            val cluster1 = ConfigFactory.load("cluster1.conf")
+            val cluster2 = ConfigFactory.load("cluster2.conf")
+            val standalone = ConfigFactory.load("standalone.conf")
 
-            testKitA = ActorTestKit.create(configA)
-            testKitB = ActorTestKit.create(configB)
+            testKitA = ActorTestKit.create(cluster1)
+            testKitB = ActorTestKit.create(cluster2)
+            standAlone = ActorTestKit.create(standalone)
 
             actorA = testKitA.spawn(ClusterHelloActorA.create(),"localActorA")
             actorB = testKitB.spawn(ClusterHelloActorB.create(),"localActorB")
+            actorAO = standAlone.spawn(ClusterHelloActorA.create(), "localActorA")
+            actorBO = standAlone.spawn(ClusterHelloActorB.create(), "localActorB")
 
             val clusterA = Cluster.get(testKitA.system())
             val clusterB = Cluster.get(testKitB.system())
+            val standAloneSystem = Cluster.get(standAlone.system())
 
             if (clusterA.selfMember().hasRole("helloA")) {
                 actorA = testKitA.spawn(ClusterHelloActorA.create(), "actorA")
@@ -47,6 +56,7 @@ class ClusterActorTest {
             if (clusterB.selfMember().hasRole("helloB")) {
                 actorB = testKitB.spawn(ClusterHelloActorB.create(), "actorB")
             }
+
         }
 
         @AfterAll
@@ -67,6 +77,13 @@ class ClusterActorTest {
         probeA.expectMessage(HelloAResponse("Kotlin"))
 
         actorB.tell(HelloB("Hello", probeB.ref))
+        probeB.expectMessage(HelloBResponse("Kotlin"))
+
+        // HelloActorA sends a message to HelloActorB
+        actorAO.tell(HelloA("Hello", probeA.ref))
+        probeA.expectMessage(HelloAResponse("Kotlin"))
+
+        actorBO.tell(HelloB("Hello", probeB.ref))
         probeB.expectMessage(HelloBResponse("Kotlin"))
     }
 
