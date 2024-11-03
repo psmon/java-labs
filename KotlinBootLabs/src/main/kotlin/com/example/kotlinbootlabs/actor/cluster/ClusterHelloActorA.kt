@@ -4,8 +4,6 @@ package com.example.kotlinbootlabs.actor.cluster
 import akka.actor.typed.ActorRef
 import akka.actor.typed.Behavior
 import akka.actor.typed.javadsl.*
-import akka.actor.typed.receptionist.Receptionist
-import akka.actor.typed.receptionist.ServiceKey
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator
 import com.example.kotlinbootlabs.actor.PersitenceSerializable
@@ -34,7 +32,8 @@ class ClusterHelloActorA private constructor(
     }
 
     init {
-
+        var mediator = DistributedPubSub.get(context.system).mediator()
+        mediator.tell(DistributedPubSubMediator.Subscribe("roleA", Adapter.toClassic(context.self)),null)
     }
 
     override fun createReceive(): Receive<HelloActorACommand> {

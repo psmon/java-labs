@@ -33,7 +33,8 @@ class ClusterHelloActorB private constructor(
     }
 
     init {
-
+        var mediator = DistributedPubSub.get(context.system).mediator()
+        mediator.tell(DistributedPubSubMediator.Subscribe("roleB", Adapter.toClassic(context.self)),null)
     }
 
     override fun createReceive(): Receive<HelloActorBCommand> {

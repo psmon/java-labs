@@ -7,6 +7,8 @@ import akka.actor.typed.ActorRef
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.receptionist.Receptionist
 import akka.actor.typed.receptionist.ServiceKey
+import akka.cluster.pubsub.DistributedPubSub
+import akka.cluster.pubsub.DistributedPubSubMediator
 import akka.cluster.typed.Cluster
 import akka.cluster.typed.JoinSeedNodes
 import com.typesafe.config.ConfigFactory
@@ -62,6 +64,7 @@ class ClusterActorTest {
         @AfterAll
         @JvmStatic
         fun teardown() {
+            standAlone.shutdownTestKit()
             testKitB.shutdownTestKit()
             testKitA.shutdownTestKit()
         }
@@ -107,6 +110,20 @@ class ClusterActorTest {
         actorBSelection.tell(HelloB("Hello", probeB.ref), null)
         probeB.expectMessage(HelloBResponse("Kotlin"))
 
+    }
+
+    @Test
+    fun testClusterPubSub() {
+
+        val mediator = DistributedPubSub.get(standAlone.system()).mediator()
+        val probeA = standAlone.createTestProbe<HelloActorAResponse>()
+        val probeB = standAlone.createTestProbe<HelloActorBResponse>()
+
+        mediator.tell(DistributedPubSubMediator.Publish("roleA", HelloA("Hello", probeA.ref)), null)
+        mediator.tell(DistributedPubSubMediator.Publish("roleB", HelloB("Hello", probeB.ref)), null)
+
+        probeA.expectMessage(HelloAResponse("Kotlin"))
+        probeB.expectMessage(HelloBResponse("Kotlin"))
     }
 
 }

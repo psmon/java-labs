@@ -16,6 +16,7 @@ java {
 
 repositories {
 	mavenCentral()
+
 }
 
 val scalaVersion = "2.13"

@@ -9,6 +9,7 @@ import akka.actor.typed.ActorSystem
 import akka.stream.javadsl.Sink
 import akka.stream.javadsl.Source
 import com.example.kotlinbootlabs.module.AkkaUtils
+import reactor.core.publisher.Mono
 import java.time.Duration
 import java.util.concurrent.CompletionStage
 
@@ -81,6 +82,21 @@ class AdminChannelController(private val actorSystem: ActorSystem<MainStageActor
         return when (response) {
             is AllCounselorManagers -> response.channels
             else -> emptyList()
+        }
+    }
+
+    @GetMapping("/list-counselor-managers-mono")
+    fun listCounselorManagersByMono(): Mono<List<String>> {
+        return AkkaUtils.askActorByMono(
+            supervisorChannelActor,
+            { replyTo: ActorRef<SupervisorChannelResponse> -> GetAllCounselorManagers(replyTo) },
+            timeout,
+            actorSystem
+        ).map { response ->
+            when (response) {
+                is AllCounselorManagers -> response.channels
+                else -> emptyList()
+            }
         }
     }
 }
