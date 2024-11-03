@@ -38,9 +38,9 @@ class ClusterActorTest {
             val cluster2 = ConfigFactory.load("cluster2.conf")
             val standalone = ConfigFactory.load("standalone.conf")
 
-            testKitA = ActorTestKit.create(cluster1)
-            testKitB = ActorTestKit.create(cluster2)
-            standAlone = ActorTestKit.create(standalone)
+            testKitA = ActorTestKit.create("ClusterSystem",cluster1)
+            testKitB = ActorTestKit.create("ClusterSystem",cluster2)
+            standAlone = ActorTestKit.create("StandAloneSystem",standalone)
 
             actorA = testKitA.spawn(ClusterHelloActorA.create(),"localActorA")
             actorB = testKitB.spawn(ClusterHelloActorB.create(),"localActorB")
