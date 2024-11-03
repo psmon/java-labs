@@ -7,6 +7,8 @@ import akka.util.Timeout
 import org.springframework.web.bind.annotation.*
 import com.example.kotlinbootlabs.ws.actor.*
 import akka.actor.typed.ActorSystem
+import com.example.kotlinbootlabs.module.AkkaUtils
+import kotlinx.coroutines.runBlocking
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
@@ -43,6 +45,33 @@ class AdminCounselorController(private val actorSystem: ActorSystem<MainStageAct
                 is SupervisorErrorStringResponse -> CompletableFuture.completedFuture(response.message)
                 else -> CompletableFuture.completedFuture("Unknown error occurred.")
             }
+        }
+    }
+
+    @PostMapping("/add-counselor-async")
+    fun addCounselorAsync(@RequestParam channel: String, @RequestParam id: String): String = runBlocking {
+        val response = AkkaUtils.askActor(
+            supervisorChannelActor,
+            { replyTo: ActorRef<SupervisorChannelResponse> -> GetCounselorManager(channel, replyTo) },
+            timeout,
+            actorSystem
+        )
+
+        when (response) {
+            is CounselorManagerFound -> {
+                val counselorResponse = AkkaUtils.askActor(
+                    response.actorRef,
+                    { replyTo: ActorRef<CounselorManagerResponse> -> CreateCounselor(id, replyTo) },
+                    timeout,
+                    actorSystem
+                )
+                when (counselorResponse) {
+                    is CounselorCreated -> "Counselor $id created successfully."
+                    else -> "Unknown error occurred."
+                }
+            }
+            is SupervisorErrorStringResponse -> response.message
+            else -> "Unknown error occurred."
         }
     }
 }

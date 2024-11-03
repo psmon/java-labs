@@ -3,12 +3,13 @@ package com.example.kotlinbootlabs.controller
 import com.example.kotlinbootlabs.actor.MainStageActorCommand
 import akka.actor.typed.ActorRef
 import akka.actor.typed.javadsl.AskPattern
-import akka.util.Timeout
 import org.springframework.web.bind.annotation.*
 import com.example.kotlinbootlabs.ws.actor.*
 import akka.actor.typed.ActorSystem
+import akka.stream.javadsl.Sink
+import akka.stream.javadsl.Source
+import com.example.kotlinbootlabs.module.AkkaUtils
 import java.time.Duration
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
 
 @RestController
@@ -46,6 +47,40 @@ class AdminChannelController(private val actorSystem: ActorSystem<MainStageActor
                 is AllCounselorManagers -> response.channels
                 else -> emptyList()
             }
+        }
+    }
+
+    @GetMapping("/list-counselor-managers-stream")
+    fun listCounselorManagersByStream(): CompletionStage<List<String>> {
+        return Source.single(Unit)
+            .mapAsync(1) {
+                AskPattern.ask(
+                    supervisorChannelActor,
+                    { replyTo: ActorRef<SupervisorChannelResponse> -> GetAllCounselorManagers(replyTo) },
+                    timeout,
+                    actorSystem.scheduler()
+                )
+            }
+            .runWith(Sink.head(), actorSystem)
+            .thenApply { response ->
+                when (response) {
+                    is AllCounselorManagers -> response.channels
+                    else -> emptyList()
+                }
+            }
+    }
+
+    @GetMapping("/list-counselor-managers-async")
+    fun listCounselorManagersByCoroutines(): List<String> {
+        val response = AkkaUtils.runBlockingAsk(
+            supervisorChannelActor,
+            { replyTo: ActorRef<SupervisorChannelResponse> -> GetAllCounselorManagers(replyTo) },
+            timeout, actorSystem
+        )
+
+        return when (response) {
+            is AllCounselorManagers -> response.channels
+            else -> emptyList()
         }
     }
 }
