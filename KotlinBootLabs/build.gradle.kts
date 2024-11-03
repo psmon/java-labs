@@ -68,6 +68,7 @@ dependencies {
 	testImplementation("com.typesafe.akka:akka-actor-testkit-typed_$scalaVersion:$akkaVersion")
 	testImplementation("com.typesafe.akka:akka-stream-testkit_$scalaVersion:$akkaVersion")
 	testImplementation("com.typesafe.akka:akka-persistence-testkit_$scalaVersion:$akkaVersion")
+	implementation("com.typesafe.akka:akka-multi-node-testkit_$scalaVersion:$akkaVersion")
 
 
 	// Logging

@@ -3,18 +3,20 @@ package com.example.kotlinbootlabs.actor.cluster
 
 import akka.actor.typed.ActorRef
 import akka.actor.typed.Behavior
-import akka.actor.typed.javadsl.AbstractBehavior
-import akka.actor.typed.javadsl.ActorContext
-import akka.actor.typed.javadsl.Behaviors
-import akka.actor.typed.javadsl.Receive
+import akka.actor.typed.javadsl.*
+import akka.actor.typed.receptionist.Receptionist
+import akka.actor.typed.receptionist.ServiceKey
+import akka.cluster.pubsub.DistributedPubSub
+import akka.cluster.pubsub.DistributedPubSubMediator
+import com.example.kotlinbootlabs.actor.PersitenceSerializable
 
 /** HelloActor 처리할 수 있는 명령들 */
-sealed class HelloActorACommand
+sealed class HelloActorACommand : PersitenceSerializable
 data class HelloA(val message: String, val replyTo: ActorRef<HelloActorAResponse>) : HelloActorACommand()
 data class GetHelloCountA(val replyTo: ActorRef<HelloActorBResponse>) : HelloActorACommand()
 
 /** HelloActor 반환할 수 있는 응답들 */
-sealed class HelloActorAResponse
+sealed class HelloActorAResponse : PersitenceSerializable
 data class HelloAResponse(val message: String) : HelloActorAResponse()
 data class HelloCountAResponse(val count: Int) : HelloActorAResponse()
 
@@ -25,9 +27,14 @@ class ClusterHelloActorA private constructor(
 ) : AbstractBehavior<HelloActorACommand>(context) {
 
     companion object {
+
         fun create(): Behavior<HelloActorACommand> {
             return Behaviors.setup { context -> ClusterHelloActorA(context) }
         }
+    }
+
+    init {
+
     }
 
     override fun createReceive(): Receive<HelloActorACommand> {
