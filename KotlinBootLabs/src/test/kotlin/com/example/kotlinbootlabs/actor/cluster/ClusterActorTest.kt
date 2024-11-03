@@ -1,16 +1,11 @@
 package com.example.kotlinbootlabs.actor.cluster
 
-import akka.actor.Address
-import akka.actor.AddressFromURIString
 import akka.actor.testkit.typed.javadsl.ActorTestKit
 import akka.actor.typed.ActorRef
-import akka.actor.typed.ActorSystem
 import akka.actor.typed.receptionist.Receptionist
-import akka.actor.typed.receptionist.ServiceKey
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator
 import akka.cluster.typed.Cluster
-import akka.cluster.typed.JoinSeedNodes
 import com.typesafe.config.ConfigFactory
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -42,21 +37,22 @@ class ClusterActorTest {
             testKitB = ActorTestKit.create("ClusterSystem",cluster2)
             standAlone = ActorTestKit.create("StandAloneSystem",standalone)
 
-            actorA = testKitA.spawn(ClusterHelloActorA.create(),"localActorA")
-            actorB = testKitB.spawn(ClusterHelloActorB.create(),"localActorB")
-            actorAO = standAlone.spawn(ClusterHelloActorA.create(), "localActorA")
-            actorBO = standAlone.spawn(ClusterHelloActorB.create(), "localActorB")
-
             val clusterA = Cluster.get(testKitA.system())
             val clusterB = Cluster.get(testKitB.system())
             val standAloneSystem = Cluster.get(standAlone.system())
 
+            // Role에 따라 작동하는 Actor 구분생성
             if (clusterA.selfMember().hasRole("helloA")) {
                 actorA = testKitA.spawn(ClusterHelloActorA.create(), "actorA")
             }
 
             if (clusterB.selfMember().hasRole("helloB")) {
                 actorB = testKitB.spawn(ClusterHelloActorB.create(), "actorB")
+            }
+
+            if(standAloneSystem.selfMember().hasRole("helloA") && standAloneSystem.selfMember().hasRole("helloB")) {
+                actorAO = standAlone.spawn(ClusterHelloActorA.create(), "localActorA")
+                actorBO = standAlone.spawn(ClusterHelloActorB.create(), "localActorB")
             }
 
         }
@@ -98,10 +94,10 @@ class ClusterActorTest {
 
         // Select actors by their paths
         val actorASelection = testKitA.system().classicSystem()
-            .actorSelection("akka://ClusterActorTest@127.0.0.1:2551/user/localActorA")
+            .actorSelection("akka://ClusterSystem@127.0.0.1:2551/user/actorA")
 
         val actorBSelection = testKitB.system().classicSystem()
-            .actorSelection("akka://ClusterActorTest@127.0.0.1:2552/user/localActorB")
+            .actorSelection("akka://ClusterSystem@127.0.0.1:2552/user/actorB")
 
         // Send messages to the selected actors
         actorASelection.tell(HelloA("Hello", probeA.ref), null)
@@ -124,6 +120,23 @@ class ClusterActorTest {
 
         probeA.expectMessage(HelloAResponse("Kotlin"))
         probeB.expectMessage(HelloBResponse("Kotlin"))
+    }
+
+    @Test
+    fun testClusterRouter(){
+        val probeA = testKitB.createTestProbe<Receptionist.Listing>()
+        val probeB = testKitB.createTestProbe<HelloActorAResponse>()
+
+        var list = testKitB.system().receptionist()
+        list.tell(Receptionist.find(ClusterHelloActorA.ClusterHelloActorAKey, probeA.ref))
+
+        val listing = probeA.receiveMessage()
+        val router = listing.getServiceInstances(ClusterHelloActorA.ClusterHelloActorAKey)
+
+        router.forEach {
+            it.tell(HelloA("Hello", probeB.ref))
+            probeB.expectMessage(HelloAResponse("Kotlin"))
+        }
     }
 
 }

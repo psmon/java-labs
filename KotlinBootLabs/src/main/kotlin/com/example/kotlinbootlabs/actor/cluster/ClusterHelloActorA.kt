@@ -4,9 +4,14 @@ package com.example.kotlinbootlabs.actor.cluster
 import akka.actor.typed.ActorRef
 import akka.actor.typed.Behavior
 import akka.actor.typed.javadsl.*
+import akka.actor.typed.receptionist.Receptionist
+import akka.actor.typed.receptionist.ServiceKey
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator
+
+
 import com.example.kotlinbootlabs.actor.PersitenceSerializable
+
 
 /** HelloActor 처리할 수 있는 명령들 */
 sealed class HelloActorACommand : PersitenceSerializable
@@ -26,14 +31,24 @@ class ClusterHelloActorA private constructor(
 
     companion object {
 
+        var ClusterHelloActorAKey:ServiceKey<HelloActorACommand> = ServiceKey.create(HelloActorACommand::class.java, "ClusterHelloActorA")
+
         fun create(): Behavior<HelloActorACommand> {
             return Behaviors.setup { context -> ClusterHelloActorA(context) }
         }
     }
 
     init {
+        // PubSub
         var mediator = DistributedPubSub.get(context.system).mediator()
         mediator.tell(DistributedPubSubMediator.Subscribe("roleA", Adapter.toClassic(context.self)),null)
+
+        //Router
+        context.system.receptionist().tell(Receptionist.register(ClusterHelloActorAKey, context.self))
+
+        var group:GroupRouter<HelloActorACommand> = Routers.group(ClusterHelloActorAKey)
+        var router: ActorRef<HelloActorACommand> = context.spawn(group, "worker-group")
+
     }
 
     override fun createReceive(): Receive<HelloActorACommand> {
