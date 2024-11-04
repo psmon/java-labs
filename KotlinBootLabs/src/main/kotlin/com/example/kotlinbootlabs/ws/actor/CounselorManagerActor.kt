@@ -4,6 +4,9 @@ import akka.actor.typed.ActorRef
 import akka.actor.typed.Behavior
 import akka.actor.typed.javadsl.*
 import java.time.Duration
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 
 sealed class CounselorManagerCommand
@@ -33,6 +36,8 @@ class CounselorManagerActor private constructor(
     }
 
     private var lastAssignedGroupIndex = 0  // For 더미테스트 RoundRobin
+
+    private val eventLog = mutableListOf<CounselingEvent>()
 
     private val counselors = mutableMapOf<String, ActorRef<CounselorCommand>>()
     private val counselorRooms = mutableMapOf<String, ActorRef<CounselorRoomCommand>>()
@@ -142,6 +147,17 @@ class CounselorManagerActor private constructor(
 
                 // 상담원에게 할당된 상담방정보 추가
                 availableCounselor.tell(AssignRoom(roomName, command.personalRoomActor, counselorRoomActor))
+
+
+                // Log the successful connection event
+                val event = CounselingEvent(
+                    eventType = "CounselingConnectionSuccess",
+                    counselorName = availableCounselor.path().name(),
+                    roomName = command.roomName,
+                    timestamp = System.currentTimeMillis(),
+                    groupId = group.id
+                )
+                eventLog.add(event)
             }
         }
 
@@ -196,7 +212,14 @@ class CounselorManagerActor private constructor(
     private fun onEvaluateRoutingRule(command: EvaluateRoutingRule): Behavior<CounselorManagerCommand> {
         val evaluationReport = StringBuilder("Evaluation Report:\n")
         routingRule.counselingGroups.forEachIndexed { index, group ->
-            evaluationReport.append("Group ${group.hashCodes.joinToString(", ")} availableSlots:${group.availableSlots}  available counselors: ${group.availableCounselors.size}\n")
+            evaluationReport.append("Group[${group.id}] ${group.hashCodes.joinToString(", ")} availableSlots:${group.availableSlots}  available counselors: ${group.availableCounselors.size}\n")
+        }
+
+        evaluationReport.append("========== Events ===========:\n")
+        val formatter = DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault())
+        eventLog.forEach { event ->
+            val formattedTimestamp = formatter.format(Instant.ofEpochMilli(event.timestamp))
+            evaluationReport.append("EventType: ${event.eventType}, GroupId: ${event.groupId}, RoomName: ${event.roomName}, CounselorName: ${event.counselorName}, Timestamp: $formattedTimestamp\n")
         }
 
         command.replyTo.tell(CounselorManagerSystemResponse(evaluationReport.toString()))

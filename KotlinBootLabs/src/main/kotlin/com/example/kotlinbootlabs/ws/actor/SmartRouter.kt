@@ -3,6 +3,14 @@ package com.example.kotlinbootlabs.ws.actor
 import akka.actor.typed.ActorRef
 import java.util.*
 
+data class CounselingEvent(
+    val eventType: String,
+    var groupId: String,
+    val roomName: String,
+    val counselorName: String,
+    val timestamp: Long
+)
+
 data class CounselingRequestInfo(
     val skillCode1: Int,
     val skillCode2: Int,
@@ -18,6 +26,7 @@ data class CounselingRequestInfo(
 }
 
 data class CounselingGroup(
+    val id: String = UUID.randomUUID().toString(),
     val hashCodes: Array<String>,
     // TODO : 상담원이 가용상태가 아닐때 실시간으로 제거 ( 별도로직 필요 )
     var availableCounselors: List<ActorRef<CounselorCommand>>,

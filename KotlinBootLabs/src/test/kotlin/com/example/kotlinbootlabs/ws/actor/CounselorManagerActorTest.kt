@@ -1,22 +1,28 @@
 import akka.actor.testkit.typed.javadsl.ActorTestKit
+import akka.actor.testkit.typed.javadsl.ManualTime
 import akka.actor.testkit.typed.javadsl.TestProbe
 import akka.actor.typed.ActorRef
 import com.example.kotlinbootlabs.ws.actor.*
+import com.typesafe.config.ConfigFactory
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.time.Duration
 import java.util.*
 
 class CounselorManagerActorTest {
 
     companion object {
         private lateinit var testKit: ActorTestKit
+        private lateinit var manualTime: ManualTime
 
         @BeforeAll
         @JvmStatic
         fun setup() {
-            testKit = ActorTestKit.create()
+            val config = ManualTime.config().withFallback(ConfigFactory.defaultApplication())
+            testKit = ActorTestKit.create(config)
+            manualTime = ManualTime.get(testKit.system())
         }
 
         @AfterAll
@@ -156,6 +162,7 @@ class CounselorManagerActorTest {
         val availableSkills = newRoutingRule.counselingGroups.flatMap { it.hashCodes.toList() }.distinct()
 
         for (i in 1..numRequests) {
+            manualTime.timePasses(Duration.ofSeconds(3))
             val randomSkill = availableSkills[random.nextInt(availableSkills.size)]
             val skillParts = randomSkill.split("-").drop(1).map { it.toInt() }
             val skillInfo = CounselingRequestInfo(skillParts[0], skillParts[1], skillParts[2])
