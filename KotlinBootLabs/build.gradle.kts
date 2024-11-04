@@ -22,6 +22,7 @@ repositories {
 val scalaVersion = "2.13"
 val akkaVersion = "2.7.0"
 val akkaR2DBC = "1.1.2"
+val alphakkaVersion = "4.0.0"
 
 dependencies {
 	// Core
@@ -32,6 +33,10 @@ dependencies {
 	implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+
+	// Reactive
+	implementation("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
+
 
 	// Jwt
 	implementation("io.jsonwebtoken:jjwt-api:0.11.5")
@@ -54,7 +59,6 @@ dependencies {
 	implementation("com.typesafe.akka:akka-actor-typed_$scalaVersion:$akkaVersion")
 	implementation("com.typesafe.akka:akka-cluster-typed_$scalaVersion:$akkaVersion")
 	implementation("com.typesafe.akka:akka-serialization-jackson_$scalaVersion:$akkaVersion")
-
 
 	// Actor Persistence
 	implementation("com.typesafe.akka:akka-persistence-typed_$scalaVersion:$akkaVersion")
