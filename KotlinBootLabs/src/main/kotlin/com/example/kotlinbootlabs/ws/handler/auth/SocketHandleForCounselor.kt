@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component
 import java.time.Duration
 import java.util.concurrent.CompletionStage
 
-data class CounselorWsMessage(val type: String, val channel: String? = null, val counselorName: String? = null, val data: String? = null)
+data class CounselorWsMessage(val type: String, val channel: String? = null, val roomName: String? , val counselorName: String? = null, val data: String? = null)
 
 @Component
 class SocketHandleForCounselor(
@@ -94,6 +94,15 @@ class SocketHandleForCounselor(
             "subscribe" -> webSocketMessage.channel?.let { /* Handle subscribe */ }
             "unsubscribe" -> webSocketMessage.channel?.let { /* Handle unsubscribe */ }
             "message" -> session.attributes["identifier"]?.let { /* Handle message */ }
+            "sendToRoom" -> {
+                val roomName = webSocketMessage.roomName
+                val message = webSocketMessage.data
+                if (roomName != null && message != null) {
+                    counselorActor.tell(SendToRoomForPersonalTextMessage(roomName, message))
+                } else {
+                    session.sendMessage(TextMessage("Missing roomName or message"))
+                }
+            }
             else -> session.sendMessage(TextMessage("Unknown message type: ${webSocketMessage.type}"))
         }
     }

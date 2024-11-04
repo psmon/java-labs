@@ -61,11 +61,18 @@ class WebSocketClient {
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
             const jsonMessage = JSON.stringify({ type: "message", data: message });
             this.socket.send(jsonMessage);
-            this.addEvent("Sent: " + jsonMessage);
+            this.addEvent("sendMessage: " + jsonMessage);
         } else {
             this.addEvent("WebSocket is not open.");
         }
     }
+
+    sendToRoom(roomName, message) {
+        const jsonMessage = JSON.stringify({ type: "sendToRoom", roomName: roomName, data: message });
+        this.socket.send(jsonMessage);
+        this.addEvent("sendToRoom: " + jsonMessage);
+    }
+
 
 }
 
@@ -91,4 +98,10 @@ function sendMessage() {
 function clearEvents() {
     this.eventList = document.getElementById("eventList");
     this.eventList.innerHTML = '';
+}
+
+function sendToRoom() {
+    const roomName = document.getElementById('roomName').value;
+    const message = document.getElementById('chatMessage').value;
+    client.sendToRoom(roomName, message);
 }
