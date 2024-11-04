@@ -5,10 +5,11 @@ import akka.actor.typed.Behavior
 import akka.actor.typed.javadsl.*
 import java.time.Duration
 
+
 sealed class CounselorManagerCommand
 data class CreateCounselor(val name: String, val replyTo: ActorRef<CounselorManagerResponse>) : CounselorManagerCommand()
 data class CreateRoom(val roomName: String, val replyTo: ActorRef<CounselorManagerResponse>) : CounselorManagerCommand()
-data class RequestCounseling(val roomName: String, val personalRoomActor: ActorRef<PersonalRoomCommand>, val replyTo: ActorRef<CounselorManagerResponse>) : CounselorManagerCommand()
+data class RequestCounseling(val roomName: String, val skillInfo:CounselingRequestInfo, val personalRoomActor: ActorRef<PersonalRoomCommand>, val replyTo: ActorRef<CounselorManagerResponse>) : CounselorManagerCommand()
 data class GetCounselor(val name: String, val replyTo: ActorRef<CounselorManagerResponse>) : CounselorManagerCommand()
 data class GetCounselorRoom(val roomName: String, val replyTo: ActorRef<CounselorManagerResponse>) : CounselorManagerCommand()
 
@@ -28,8 +29,32 @@ class CounselorManagerActor private constructor(
         }
     }
 
+    private var lastAssignedGroupIndex = 0  // For 더미테스트 RoundRobin
+
     private val counselors = mutableMapOf<String, ActorRef<CounselorCommand>>()
     private val counselorRooms = mutableMapOf<String, ActorRef<CounselorRoomCommand>>()
+    private val routingRule:CounselingRouter = CounselingRouter(
+        counselingGroups = listOf(
+            CounselingGroup(
+                hashCodes = arrayOf("skill-1-0-0", "skill-1-0-1", "skill-1-0-2", "skill-1-0-3", "skill-1-0-4"),
+                availableCounselors = mutableListOf(),
+                lastAssignmentTime = System.currentTimeMillis(),
+                availableSlots = 10
+            ),
+            CounselingGroup(
+                hashCodes = arrayOf("skill-2-0-0", "skill-2-0-1", "skill-2-0-2", "skill-2-0-3", "skill-2-0-4"),
+                availableCounselors = mutableListOf(),
+                lastAssignmentTime = System.currentTimeMillis(),
+                availableSlots = 10
+            ),
+            CounselingGroup(
+                hashCodes = arrayOf("skill-3-0-0", "skill-3-0-1", "skill-3-0-2", "skill-3-0-3", "skill-3-0-4"),
+                availableCounselors = mutableListOf(),
+                lastAssignmentTime = System.currentTimeMillis(),
+                availableSlots = 10
+            )
+        )
+    )
 
     override fun createReceive(): Receive<CounselorManagerCommand> {
         return newReceiveBuilder()
@@ -48,6 +73,14 @@ class CounselorManagerActor private constructor(
         } else {
             val counselorActor = context.spawn(CounselorActor.create(command.name), command.name)
             counselors[command.name] = counselorActor
+
+            //For Dummy Test
+            // Add the counselor to the next group in a round-robin manner
+            val group = routingRule.counselingGroups[lastAssignedGroupIndex]
+            (group.availableCounselors as MutableList).add(counselorActor)
+            lastAssignedGroupIndex = (lastAssignedGroupIndex + 1) % routingRule.counselingGroups.size
+
+
             command.replyTo.tell(CounselorCreated(command.name))
         }
         return this
@@ -65,7 +98,10 @@ class CounselorManagerActor private constructor(
     }
 
     private fun onRequestCounseling(command: RequestCounseling): Behavior<CounselorManagerCommand> {
-        val availableCounselor = counselors.values.firstOrNull()
+        // 상담분배로직
+        val group = routingRule.findHighestPriorityGroup(command.skillInfo.generateHashCode())
+        val availableCounselor = group?.findNextAvailableCounselor()
+        
         if (availableCounselor == null) {
             //command.replyTo.tell(ErrorResponse("No available counselors."))
             context.log.error("No available counselors.")

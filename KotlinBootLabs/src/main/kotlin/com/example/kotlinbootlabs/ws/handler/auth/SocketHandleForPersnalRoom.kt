@@ -120,7 +120,8 @@ class SocketHandlerForPersnalRoom(
 
                     AskPattern.ask(
                         counselorManager,
-                        { replyTo: ActorRef<CounselorManagerResponse> -> RequestCounseling(roomName, persnalRoomActor, replyTo) },
+                        { replyTo: ActorRef<CounselorManagerResponse> -> RequestCounseling(roomName,
+                            generateRandomSkillInfo(), persnalRoomActor, replyTo) },
                         Duration.ofSeconds(3),
                         actorSystem.scheduler()
                     ).thenAccept() { res2 ->
