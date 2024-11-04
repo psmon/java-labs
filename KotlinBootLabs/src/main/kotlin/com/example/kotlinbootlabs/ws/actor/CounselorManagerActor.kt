@@ -12,12 +12,15 @@ data class CreateRoom(val roomName: String, val replyTo: ActorRef<CounselorManag
 data class RequestCounseling(val roomName: String, val skillInfo:CounselingRequestInfo, val personalRoomActor: ActorRef<PersonalRoomCommand>, val replyTo: ActorRef<CounselorManagerResponse>) : CounselorManagerCommand()
 data class GetCounselor(val name: String, val replyTo: ActorRef<CounselorManagerResponse>) : CounselorManagerCommand()
 data class GetCounselorRoom(val roomName: String, val replyTo: ActorRef<CounselorManagerResponse>) : CounselorManagerCommand()
+data class UpdateRoutingRule(val newRoutingRule: CounselingRouter, val replyTo: ActorRef<CounselorManagerResponse>) : CounselorManagerCommand()
+data class EvaluateRoutingRule(val replyTo: ActorRef<CounselorManagerResponse>) : CounselorManagerCommand()
 
 sealed class CounselorManagerResponse
 data class CounselorCreated(val name: String) : CounselorManagerResponse()
 data class ErrorResponse(val message: String) : CounselorManagerResponse()
 data class CounselorFound(val name: String, val actorRef: ActorRef<CounselorCommand>) : CounselorManagerResponse()
 data class CounselorRoomFound(val roomName: String, val actorRef: ActorRef<CounselorRoomCommand>) : CounselorManagerResponse()
+data class CounselorManagerSystemResponse(val message: String) : CounselorManagerResponse()
 
 class CounselorManagerActor private constructor(
     context: ActorContext<CounselorManagerCommand>
@@ -33,7 +36,7 @@ class CounselorManagerActor private constructor(
 
     private val counselors = mutableMapOf<String, ActorRef<CounselorCommand>>()
     private val counselorRooms = mutableMapOf<String, ActorRef<CounselorRoomCommand>>()
-    private val routingRule:CounselingRouter = CounselingRouter(
+    private var routingRule:CounselingRouter = CounselingRouter(
         counselingGroups = listOf(
             CounselingGroup(
                 hashCodes = arrayOf("skill-1-0-0", "skill-1-0-1", "skill-1-0-2", "skill-1-0-3", "skill-1-0-4"),
@@ -63,6 +66,8 @@ class CounselorManagerActor private constructor(
             .onMessage(RequestCounseling::class.java, this::onRequestCounseling)
             .onMessage(GetCounselor::class.java, this::onGetCounselor)
             .onMessage(GetCounselorRoom::class.java, this::onGetCounselorRoom)
+            .onMessage(UpdateRoutingRule::class.java, this::onUpdateRoutingRule)
+            .onMessage(EvaluateRoutingRule::class.java, this::onEvaluateRoutingRule)
             .build()
     }
 
@@ -108,6 +113,9 @@ class CounselorManagerActor private constructor(
             return this
         }
 
+        // Decrease available slots
+        group.decreaseAvailableSlots()
+
         // Create Room - 가용상담원이 있을대만 방생성진행
         val roomName = command.roomName
         val counselorRoomActor = context.spawn(CounselorRoomActor.create(roomName), roomName)
@@ -142,6 +150,27 @@ class CounselorManagerActor private constructor(
         return this
     }
 
+    private fun onUpdateRoutingRule(command: UpdateRoutingRule): Behavior<CounselorManagerCommand> {
+        routingRule = command.newRoutingRule
+
+        // Reassign available counselors to the new routing rule
+        var index = 0
+        val counselorList = counselors.values.toList()
+        routingRule.counselingGroups.forEach { group ->
+            //group.availableCounselors.clear()
+            group.availableCounselors = mutableListOf()
+            repeat(group.availableSlots) {
+                if (index < counselorList.size) {
+                    (group.availableCounselors as MutableList).add(counselorList[index])
+                    index++
+                }
+            }
+        }
+
+        command.replyTo.tell(CounselorManagerSystemResponse("Routing rule updated successfully."))
+        return this
+    }
+
     private fun onGetCounselor(command: GetCounselor): Behavior<CounselorManagerCommand> {
         var counselorActor = counselors[command.name]
         if(counselorActor == null) {
@@ -161,6 +190,16 @@ class CounselorManagerActor private constructor(
         }
 
         command.replyTo.tell(counselorRoomActor?.let { CounselorRoomFound(command.roomName, it) })
+        return this
+    }
+
+    private fun onEvaluateRoutingRule(command: EvaluateRoutingRule): Behavior<CounselorManagerCommand> {
+        val evaluationReport = StringBuilder("Evaluation Report:\n")
+        routingRule.counselingGroups.forEachIndexed { index, group ->
+            evaluationReport.append("Group ${group.hashCodes.joinToString(", ")} availableSlots:${group.availableSlots}  available counselors: ${group.availableCounselors.size}\n")
+        }
+
+        command.replyTo.tell(CounselorManagerSystemResponse(evaluationReport.toString()))
         return this
     }
 

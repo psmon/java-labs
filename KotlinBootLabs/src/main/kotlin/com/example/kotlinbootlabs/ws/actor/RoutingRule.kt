@@ -20,9 +20,9 @@ data class CounselingRequestInfo(
 data class CounselingGroup(
     val hashCodes: Array<String>,
     // TODO : 상담원이 가용상태가 아닐때 실시간으로 제거 ( 별도로직 필요 )
-    val availableCounselors: List<ActorRef<CounselorCommand>>,
+    var availableCounselors: List<ActorRef<CounselorCommand>>,
     val lastAssignmentTime: Long,
-    val availableSlots: Int
+    var availableSlots: Int = 100
 ){
     private var lastAssignedCounselorIndex = 0
 
@@ -34,6 +34,13 @@ data class CounselingGroup(
 
         return counselor
     }
+
+    fun decreaseAvailableSlots() {
+        if (availableSlots > 0) {
+            availableSlots -= 1
+        }
+    }
+
 }
 
 data class CounselingRouter(
