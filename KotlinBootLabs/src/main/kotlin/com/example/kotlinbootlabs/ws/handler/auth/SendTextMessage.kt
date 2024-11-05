@@ -6,7 +6,11 @@ import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession
 
 enum class MessageType {
-    CHAT, CHATBLOCK
+    CHAT,               //For Chat
+    CHATBLOCK,          //For ChatBot Block
+    PUSH,               //For Push Notification
+    INFO, ERROR,        //For SystemMessage
+    SESSIONID           //For Session ID Update
 }
 
 enum class MessageFrom {

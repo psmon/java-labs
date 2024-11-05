@@ -9,6 +9,8 @@ import akka.actor.typed.javadsl.Behaviors
 import akka.actor.typed.javadsl.Receive
 import com.example.kotlinbootlabs.service.TokenClaims
 import com.example.kotlinbootlabs.ws.handler.auth.EventTextMessage
+import com.example.kotlinbootlabs.ws.handler.auth.MessageFrom
+import com.example.kotlinbootlabs.ws.handler.auth.MessageType
 import com.example.kotlinbootlabs.ws.handler.auth.sendEventTextMessage
 import org.springframework.web.socket.WebSocketSession
 import org.springframework.web.socket.TextMessage
@@ -86,7 +88,17 @@ class UserSessionManagerActor private constructor(
     private fun onUserAction(command: OnUserAction): Behavior<UserSessionCommand> {
         when (command.action) {
             "cart" -> {
-                command.session.sendMessage(TextMessage("장바구니에 상품을 담으셨군요 00한 상품은 어떤가요?"))
+                //command.session.sendMessage(TextMessage("장바구니에 상품을 담으셨군요 00한 상품은 어떤가요?"))
+
+                sendEventTextMessage(
+                    command.session, EventTextMessage(
+                        type = MessageType.PUSH,
+                        message = "장바구니에 상품을 담으셨군요 00한 상품은 어떤가요?",
+                        from = MessageFrom.SYSTEM,
+                        id = null,
+                        jsondata = null,
+                    )
+                )
             }
             "buy" -> {
                 command.session.sendMessage(TextMessage("상품을 구매하셨네요~"))
@@ -96,7 +108,17 @@ class UserSessionManagerActor private constructor(
     }
 
     private fun onUpdateSession(command: UpdateSession): Behavior<UserSessionCommand> {
-        command.session.sendMessage(TextMessage("Welcome ${command.claims.nick}"))
+        //command.session.sendMessage(TextMessage("Welcome ${command.claims.nick}"))
+
+        sendEventTextMessage(
+            command.session, EventTextMessage(
+                type = MessageType.PUSH,
+                message = "Welcome ${command.claims.nick}",
+                from = MessageFrom.SYSTEM,
+                id = null,
+                jsondata = null,
+            )
+        )
 
         command.claims.identifier?.let { createPrivacyRoom(it, command.session) }
 
@@ -116,9 +138,16 @@ class UserSessionManagerActor private constructor(
     private fun onAddSession(command: AddSession): Behavior<UserSessionCommand> {
         sessions[command.session.id] = command.session
         logger.info("Connected: ${command.session.id}")
-        command.session.sendMessage(TextMessage("{\"type\": \"sessionId\", \"id\": \"${command.session.id}\"}"))
 
+        //command.session.sendMessage(TextMessage("{\"type\": \"sessionId\", \"id\": \"${command.session.id}\"}"))
 
+        sendEventTextMessage(command.session, EventTextMessage(
+            type = MessageType.SESSIONID,
+            message = "Connected",
+            from = MessageFrom.SYSTEM,
+            id = command.session.id,
+            jsondata = null,
+        ))
 
         return this
     }
@@ -142,7 +171,17 @@ class UserSessionManagerActor private constructor(
 
     private fun onSendMessageToAll(command: SendMessageToAll): Behavior<UserSessionCommand> {
         sessions.values.forEach { session ->
-            session.sendMessage(TextMessage(command.message))
+            //session.sendMessage(TextMessage(command.message))
+
+            sendEventTextMessage(
+                session, EventTextMessage(
+                    type = MessageType.PUSH,
+                    message = command.message,
+                    from = MessageFrom.SYSTEM,
+                    id = null,
+                    jsondata = null,
+                )
+            )
         }
         return this
     }
@@ -160,13 +199,34 @@ class UserSessionManagerActor private constructor(
     }
 
     private fun onSendMessageToSession(command: SendMessageToSession): Behavior<UserSessionCommand> {
-        sessions[command.sessionId]?.sendMessage(TextMessage(command.message))
+        //sessions[command.sessionId]?.sendMessage(TextMessage(command.message))
+
+        sendEventTextMessage(
+            sessions[command.sessionId]!!, EventTextMessage(
+                type = MessageType.PUSH,
+                message = command.message,
+                from = MessageFrom.SYSTEM,
+                id = null,
+                jsondata = null,
+            )
+        )
+
         return this
     }
 
     private fun onSendMessageToTopic(command: SendMessageToTopic): Behavior<UserSessionCommand> {
         topicSubscriptions[command.topic]?.forEach { sessionId ->
-            sessions[sessionId]?.sendMessage(TextMessage(command.message))
+            //sessions[sessionId]?.sendMessage(TextMessage(command.message))
+
+            sendEventTextMessage(
+                sessions[sessionId]!!, EventTextMessage(
+                    type = MessageType.PUSH,
+                    message = command.message,
+                    from = MessageFrom.SYSTEM,
+                    id = null,
+                    jsondata = null,
+                )
+            )
         }
         return this
     }

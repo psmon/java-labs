@@ -66,7 +66,17 @@ class SocketHandlerForPersnalRoom(
                     session.attributes["id"] = authResponse.id
                     session.attributes["nick"] = authResponse.nick
                     session.attributes["identifier"] = authResponse.identifier
-                    session.sendMessage(TextMessage("Login successful from User"))
+
+                    //session.sendMessage(TextMessage("Login successful from User"))
+
+                    sendEventTextMessage(session, EventTextMessage(
+                        type = MessageType.INFO,
+                        message = "Login successful from User",
+                        from = MessageFrom.SYSTEM,
+                        id = null,
+                        jsondata = null,
+                    ))
+
                     sessionManagerActor.tell(UpdateSession(session, authResponse))
 
                     val response: CompletionStage<UserSessionResponse> = AskPattern.ask(
@@ -81,27 +91,76 @@ class SocketHandlerForPersnalRoom(
                     response.whenComplete { res, ex ->
                         if (res is FoundPersonalRoomActor) {
                             persnalRoomActor = res.actorRef
-                            session.sendMessage(TextMessage("PersonalRoomActor reference obtained."))
+                            //session.sendMessage(TextMessage("PersonalRoomActor reference obtained."))
+
+                            sendEventTextMessage(session, EventTextMessage(
+                                type = MessageType.INFO,
+                                message = "PersonalRoomActor reference obtained.",
+                                from = MessageFrom.SYSTEM,
+                                id = null,
+                                jsondata = null,
+                            ))
+
                         } else {
-                            session.sendMessage(TextMessage("Failed to obtain CounselorRoomActor reference."))
+                            //session.sendMessage(TextMessage("Failed to obtain CounselorRoomActor reference."))
+
+                            sendEventTextMessage(session, EventTextMessage(
+                                type = MessageType.ERROR,
+                                message = "Failed to obtain CounselorRoomActor reference.",
+                                from = MessageFrom.SYSTEM,
+                                id = null,
+                                jsondata = null,
+                            ))
                         }
                     }
                 } else {
-                    session.sendMessage(TextMessage("Login failed: Invalid user type"))
+                    //session.sendMessage(TextMessage("Login failed: Invalid user type"))
+
+                    sendEventTextMessage(session, EventTextMessage(
+                        type = MessageType.ERROR,
+                        message = "Login failed: Invalid user type",
+                        from = MessageFrom.SYSTEM,
+                        id = null,
+                        jsondata = null,
+                    ))
                 }
 
             } catch (e: Exception) {
-                session.sendMessage(TextMessage("Login failed: ${e.message}"))
+                //session.sendMessage(TextMessage("Login failed: ${e.message}"))
+
+                sendEventTextMessage(session, EventTextMessage(
+                    type = MessageType.ERROR,
+                    message = "Login failed: ${e.message}",
+                    from = MessageFrom.SYSTEM,
+                    id = null,
+                    jsondata = null,
+                ))
             }
         } else {
-            session.sendMessage(TextMessage("Login failed: Missing id or password"))
+            //session.sendMessage(TextMessage("Login failed: Missing id or password"))
+
+            sendEventTextMessage(session, EventTextMessage(
+                type = MessageType.ERROR,
+                message = "Login failed: Missing id or password",
+                from = MessageFrom.SYSTEM,
+                id = null,
+                jsondata = null,
+            ))
         }
     }
 
     private fun handleCounselingRequest(session: WebSocketSession, channel: String?) {
         val token = session.attributes["token"] as String?
         if (token == null || !isValidToken(token)) {
-            session.sendMessage(TextMessage("Invalid or missing token"))
+            //session.sendMessage(TextMessage("Invalid or missing token"))
+
+            sendEventTextMessage(session, EventTextMessage(
+                type = MessageType.ERROR,
+                message = "Invalid or missing token",
+                from = MessageFrom.SYSTEM,
+                id = null,
+                jsondata = null,
+            ))
             return
         }
 
@@ -116,7 +175,15 @@ class SocketHandlerForPersnalRoom(
             ).thenAccept { res ->
                 if (res is CounselorManagerFound) {
                     counselorManager = res.actorRef
-                    session.sendMessage(TextMessage("Counseling CounselorManagerFound : ${res.channel}"))
+                    //session.sendMessage(TextMessage("Counseling CounselorManagerFound : ${res.channel}"))
+
+                    sendEventTextMessage(session, EventTextMessage(
+                        type = MessageType.INFO,
+                        message = "Counseling CounselorManagerFound : ${res.channel}",
+                        from = MessageFrom.SYSTEM,
+                        id = null,
+                        jsondata = null,
+                    ))
 
                     AskPattern.ask(
                         counselorManager,
@@ -126,19 +193,56 @@ class SocketHandlerForPersnalRoom(
                         actorSystem.scheduler()
                     ).thenAccept() { res2 ->
                         if (res2 is CounselorRoomFound) {
-                            session.sendMessage(TextMessage("Counseling room created: $roomName"))
+                            //session.sendMessage(TextMessage("Counseling room created: $roomName"))
+
+                            sendEventTextMessage(session, EventTextMessage(
+                                type = MessageType.INFO,
+                                message = "Counseling room created: $roomName",
+                                from = MessageFrom.SYSTEM,
+                                id = null,
+                                jsondata = null,
+                            ))
                             counselorRoomActor = res2.actorRef
                         } else {
-                            session.sendMessage(TextMessage("Counseling request failed: $roomName"))
+                            //session.sendMessage(TextMessage("Counseling request failed: $roomName"))
+
+                            sendEventTextMessage(session, EventTextMessage(
+                                type = MessageType.ERROR,
+                                message = "Counseling request failed: $roomName",
+                                from = MessageFrom.SYSTEM,
+                                id = null,
+                                jsondata = null,
+                            ))
                         }
                     }
 
                 } else {
-                    session.sendMessage(TextMessage("Counselor manager not found for channel: $channel"))
+                    //session.sendMessage(TextMessage("Counselor manager not found for channel: $channel"))
+
+                    sendEventTextMessage(
+                        session, EventTextMessage(
+                            type = MessageType.ERROR,
+                            message = "Counselor manager not found for channel: $channel",
+                            from = MessageFrom.SYSTEM,
+                            id = null,
+                            jsondata = null,
+                        )
+                    )
                 }
             }
         } else {
-            session.sendMessage(TextMessage("Counseling request failed: Missing channel"))
+            //session.sendMessage(TextMessage("Counseling request failed: Missing channel"))
+
+            sendEventTextMessage(
+                session, EventTextMessage(
+                    type = MessageType.ERROR,
+                    message = "Counseling request failed: Missing channel",
+                    from = MessageFrom.SYSTEM,
+                    id = null,
+                    jsondata = null,
+                )
+            )
+
         }
     }
 
@@ -147,14 +251,35 @@ class SocketHandlerForPersnalRoom(
             persnalRoomActor.tell(SendToCounselorRoomForCounseling(chatMessage))
             //session.sendMessage(TextMessage("Chat message sent: $chatMessage"))
         } else {
-            session.sendMessage(TextMessage("Chat message is missing"))
+            //session.sendMessage(TextMessage("Chat message is missing"))
+
+            sendEventTextMessage(
+                session, EventTextMessage(
+                    type = MessageType.ERROR,
+                    message = "Chat message is missing",
+                    from = MessageFrom.SYSTEM,
+                    id = null,
+                    jsondata = null,
+                )
+            )
+
         }
     }
 
     private fun handleOtherMessages(session: WebSocketSession, webSocketMessage: PersnalWsMessage) {
         val token = session.attributes["token"] as String?
         if (token == null || !isValidToken(token)) {
-            session.sendMessage(TextMessage("Invalid or missing token"))
+            //session.sendMessage(TextMessage("Invalid or missing token"))
+
+            sendEventTextMessage(
+                session, EventTextMessage(
+                    type = MessageType.ERROR,
+                    message = "Invalid or missing token",
+                    from = MessageFrom.SYSTEM,
+                    id = null,
+                    jsondata = null,
+                )
+            )
             return
         }
 
@@ -163,7 +288,20 @@ class SocketHandlerForPersnalRoom(
             "subscribe" -> webSocketMessage.topic?.let { topic -> sessionManagerActor.tell(SubscribeToTopic(session.id, topic)) }
             "unsubscribe" -> webSocketMessage.topic?.let { topic -> sessionManagerActor.tell(UnsubscribeFromTopic(session.id, topic)) }
             "message" -> session.attributes["identifier"]?.let { identifier -> sessionManagerActor.tell(SendMessageToActor(identifier.toString(), webSocketMessage.data.toString())) }
-            else -> session.sendMessage(TextMessage("Unknown message type: ${webSocketMessage.type}"))
+            else -> {
+
+                //session.sendMessage(TextMessage("Unknown message type: ${webSocketMessage.type}"))
+
+                sendEventTextMessage(
+                    session, EventTextMessage(
+                        type = MessageType.ERROR,
+                        message = "Unknown message type: ${webSocketMessage.type}",
+                        from = MessageFrom.SYSTEM,
+                        id = null,
+                        jsondata = null,
+                    )
+                )
+            }
         }
     }
 

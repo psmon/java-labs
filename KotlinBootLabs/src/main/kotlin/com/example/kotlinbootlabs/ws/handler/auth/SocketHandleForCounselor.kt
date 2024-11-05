@@ -38,14 +38,34 @@ class SocketHandleForCounselor(
 
     private fun handleLogin(session: WebSocketSession, token: String?) {
         if (token == null) {
-            session.sendMessage(TextMessage("Login failed: Missing id or password"))
+            //session.sendMessage(TextMessage("Login failed: Missing id or password"))
+
+            sendEventTextMessage(
+                session, EventTextMessage(
+                    type = MessageType.ERROR,
+                    message = "Login failed: Missing id or password",
+                    from = MessageFrom.SYSTEM,
+                    id = null,
+                    jsondata = null,
+                )
+            )
             return
         }
 
         try {
             val authResponse = authService.getClaimsFromToken(token)
             if (authResponse.authType != "counselor") {
-                session.sendMessage(TextMessage("Login failed: Invalid user type"))
+                //session.sendMessage(TextMessage("Login failed: Invalid user type"))
+
+                sendEventTextMessage(
+                    session, EventTextMessage(
+                        type = MessageType.ERROR,
+                        message = "Login failed: Invalid user type",
+                        from = MessageFrom.SYSTEM,
+                        id = null,
+                        jsondata = null,
+                    )
+                )
                 return
             }
 
@@ -56,7 +76,18 @@ class SocketHandleForCounselor(
                 put("nick", authResponse.nick)
                 put("identifier", authResponse.identifier)
             }
-            session.sendMessage(TextMessage("Login successful from Counselor"))
+
+            //session.sendMessage(TextMessage("Login successful from Counselor"))
+
+            sendEventTextMessage(
+                session, EventTextMessage(
+                    type = MessageType.INFO,
+                    message = "Login successful from Counselor",
+                    from = MessageFrom.SYSTEM,
+                    id = null,
+                    jsondata = null,
+                )
+            )
 
             val response: CompletionStage<SupervisorChannelResponse> = AskPattern.ask(
                 supervisorChannelActor,
@@ -72,20 +103,61 @@ class SocketHandleForCounselor(
                     counselorActor = res.actorRef
                     counselorActor.tell(SetCounselorSocketSession(session))
 
-                    session.sendMessage(TextMessage("CounselorActor reference obtained."))
+                    //session.sendMessage(TextMessage("CounselorActor reference obtained."))
+
+                    sendEventTextMessage(
+                        session, EventTextMessage(
+                            type = MessageType.INFO,
+                            message = "CounselorActor reference obtained.",
+                            from = MessageFrom.SYSTEM,
+                            id = null,
+                            jsondata = null,
+                        )
+                    )
+
                 } else {
-                    session.sendMessage(TextMessage("Failed to obtain CounselorActor reference."))
+                    //session.sendMessage(TextMessage("Failed to obtain CounselorActor reference."))
+
+                    sendEventTextMessage(
+                        session, EventTextMessage(
+                            type = MessageType.ERROR,
+                            message = "Failed to obtain CounselorActor reference.",
+                            from = MessageFrom.SYSTEM,
+                            id = null,
+                            jsondata = null,
+                        )
+                    )
                 }
             }
         } catch (e: Exception) {
-            session.sendMessage(TextMessage("Login failed: ${e.message}"))
+            //session.sendMessage(TextMessage("Login failed: ${e.message}"))
+
+            sendEventTextMessage(
+                session, EventTextMessage(
+                    type = MessageType.ERROR,
+                    message = "Login failed: ${e.message}\"",
+                    from = MessageFrom.SYSTEM,
+                    id = null,
+                    jsondata = null,
+                )
+            )
         }
     }
 
     private fun handleOtherMessages(session: WebSocketSession, webSocketMessage: CounselorWsMessage) {
         val token = session.attributes["token"] as String?
         if (token == null || !isValidToken(token)) {
-            session.sendMessage(TextMessage("Invalid or missing token"))
+            //session.sendMessage(TextMessage("Invalid or missing token"))
+
+            sendEventTextMessage(
+                session, EventTextMessage(
+                    type = MessageType.ERROR,
+                    message = "Invalid or missing token",
+                    from = MessageFrom.SYSTEM,
+                    id = null,
+                    jsondata = null,
+                )
+            )
             return
         }
 
@@ -100,10 +172,32 @@ class SocketHandleForCounselor(
                 if (roomName != null && message != null) {
                     counselorActor.tell(SendToRoomForPersonalTextMessage(roomName, message))
                 } else {
-                    session.sendMessage(TextMessage("Missing roomName or message"))
+                    //session.sendMessage(TextMessage("Missing roomName or message"))
+
+                    sendEventTextMessage(
+                        session, EventTextMessage(
+                            type = MessageType.ERROR,
+                            message = "Missing roomName or message",
+                            from = MessageFrom.SYSTEM,
+                            id = null,
+                            jsondata = null,
+                        )
+                    )
                 }
             }
-            else -> session.sendMessage(TextMessage("Unknown message type: ${webSocketMessage.type}"))
+            else -> {
+                //session.sendMessage(TextMessage("Unknown message type: ${webSocketMessage.type}"))
+
+                sendEventTextMessage(
+                    session, EventTextMessage(
+                        type = MessageType.ERROR,
+                        message = "Unknown message type: ${webSocketMessage.type}",
+                        from = MessageFrom.SYSTEM,
+                        id = null,
+                        jsondata = null,
+                    )
+                )
+            }
         }
     }
 

@@ -1,5 +1,9 @@
 package com.example.kotlinbootlabs.ws
 
+import com.example.kotlinbootlabs.ws.handler.auth.EventTextMessage
+import com.example.kotlinbootlabs.ws.handler.auth.MessageFrom
+import com.example.kotlinbootlabs.ws.handler.auth.MessageType
+import com.example.kotlinbootlabs.ws.handler.auth.sendEventTextMessage
 import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession
 import org.springframework.web.socket.handler.TextWebSocketHandler
@@ -29,7 +33,15 @@ class MyWebSocketHandler(private val sessionManager: WebSocketSessionManager) : 
                 sessionManager.unsubscribeFromTopic(session.id, topic)
             }
             else -> {
-                session.sendMessage(TextMessage("Echo: $payload"))
+                //session.sendMessage(TextMessage("Echo: $payload"))
+
+                sendEventTextMessage(session, EventTextMessage(
+                    type = MessageType.CHAT,
+                    message = "Echo: $payload",
+                    from = MessageFrom.SYSTEM,
+                    id = null,
+                    jsondata = null,
+                ))
             }
         }
     }

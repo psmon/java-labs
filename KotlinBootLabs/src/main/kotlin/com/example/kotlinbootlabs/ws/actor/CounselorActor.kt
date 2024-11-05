@@ -3,6 +3,10 @@ package com.example.kotlinbootlabs.ws.actor
 import akka.actor.typed.ActorRef
 import akka.actor.typed.Behavior
 import akka.actor.typed.javadsl.*
+import com.example.kotlinbootlabs.ws.handler.auth.EventTextMessage
+import com.example.kotlinbootlabs.ws.handler.auth.MessageFrom
+import com.example.kotlinbootlabs.ws.handler.auth.MessageType
+import com.example.kotlinbootlabs.ws.handler.auth.sendEventTextMessage
 import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession
 
@@ -88,7 +92,16 @@ class CounselorActor private constructor(
 
     private fun onSendToCounselorTextMessage(command: SendToCounselorHandlerTextMessage): Behavior<CounselorCommand> {
         if(socketSession != null){
-            socketSession?.sendMessage(TextMessage("$command.message"))
+            //socketSession?.sendMessage(TextMessage("$command.message"))
+
+            sendEventTextMessage(
+                socketSession!!, EventTextMessage(
+                type = MessageType.CHAT,
+                message = "$command.message",
+                from = MessageFrom.SYSTEM,
+                id = null,
+                jsondata = null,
+            ))
         }
         else{
             context.log.error("Counselor socketSession  is not initialized - ${context.self.path()}")
@@ -99,7 +112,19 @@ class CounselorActor private constructor(
     private fun onSetCounselorSocketSession(setCounselorSocketSession: SetCounselorSocketSession): Behavior<CounselorCommand> {
         context.log.info("Counselor ${context.self.path()} socket session set:  ${setCounselorSocketSession.socketSession}")
         socketSession = setCounselorSocketSession.socketSession
-        socketSession!!.sendMessage(TextMessage("Counselor $name is now connected"))
+
+        //socketSession!!.sendMessage(TextMessage("Counselor $name is now connected"))
+
+        sendEventTextMessage(
+            socketSession!!, EventTextMessage(
+                type = MessageType.INFO,
+                message = "Counselor $name is now connected",
+                from = MessageFrom.SYSTEM,
+                id = null,
+                jsondata = null,
+            ))
+
+
         status = CounselorStatus.ONLINE
         return this
     }

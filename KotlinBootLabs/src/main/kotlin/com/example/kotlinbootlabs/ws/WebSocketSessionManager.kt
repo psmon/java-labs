@@ -1,5 +1,9 @@
 package com.example.kotlinbootlabs.ws
 
+import com.example.kotlinbootlabs.ws.handler.auth.EventTextMessage
+import com.example.kotlinbootlabs.ws.handler.auth.MessageFrom
+import com.example.kotlinbootlabs.ws.handler.auth.MessageType
+import com.example.kotlinbootlabs.ws.handler.auth.sendEventTextMessage
 import org.springframework.web.socket.WebSocketSession
 import org.springframework.web.socket.TextMessage
 import org.slf4j.LoggerFactory
@@ -33,12 +37,36 @@ class WebSocketSessionManager {
     }
 
     fun sendMessageToSession(sessionId: String, message: String) {
-        sessions[sessionId]?.sendMessage(TextMessage(message))
+        //sessions[sessionId]?.sendMessage(TextMessage(message))
+
+        sessions[sessionId]?.let {
+            sendEventTextMessage(
+                it, EventTextMessage(
+                    type = MessageType.PUSH,
+                    message = message,
+                    from = MessageFrom.SYSTEM,
+                    id = null,
+                    jsondata = null,
+                )
+            )
+        }
     }
 
     fun sendMessageToTopic(topic: String, message: String) {
         topicSubscriptions[topic]?.forEach { sessionId ->
-            sessions[sessionId]?.sendMessage(TextMessage(message))
+            //sessions[sessionId]?.sendMessage(TextMessage(message))
+
+            sessions[sessionId]?.let {
+                sendEventTextMessage(
+                    it, EventTextMessage(
+                        type = MessageType.PUSH,
+                        message = message,
+                        from = MessageFrom.SYSTEM,
+                        id = null,
+                        jsondata = null,
+                    )
+                )
+            }
         }
     }
 }

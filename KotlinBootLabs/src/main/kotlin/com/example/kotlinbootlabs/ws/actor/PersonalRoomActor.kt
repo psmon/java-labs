@@ -5,6 +5,10 @@ import akka.actor.typed.Behavior
 import akka.actor.typed.javadsl.*
 import com.example.kotlinbootlabs.actor.HelloActorResponse
 import com.example.kotlinbootlabs.actor.HelloResponse
+import com.example.kotlinbootlabs.ws.handler.auth.EventTextMessage
+import com.example.kotlinbootlabs.ws.handler.auth.MessageFrom
+import com.example.kotlinbootlabs.ws.handler.auth.MessageType
+import com.example.kotlinbootlabs.ws.handler.auth.sendEventTextMessage
 import org.slf4j.LoggerFactory
 import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession
@@ -73,7 +77,17 @@ class PersonalRoomActor private constructor(
             counselorRoomActor.tell(SendToCounselor(sendToCounselorRoomForCounseling.message))
         }
         else {
-            socketSession?.sendMessage(TextMessage("상담방이 없습니다."))
+            //socketSession?.sendMessage(TextMessage("상담방이 없습니다."))
+
+            sendEventTextMessage(
+                socketSession!!, EventTextMessage(
+                    type = MessageType.ERROR,
+                    message = "상담방이 없습니다.",
+                    from = MessageFrom.SYSTEM,
+                    id = null,
+                    jsondata = null,
+                )
+            )
         }
 
         return this
@@ -83,7 +97,17 @@ class PersonalRoomActor private constructor(
         counselorRoomActor = setCounselorRoom.counselorRoomActor
 
         if(socketSession!=null){
-            socketSession!!.sendMessage(TextMessage("상담방이 시작됨 ${counselorRoomActor.path()}"))
+            //socketSession!!.sendMessage(TextMessage("상담방이 시작됨 ${counselorRoomActor.path()}"))
+
+            sendEventTextMessage(
+                socketSession!!, EventTextMessage(
+                    type = MessageType.INFO,
+                    message = "상담방이 시작됨 ${counselorRoomActor.path()}",
+                    from = MessageFrom.SYSTEM,
+                    id = null,
+                    jsondata = null,
+                )
+            )
         }
         return this
     }
@@ -93,7 +117,18 @@ class PersonalRoomActor private constructor(
 
         if (socketSession != null) {
             try {
-                socketSession!!.sendMessage(TextMessage("Echo : ${sendTextMessage.message}"))
+                //socketSession!!.sendMessage(TextMessage("Echo : ${sendTextMessage.message}"))
+
+                sendEventTextMessage(
+                    socketSession!!, EventTextMessage(
+                        type = MessageType.INFO,
+                        message = "Echo : ${sendTextMessage.message}",
+                        from = MessageFrom.SYSTEM,
+                        id = null,
+                        jsondata = null,
+                    )
+                )
+
             } catch (e: Exception) {
                 logger.error("Error sending message: ${e.message}")
                 socketSession = null
@@ -141,7 +176,18 @@ class PersonalRoomActor private constructor(
 
         if (socketSession != null) {
             try {
-                socketSession!!.sendMessage(TextMessage("Hello World by PrivacyRoomActor $identifier"))
+                //socketSession!!.sendMessage(TextMessage("Hello World by PrivacyRoomActor $identifier"))
+
+                sendEventTextMessage(
+                    socketSession!!, EventTextMessage(
+                        type = MessageType.INFO,
+                        message = "Hello World by PrivacyRoomActor $identifier",
+                        from = MessageFrom.SYSTEM,
+                        id = null,
+                        jsondata = null,
+                    )
+                )
+
             } catch (e: Exception) {
                 logger.error("Error sending message: ${e.message}")
                 socketSession = null
