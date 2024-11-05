@@ -8,6 +8,8 @@ import akka.actor.typed.javadsl.ActorContext
 import akka.actor.typed.javadsl.Behaviors
 import akka.actor.typed.javadsl.Receive
 import com.example.kotlinbootlabs.service.TokenClaims
+import com.example.kotlinbootlabs.ws.handler.auth.EventTextMessage
+import com.example.kotlinbootlabs.ws.handler.auth.sendEventTextMessage
 import org.springframework.web.socket.WebSocketSession
 import org.springframework.web.socket.TextMessage
 import org.slf4j.LoggerFactory
@@ -115,6 +117,9 @@ class UserSessionManagerActor private constructor(
         sessions[command.session.id] = command.session
         logger.info("Connected: ${command.session.id}")
         command.session.sendMessage(TextMessage("{\"type\": \"sessionId\", \"id\": \"${command.session.id}\"}"))
+
+
+
         return this
     }
 
