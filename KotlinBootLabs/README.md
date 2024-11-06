@@ -154,3 +154,4 @@ Akka Streams, RxJava 등이 있으며, 이들은 Reactive Streams 표준을 따�
 - [Line Chatting Architecture](https://engineering.linecorp.com/ko/blog/the-architecture-behind-chatting-on-line-live)
 - [Asynchronous testing](https://doc.akka.io/docs/akka/current/typed/testing-async.html)
 - [Akka Cluster](https://www.youtube.com/watch?v=mUTKvGyxbOA)
+- https://doc.akka.io/libraries/akka-core/2.7/

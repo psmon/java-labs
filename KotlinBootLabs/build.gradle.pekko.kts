@@ -19,7 +19,7 @@ repositories {
 }
 
 val scalaVersion = "2.13"
-val akkaVersion = "2.7.0"
+val akkaVersion = "2.7.1"
 val pekkoVersion = "1.1.2"
 val pekkoJdbc = "1.1.0"
 val pekkoJ2dbc = "1.1.0-M0"

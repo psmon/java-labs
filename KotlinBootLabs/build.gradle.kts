@@ -57,8 +57,11 @@ dependencies {
 
 	// Typed Actor
 	implementation("com.typesafe.akka:akka-actor-typed_$scalaVersion:$akkaVersion")
-	implementation("com.typesafe.akka:akka-cluster-typed_$scalaVersion:$akkaVersion")
 	implementation("com.typesafe.akka:akka-serialization-jackson_$scalaVersion:$akkaVersion")
+
+	// Cluster Actor
+	implementation("com.typesafe.akka:akka-cluster-typed_$scalaVersion:$akkaVersion")
+
 
 	// Actor Persistence
 	implementation("com.typesafe.akka:akka-persistence-typed_$scalaVersion:$akkaVersion")
@@ -67,8 +70,9 @@ dependencies {
 
 	// Actor Logging
 	implementation("com.typesafe.akka:akka-slf4j_$scalaVersion:$akkaVersion")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
 
-	// Actor TestKit
+    // Actor TestKit
 	testImplementation("com.typesafe.akka:akka-testkit_$scalaVersion:$akkaVersion")
 	testImplementation("com.typesafe.akka:akka-actor-testkit-typed_$scalaVersion:$akkaVersion")
 	testImplementation("com.typesafe.akka:akka-stream-testkit_$scalaVersion:$akkaVersion")
