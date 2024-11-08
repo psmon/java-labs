@@ -88,7 +88,8 @@ dependencies {
 	testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.3")
 	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.3")
 	testImplementation("com.squareup.okhttp3:okhttp:4.12.0")
-
+	testImplementation("org.openjdk.jmh:jmh-core:1.35")
+	testAnnotationProcessor("org.openjdk.jmh:jmh-generator-annprocess:1.35")
 }
 
 kotlin {

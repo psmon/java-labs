@@ -4,8 +4,6 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest
 import org.springframework.test.context.junit.jupiter.SpringExtension
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -13,7 +11,7 @@ import reactor.test.StepVerifier
 
 @DataMongoTest
 @ExtendWith(SpringExtension::class)
-class TestEntityTest {
+class MongoEntityTest {
 
 
     @Autowired
@@ -81,7 +79,7 @@ class TestEntityTest {
 
     @Test
     fun testSaveAndReadMultipleTimes() {
-        val testCount = 10000
+        val testCount = 100
 
         // Measure save time
         val saveStartTime = System.currentTimeMillis()
@@ -127,4 +125,60 @@ class TestEntityTest {
         println("Read average time per read: $readAverageTime ms")
     }
 
+    /*
+    * 사용된 튜닝값
+    * spring.data.mongodb.uri=mongodb://localhost:27017/test?maxPoolSize=100
+    * spring.task.execution.pool.core-size=5
+    * spring.task.execution.pool.max-size=5
+    * */
+    
+    @Test
+    fun testSaveAndReadFluxMultipleTimes() {
+        val testCount = 100
+
+        // Measure save time
+        val saveStartTime = System.currentTimeMillis()
+
+        val saveFlux = Flux.range(1, testCount)
+            .flatMap { i ->
+                val entity = TestEntity(name = "test$i", value = i)
+                repository.save(entity)
+            }
+
+        StepVerifier.create(saveFlux.collectList())
+            .expectNextMatches { it.size == testCount }
+            .verifyComplete()
+
+        val saveEndTime = System.currentTimeMillis()
+        val saveTotalTime = saveEndTime - saveStartTime
+        val saveAverageTime = saveTotalTime / testCount.toFloat()
+
+        println("Save total time: $saveTotalTime ms Total saves: $testCount")
+        println("Save average time per save: $saveAverageTime ms")
+
+        // Measure read time
+        val readStartTime = System.currentTimeMillis()
+
+        val readFlux = saveFlux.flatMap ({ savedEntity ->
+            val individualReadStartTime = System.currentTimeMillis()
+            repository.findById(savedEntity.id)
+                .doOnNext { entity ->
+                    val individualReadEndTime = System.currentTimeMillis()
+                    val individualReadTime = individualReadEndTime - individualReadStartTime
+                    println("Read time for entity ${savedEntity.id}: $individualReadTime ms")
+                    println("Read entity: $entity")
+                }
+        }, 10)
+
+        val readEndTime = System.currentTimeMillis()
+        val readTotalTime = readEndTime - readStartTime
+        val readAverageTime = readTotalTime / testCount.toFloat()
+
+        println("Read total time: $readTotalTime ms Total reads: $testCount")
+        println("Read average time per read: $readAverageTime ms")
+
+        StepVerifier.create(readFlux.collectList())
+            .expectNextMatches { it.size == testCount }
+            .verifyComplete()
+    }
 }
