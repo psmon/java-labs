@@ -7,6 +7,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.junit.jupiter.api.Test
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import reactor.core.scheduler.Schedulers
 import reactor.test.StepVerifier
 
 @DataMongoTest
@@ -134,7 +135,7 @@ class MongoEntityTest {
     
     @Test
     fun testSaveAndReadFluxMultipleTimes() {
-        val testCount = 100
+        val testCount = 10000
 
         // Measure save time
         val saveStartTime = System.currentTimeMillis()
@@ -165,10 +166,11 @@ class MongoEntityTest {
                 .doOnNext { entity ->
                     val individualReadEndTime = System.currentTimeMillis()
                     val individualReadTime = individualReadEndTime - individualReadStartTime
-                    println("Read time for entity ${savedEntity.id}: $individualReadTime ms")
+                    println("Read time for entity ${savedEntity.name}: $individualReadTime ms")
                     println("Read entity: $entity")
                 }
-        }, 10)
+        }, 10) // 동시성 10
+        .subscribeOn(Schedulers.parallel()) // 병렬 스케줄러 사용
 
         val readEndTime = System.currentTimeMillis()
         val readTotalTime = readEndTime - readStartTime
