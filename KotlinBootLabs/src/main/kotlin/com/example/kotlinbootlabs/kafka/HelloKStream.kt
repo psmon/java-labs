@@ -20,10 +20,15 @@ import java.util.Properties
 
 fun createHelloKStreams(): KafkaStreams {
     val props = Properties().apply {
-        put("bootstrap.servers", "localhost:9092")
-        put("application.id", "hello-ktable-actor")
+        put("bootstrap.servers", "localhost:9092,localhost:9003,localhost:9004")
+        put("application.id", "unique-hello-ktable-actor")
         put("default.key.serde", Serdes.String().javaClass.name)
         put("default.value.serde", Serdes.String().javaClass.name)
+        put("processing.guarantee", "exactly_once") // Ensure exactly-once processing
+        put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer::class.java.name)
+        put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, HelloKTableStateSerializer::class.java.name)
+        put(ProducerConfig.ACKS_CONFIG, "all") // Ensure all replicas acknowledge
+        put(ProducerConfig.RETRIES_CONFIG, 3) // Retry up to 3 times
     }
 
     val builder = StreamsBuilder()
@@ -33,6 +38,7 @@ fun createHelloKStreams(): KafkaStreams {
         Serdes.serdeFrom(HelloKTableStateSerializer(), HelloKTableStateDeserializer())
     )
     builder.addStateStore(storeBuilder)
+
     val table: KTable<String, HelloKTableState> = builder.table("hello-state-store")
 
     val streams = KafkaStreams(builder.build(), props)

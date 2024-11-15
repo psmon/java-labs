@@ -2,17 +2,25 @@ package com.example.kotlinbootlabs.kactor
 
 import com.example.kotlinbootlabs.kafka.createHelloKStreams
 import com.example.kotlinbootlabs.kafka.createKafkaProducer
+import com.example.kotlinbootlabs.kafka.getStateStoreWithRetries
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import org.apache.kafka.clients.producer.KafkaProducer
+import org.apache.kafka.clients.producer.Producer
 import org.apache.kafka.streams.KafkaStreams
+import org.apache.kafka.streams.errors.InvalidStateStoreException
+import org.apache.kafka.streams.state.ReadOnlyKeyValueStore
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 
 class HelloKTableActorTest {
     companion object {
@@ -21,10 +29,11 @@ class HelloKTableActorTest {
 
     private lateinit var streams: KafkaStreams
     private lateinit var actor: HelloKTableActor
+    private lateinit var producer: KafkaProducer<String, HelloKTableState>
 
-    @BeforeEach
+    @BeforeTest
     fun setUp() {
-        val producer = createKafkaProducer()
+        producer = createKafkaProducer()
         streams = createHelloKStreams()
         val latch = CountDownLatch(1)
 
@@ -46,24 +55,33 @@ class HelloKTableActorTest {
 
         var testPersistId = "test-persistence-id-02"
 
-        actor = HelloKTableActor(testPersistId, streams, producer)
-    }
+        val readStateStore: ReadOnlyKeyValueStore<String, HelloKTableState> =
+            getStateStoreWithRetries(streams, "hello-state-store")
 
-    @AfterEach
-    fun tearDown() {
+        var curState: HelloKTableState
 
-        val latch = CountDownLatch(1)
-
-        streams.setStateListener { newState, _ ->
-            if (newState == KafkaStreams.State.NOT_RUNNING) {
-                latch.countDown()
-            }
+        try {
+            curState = readStateStore[testPersistId] ?: HelloKTableState(HelloKState.HAPPY, 0, 0)
+            println("Found state in store: $curState")
+        }
+        catch (e: InvalidStateStoreException) {
+            testPersistId = "test-persistence-id-01"
+            curState = HelloKTableState(HelloKState.HAPPY, 0, 0)
+            println("State not found in store, creating new state with persistence ID: $testPersistId")
         }
 
-        actor.stop()
+        println("Creating actor with persistence ID: $testPersistId ")
 
-        latch.await(5, TimeUnit.SECONDS) // Wait for up to 5 seconds for the streams to close
+        actor = HelloKTableActor(testPersistId, streams, curState, producer)
+    }
 
+    @AfterTest
+    fun tearDown() {
+        producer.close(Duration.ofSeconds(3))
+        streams.close(Duration.ofSeconds(3))
+        if(::actor.isInitialized) {
+            actor.stop()
+        }
     }
 
     @Test

@@ -32,6 +32,7 @@ data class HelloKTableState(val state: HelloKState, val helloCount: Long, val he
 class HelloKTableActor(
         private val persistenceId:String ,
         private val streams: KafkaStreams,
+        private var inItState: HelloKTableState,
         private val producer: KafkaProducer<String, HelloKTableState>
     ) {
     private val channel = Channel<HelloKTableActorCommand>()
@@ -44,8 +45,7 @@ class HelloKTableActor(
 
     init {
 
-        //streams.start()
-        curState = readStateStore[persistenceId] ?: HelloKTableState(HelloKState.HAPPY, 0, 0)
+        curState = inItState
 
         scope.launch {
             for (command in channel) {
@@ -97,7 +97,6 @@ class HelloKTableActor(
     }
 
     fun stop() {
-        streams.close()
         scope.cancel()
     }
 }
