@@ -1,6 +1,8 @@
 package com.example.kotlinbootlabs.kactor
 
 import com.example.kotlinbootlabs.kafka.getStateStoreWithRetries
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonProperty
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -27,7 +29,11 @@ enum class HelloKState {
     ANGRY
 }
 
-data class HelloKTableState(val state: HelloKState, val helloCount: Long, val helloTotalCount: Long)
+data class HelloKTableState @JsonCreator constructor(
+    @JsonProperty("state") val state: HelloKState,
+    @JsonProperty("helloCount") val helloCount: Long,
+    @JsonProperty("helloTotalCount") val helloTotalCount: Long
+)
 
 class HelloKTableActor(
         private val persistenceId:String ,
@@ -64,7 +70,7 @@ class HelloKTableActor(
             val newState = curState.copy(helloCount = curState.helloCount + 1, helloTotalCount = curState.helloTotalCount + 1)
             // Update KTable with new state
             //stateStore.put(persistenceId, newState)
-            producer.send(org.apache.kafka.clients.producer.ProducerRecord("hello-state-store", persistenceId, newState))
+            producer.send(org.apache.kafka.clients.producer.ProducerRecord("hello-log-store", persistenceId, newState))
 
             command.replyTo.complete(HelloKStateResponse("Kotlin"))
 
@@ -81,7 +87,7 @@ class HelloKTableActor(
         val newState = command.copy(state = command.state)
         // Update KTable with new state
         //stateStore.put(persistenceId, newState.state)
-        producer.send(org.apache.kafka.clients.producer.ProducerRecord("hello-state-store", persistenceId, newState.state))
+        producer.send(org.apache.kafka.clients.producer.ProducerRecord("hello-log-store", persistenceId, newState.state))
     }
 
     private fun handleResetHelloCount() {
@@ -89,7 +95,7 @@ class HelloKTableActor(
         val newState = curState.copy(helloCount = 0)
         // Update KTable with new state
         //stateStore.put(persistenceId, newState)
-        producer.send(org.apache.kafka.clients.producer.ProducerRecord("hello-state-store", persistenceId, newState))
+        producer.send(org.apache.kafka.clients.producer.ProducerRecord("hello-log-store", persistenceId, newState))
     }
 
     suspend fun send(command: HelloKTableActorCommand) {

@@ -1,5 +1,6 @@
 package com.example.kotlinbootlabs.kafka
 
+import com.example.kotlinbootlabs.kactor.HelloKState
 import com.example.kotlinbootlabs.kactor.HelloKTableState
 import com.example.kotlinbootlabs.kactor.HelloKTableStateDeserializer
 import com.example.kotlinbootlabs.kactor.HelloKTableStateSerializer
@@ -12,11 +13,14 @@ import org.apache.kafka.streams.StoreQueryParameters
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.errors.InvalidStateStoreException
 import org.apache.kafka.streams.errors.StreamsUncaughtExceptionHandler
+import org.apache.kafka.streams.kstream.Consumed
 import org.apache.kafka.streams.kstream.KTable
+import org.apache.kafka.streams.kstream.Materialized
 import org.apache.kafka.streams.state.QueryableStoreTypes
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore
 import org.apache.kafka.streams.state.Stores
 import java.util.Properties
+import kotlin.collections.aggregate
 
 fun createHelloKStreams(): KafkaStreams {
     val props = Properties().apply {
@@ -42,7 +46,14 @@ fun createHelloKStreams(): KafkaStreams {
     )
     builder.addStateStore(storeBuilder)
 
-    val table: KTable<String, HelloKTableState> = builder.table("hello-state-store")
+    // Create a KTable from the hello-log-store topic
+    val helloKTable = builder.table<String, HelloKTableState>(
+        "hello-log-store",
+        Consumed.with(Serdes.String(), Serdes.serdeFrom(HelloKTableStateSerializer(), HelloKTableStateDeserializer())),
+        Materialized.with(Serdes.String(), Serdes.serdeFrom(HelloKTableStateSerializer(), HelloKTableStateDeserializer()))
+    )
+
+    helloKTable.toStream().to("hello-state-store")
 
     val streams = KafkaStreams(builder.build(), props)
 

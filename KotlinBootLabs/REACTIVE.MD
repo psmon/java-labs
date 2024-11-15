@@ -74,3 +74,4 @@ Reactive를 지원하는 다양한 저장장치와 연동하여 활용할수 있
 상태프로그래밍을 이용한 Stream처리~
 
 - https://velog.io/@ehdrms2034/%EC%B9%B4%ED%94%84%EC%B9%B4-%EC%8A%A4%ED%8A%B8%EB%A6%BC%EC%A6%88-DSL-%EA%B0%9C%EB%85%90
+- https://breezymind.com/kafka-streams-basic/
