@@ -47,7 +47,7 @@ class HelloKTableActorTest {
         }
 
         streams.start()
-        latch.await(10, TimeUnit.SECONDS)
+        latch.await(20, TimeUnit.SECONDS)
 
         if (!isRunning) {
             throw IllegalStateException("Kafka Streams application did not start")
@@ -77,8 +77,13 @@ class HelloKTableActorTest {
 
     @AfterTest
     fun tearDown() {
-        producer.close(Duration.ofSeconds(3))
-        streams.close(Duration.ofSeconds(3))
+        if (::producer.isInitialized) {
+            producer.close(Duration.ofSeconds(3))
+        }
+        if (::streams.isInitialized) {
+            streams.close(Duration.ofSeconds(3))
+        }
+
         if(::actor.isInitialized) {
             actor.stop()
         }

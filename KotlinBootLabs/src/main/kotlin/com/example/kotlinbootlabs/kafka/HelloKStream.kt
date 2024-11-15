@@ -25,6 +25,9 @@ fun createHelloKStreams(): KafkaStreams {
         put("default.key.serde", Serdes.String().javaClass.name)
         put("default.value.serde", Serdes.String().javaClass.name)
         put("processing.guarantee", "exactly_once") // Ensure exactly-once processing
+        put("session.timeout.ms", "30000") // Increase session timeout
+        put("heartbeat.interval.ms", "10000") // Adjust heartbeat interval
+        put("group.instance.id", "unique-instance-id") // Enable static membership
         put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer::class.java.name)
         put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, HelloKTableStateSerializer::class.java.name)
         put(ProducerConfig.ACKS_CONFIG, "all") // Ensure all replicas acknowledge
