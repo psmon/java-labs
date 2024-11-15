@@ -1,10 +1,14 @@
 package com.example.kotlinbootlabs.kactor
+
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+
+import com.example.kotlinbootlabs.kactor.HelloKActor.*
+
 
 class HelloKActorTest {
     companion object {

@@ -41,6 +41,9 @@ dependencies {
 	// Reactive
 	implementation("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
 
+	// Kafka
+	implementation("org.apache.kafka:kafka-streams:3.4.0")
+	implementation("org.apache.kafka:kafka-clients:3.4.0")
 
 	// Jwt
 	implementation("io.jsonwebtoken:jjwt-api:0.11.5")

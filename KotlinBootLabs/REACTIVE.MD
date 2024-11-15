@@ -25,11 +25,52 @@ Reactive Stream을 도전하기전 , 기본언어가 지원하는 병렬처리�
 - [동시프로그래밍](https://wiki.webnori.com/display/AKKA/Future+and+Promise)
 
 
+Reactive는 구현체가 달라도 상호연동및 운영가능한 인터페이스로 
+
+SpringBoot Reactive 요소와 Kotlin의 Reactive 요소를 상호연결 운영할수 있으며
+Reactive를 지원하는 다양한 저장장치와 연동하여 활용할수 있습니다.
+
+다음 구성요소를 활용하여 Reactive Stream을 구현할수 있습니다.
+
+- Spring Boot Reactive Stream
+  - Netty
+  - Ractive Streams Adapter
+  - Spring Security Reactive
+  - Spring WebFlux 
+  - Spring Data Reactive Repositories
+    - MongoDB, Cassandra, Couchbase, Redis, Elasticsearch , R2DBC.......
+
+- Kotlin Coroutine 
+  - core: 기본 코루틴 기능을 제공하는 핵심 모듈입니다. 
+  - reactive: 리액티브 스트림과의 상호 운용을 지원합니다. 
+  - reactor: Reactor 라이브러리와의 통합을 지원합니다. 
+  - rx2: RxJava 2와의 상호 운용성을 제공합니다. 
+  - guava: Google Guava와의 호환을 위해 작성된 코루틴 모듈입니다.
+  
+## Spring Boot Reactive Stream
+
+기대효과
+고성능 처리: 논블로킹 I/O와 리액티브 스트림을 활용한 고성능 분산 처리를 구현할 수 있습니다.
+확장성과 유연성: 다양한 비관계형 데이터베이스와의 리액티브 연동을 통해 대규모 확장성 있는 시스템을 구축할 수 있습니다.
+리액티브 프로그램의 일관성: 코루틴과 리액티브 스트림의 통합으로 코드 일관성을 유지하면서, 효율적인 비동기 처리가 가능합니다.
+
+추가로 활용할 수 있는 Stack
+
+- Kotlin Flow: 단일 데이터 처리에서 스트림 데이터까지 확장된 비동기 처리를 지원합니다.
+- gRPC 또는 GraphQL: 마이크로서비스 간의 고성능 통신을 위해, 비동기 통신을 지원하는 프로토콜을 사용할 수 있습니다.
+- Kafka (Spring Cloud Stream): 이벤트 기반 아키텍처에서 데이터 스트림을 효율적으로 처리할 수 있으며, 확장된 비동기 처리를 위한 데이터 파이프라인에 활용할 수 있습니다.
+- Spring Cloud Gateway: API 게이트웨이로서 리액티브 방식의 요청 라우팅과 필터링을 지원해, 마이크로서비스 아키텍처에서 유용합니다.
+이 구성을 통해 코틀린과 스프링 부트 기반의 효율적이고 고성능의 분산 시스템을 구축할 수 있으며, 확장성을 갖춘 이벤트 기반 아키텍처로 발전시킬 수 있습니다.
+    
 ## 코틀린 지원 순수 액터모델
 
-코프링인경우 코어영역에 액터모델이 포함되어 활용가능합니다.
+위와 같은 장점은 코틀린의 core가 액터모델을 품고 있기때문에, 액터모델 채택시 기본으로 운영가능합니다.
 
 - [코액터](https://github.com/psmon/java-labs/tree/master/KotlinBootLabs/src/test/kotlin/com/example/kotlinbootlabs/kactor)
 - [연구위치](https://wiki.webnori.com/pages/viewpage.action?pageId=93946604)
 
+## Stateful
 
+상태프로그래밍을 이용한 Stream처리~
+
+- https://velog.io/@ehdrms2034/%EC%B9%B4%ED%94%84%EC%B9%B4-%EC%8A%A4%ED%8A%B8%EB%A6%BC%EC%A6%88-DSL-%EA%B0%9C%EB%85%90
