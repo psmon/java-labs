@@ -33,8 +33,19 @@ class HelloKTableActorTest {
 
     @BeforeTest
     fun setUp() {
+
+        var testPersistId = "test-persistence-id-02"
+
         producer = createKafkaProducer()
-        streams = createHelloKStreams()
+
+        producer.send(org.apache.kafka.clients.producer.ProducerRecord("hello-log-store", testPersistId,
+            HelloKTableState(HelloKState.HAPPY, 0, 0)))
+
+        Thread.sleep(1000)
+
+        var helloKStreams = createHelloKStreams()
+        streams = helloKStreams.streams
+
         val latch = CountDownLatch(1)
 
         var isRunning = false
@@ -53,8 +64,6 @@ class HelloKTableActorTest {
             throw IllegalStateException("Kafka Streams application did not start")
         }
 
-        var testPersistId = "test-persistence-id-02"
-
         val readStateStore: ReadOnlyKeyValueStore<String, HelloKTableState> =
             getStateStoreWithRetries(streams, "hello-state-store")
 
@@ -65,7 +74,6 @@ class HelloKTableActorTest {
             println("Found state in store: $curState")
         }
         catch (e: InvalidStateStoreException) {
-            testPersistId = "test-persistence-id-01"
             curState = HelloKTableState(HelloKState.HAPPY, 0, 0)
             println("State not found in store, creating new state with persistence ID: $testPersistId")
         }
@@ -73,6 +81,12 @@ class HelloKTableActorTest {
         println("Creating actor with persistence ID: $testPersistId ")
 
         actor = HelloKTableActor(testPersistId, streams, curState, producer)
+
+        helloKStreams.helloKTable.toStream().foreach { key, value ->
+            println("Key: $key, Value: $value")
+            //actor.send(HelloKtable("Hello", CompletableDeferred()))
+        }
+
     }
 
     @AfterTest
