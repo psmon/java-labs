@@ -69,6 +69,7 @@ class HelloKTableActorTest {
 
     @Test
     fun testHelloCommandAndReadCountPerform() = runBlocking {
+        // For Clean Test
         actor.send(ChangeStateKtable(HelloKTableState(HelloKState.HAPPY, 0, 0)))
         CompletableDeferred<HelloKTableActorResponse>()
 
@@ -79,7 +80,6 @@ class HelloKTableActorTest {
         // The response message should be 'Kotlin'
         assertEquals("Kotlin", result.message)
 
-
         // Verify Curren count
         val initialCountResponse = CompletableDeferred<HelloKTableActorResponse>()
         actor.send(GetHelloKtableCount(initialCountResponse))
@@ -87,12 +87,16 @@ class HelloKTableActorTest {
             withTimeout(TIMEOUT_DURATION) { initialCountResponse.await() } as HelloKStateCountResponse
         assertEquals(true, initialCountResult.count > 0)
 
+        val startWriteTime = System.currentTimeMillis()
+
         // Send Hello command 100 times
         repeat(100) {
             val response = CompletableDeferred<HelloKTableActorResponse>()
             actor.send(HelloKtable("Hello", response))
             withTimeout(TIMEOUT_DURATION) { response.await() }
         }
+
+        val endWriteTime = System.currentTimeMillis()
 
         var finalTotalcount = initialCountResult.count + 100
 
@@ -116,9 +120,13 @@ class HelloKTableActorTest {
         val endTime = System.currentTimeMillis()
         val totalTime = endTime - startTime
         val averageTime = totalTime / 1000.0
+        var averageWriterTime = (endWriteTime - startWriteTime) / 100.0
+        val totalWriteTime = endWriteTime - startWriteTime
 
-        println("Total time for 1000 Hello commands: $totalTime ms")
-        println("Average time per Hello command: $averageTime ms")
+        println("Total time for 100 Hello commands for Write: $totalWriteTime ms")
+        println("Average time per Hello command for Write: $averageWriterTime ms")
+        println("Total time for 1000 HelloCount for Read commands: $totalTime ms")
+        println("Average time per HelloCount command: $averageTime ms")
 
         // Verify count after 1000 Hello commands
         val finalCountResponse = CompletableDeferred<HelloKTableActorResponse>()
