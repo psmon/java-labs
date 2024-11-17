@@ -1,8 +1,10 @@
 package com.example.kotlinbootlabs.kactor
 
 import com.example.kotlinbootlabs.kafka.getStateStoreWithRetries
+import com.example.kotlinbootlabs.service.RedisService
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.ObjectMapper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -37,22 +39,28 @@ data class HelloKTableState @JsonCreator constructor(
 
 class HelloKTableActor(
         private val persistenceId:String ,
-        private val streams: KafkaStreams,
-        private var inItState: HelloKTableState,
-        private val producer: KafkaProducer<String, HelloKTableState>
+        private val producer: KafkaProducer<String, HelloKTableState>,
+        private val redisService: RedisService
     ) {
 
     private val channel = Channel<HelloKTableActorCommand>()
+
     private val scope = CoroutineScope(Dispatchers.Default)
 
-    val readStateStore: ReadOnlyKeyValueStore<String, HelloKTableState> =
-        getStateStoreWithRetries(streams, "hello-state-store")
+    private val objectMapper = ObjectMapper()
 
     private var curState: HelloKTableState
 
     init {
 
-        curState = inItState
+        // Read initial state from Redis
+        curState = redisService.getValue("hello-state-store", persistenceId)
+            .map { stateJson ->
+                // Deserialize stateJson to HelloKTableState
+                // Assuming you have a method to deserialize JSON to HelloKTableState
+                stateJson?.let { deserializeState(it) }
+            }
+            .block() ?: HelloKTableState(HelloKState.HAPPY, 0, 0) // Default state if not found
 
         scope.launch {
             for (command in channel) {
@@ -71,6 +79,9 @@ class HelloKTableActor(
             val newState = curState.copy(helloCount = curState.helloCount + 1, helloTotalCount = curState.helloTotalCount + 1)
 
             curState = newState
+
+            // Save state to Redis
+            redisService.setValue("hello-state-store", persistenceId, serializeState(curState)).subscribe()
 
             // Update KTable with new state
             //stateStore.put(persistenceId, newState)
@@ -91,6 +102,9 @@ class HelloKTableActor(
 
         curState.state = command.state.state
 
+        // Save state to Redis
+        redisService.setValue("hello-state-store", persistenceId, serializeState(curState)).subscribe()
+
         // Update KTable with new state
         //stateStore.put(persistenceId, newState.state)
         producer.send(org.apache.kafka.clients.producer.ProducerRecord("hello-log-store", persistenceId, curState))
@@ -100,6 +114,9 @@ class HelloKTableActor(
 
         val newState = curState.copy(helloCount = 0)
         curState = newState
+
+        // Save state to Redis
+        redisService.setValue("hello-state-store", persistenceId, serializeState(curState)).subscribe()
 
         // Update KTable with new state
         //stateStore.put(persistenceId, newState)
@@ -112,5 +129,13 @@ class HelloKTableActor(
 
     fun stop() {
         scope.cancel()
+    }
+
+    private fun serializeState(state: HelloKTableState): String {
+        return objectMapper.writeValueAsString(state)
+    }
+
+    private fun deserializeState(stateJson: String): HelloKTableState {
+        return objectMapper.readValue(stateJson, HelloKTableState::class.java)
     }
 }

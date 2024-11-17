@@ -1,35 +1,33 @@
 package com.example.kotlinbootlabs.kactor
 
-import com.example.kotlinbootlabs.kafka.createHelloKStreams
 import com.example.kotlinbootlabs.kafka.createKafkaProducer
-import com.example.kotlinbootlabs.kafka.getStateStoreWithRetries
+import com.example.kotlinbootlabs.service.RedisService
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.apache.kafka.clients.producer.KafkaProducer
-import org.apache.kafka.clients.producer.Producer
-import org.apache.kafka.streams.KafkaStreams
-import org.apache.kafka.streams.errors.InvalidStateStoreException
-import org.apache.kafka.streams.state.ReadOnlyKeyValueStore
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.junit.jupiter.SpringExtension
 import java.time.Duration
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-import kotlin.concurrent.thread
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 
+@ExtendWith(SpringExtension::class)
+@SpringBootTest
 class HelloKTableActorTest {
     companion object {
         private const val TIMEOUT_DURATION = 3000L // Timeout duration in milliseconds
     }
 
-    private lateinit var streams: KafkaStreams
     private lateinit var actor: HelloKTableActor
     private lateinit var producer: KafkaProducer<String, HelloKTableState>
+
+    @Autowired
+    lateinit var redisService: RedisService
 
     @BeforeTest
     fun setUp() {
@@ -38,54 +36,10 @@ class HelloKTableActorTest {
 
         producer = createKafkaProducer()
 
-        producer.send(org.apache.kafka.clients.producer.ProducerRecord("hello-log-store", testPersistId,
-            HelloKTableState(HelloKState.HAPPY, 0, 0)))
-
-        Thread.sleep(1000)
-
-        var helloKStreams = createHelloKStreams()
-        streams = helloKStreams.streams
-
-        val latch = CountDownLatch(1)
-
-        var isRunning = false
-
-        streams.setStateListener { newState, _ ->
-            if (newState == KafkaStreams.State.RUNNING) {
-                latch.countDown()
-                isRunning = true
-            }
-        }
-
-        streams.start()
-        latch.await(20, TimeUnit.SECONDS)
-
-        if (!isRunning) {
-            throw IllegalStateException("Kafka Streams application did not start")
-        }
-
-        val readStateStore: ReadOnlyKeyValueStore<String, HelloKTableState> =
-            getStateStoreWithRetries(streams, "hello-state-store")
-
-        var curState: HelloKTableState
-
-        try {
-            curState = readStateStore[testPersistId] ?: HelloKTableState(HelloKState.HAPPY, 0, 0)
-            println("Found state in store: $curState")
-        }
-        catch (e: InvalidStateStoreException) {
-            curState = HelloKTableState(HelloKState.HAPPY, 0, 0)
-            println("State not found in store, creating new state with persistence ID: $testPersistId")
-        }
-
         println("Creating actor with persistence ID: $testPersistId ")
 
-        actor = HelloKTableActor(testPersistId, streams, curState, producer)
+        actor = HelloKTableActor(testPersistId, producer, redisService)
 
-        helloKStreams.helloKTable.toStream().foreach { key, value ->
-            println("Key: $key, Value: $value")
-            //actor.send(HelloKtable("Hello", CompletableDeferred()))
-        }
 
     }
 
@@ -94,17 +48,17 @@ class HelloKTableActorTest {
         if (::producer.isInitialized) {
             producer.close(Duration.ofSeconds(3))
         }
-        if (::streams.isInitialized) {
-            streams.close(Duration.ofSeconds(3))
-        }
 
-        if(::actor.isInitialized) {
+        if (::actor.isInitialized) {
             actor.stop()
         }
     }
 
     @Test
     fun testHelloCommand() = runBlocking {
+        actor.send(ChangeStateKtable(HelloKTableState(HelloKState.HAPPY, 0, 0)))
+        CompletableDeferred<HelloKTableActorResponse>()
+
         val response = CompletableDeferred<HelloKTableActorResponse>()
         actor.send(HelloKtable("Hello", response))
         val result = withTimeout(TIMEOUT_DURATION) { response.await() } as HelloKStateResponse
@@ -114,7 +68,71 @@ class HelloKTableActorTest {
     }
 
     @Test
+    fun testHelloCommandAndReadCountPerform() = runBlocking {
+        actor.send(ChangeStateKtable(HelloKTableState(HelloKState.HAPPY, 0, 0)))
+        CompletableDeferred<HelloKTableActorResponse>()
+
+        val response = CompletableDeferred<HelloKTableActorResponse>()
+        actor.send(HelloKtable("Hello", response))
+        val result = withTimeout(TIMEOUT_DURATION) { response.await() } as HelloKStateResponse
+
+        // The response message should be 'Kotlin'
+        assertEquals("Kotlin", result.message)
+
+
+        // Verify Curren count
+        val initialCountResponse = CompletableDeferred<HelloKTableActorResponse>()
+        actor.send(GetHelloKtableCount(initialCountResponse))
+        val initialCountResult =
+            withTimeout(TIMEOUT_DURATION) { initialCountResponse.await() } as HelloKStateCountResponse
+        assertEquals(true, initialCountResult.count > 0)
+
+        // Send Hello command 100 times
+        repeat(100) {
+            val response = CompletableDeferred<HelloKTableActorResponse>()
+            actor.send(HelloKtable("Hello", response))
+            withTimeout(TIMEOUT_DURATION) { response.await() }
+        }
+
+        var finalTotalcount = initialCountResult.count + 100
+
+        // Verify count after 100 Hello commands
+        val countAfter100Response = CompletableDeferred<HelloKTableActorResponse>()
+        actor.send(GetHelloKtableCount(countAfter100Response))
+        val countAfter100Result =
+            withTimeout(TIMEOUT_DURATION) { countAfter100Response.await() } as HelloKStateCountResponse
+        assertEquals(finalTotalcount, countAfter100Result.count)
+
+        // Measure time for 1000 Hello commands
+        val startTime = System.currentTimeMillis()
+        repeat(1000) {
+            val countAfter100Response = CompletableDeferred<HelloKTableActorResponse>()
+            actor.send(GetHelloKtableCount(countAfter100Response))
+            val countAfter100Result =
+                withTimeout(TIMEOUT_DURATION) { countAfter100Response.await() } as HelloKStateCountResponse
+            assertEquals(finalTotalcount, countAfter100Result.count)
+        }
+
+        val endTime = System.currentTimeMillis()
+        val totalTime = endTime - startTime
+        val averageTime = totalTime / 1000.0
+
+        println("Total time for 1000 Hello commands: $totalTime ms")
+        println("Average time per Hello command: $averageTime ms")
+
+        // Verify count after 1000 Hello commands
+        val finalCountResponse = CompletableDeferred<HelloKTableActorResponse>()
+        actor.send(GetHelloKtableCount(finalCountResponse))
+        val finalCountResult = withTimeout(TIMEOUT_DURATION) { finalCountResponse.await() } as HelloKStateCountResponse
+        assertEquals(finalTotalcount, finalCountResult.count)
+
+    }
+
+    @Test
     fun testGetHelloCountCommand() = runBlocking {
+        actor.send(ChangeStateKtable(HelloKTableState(HelloKState.HAPPY, 0, 0)))
+        CompletableDeferred<HelloKTableActorResponse>()
+
         val response1 = CompletableDeferred<HelloKTableActorResponse>()
         actor.send(HelloKtable("Hello", response1))
         withTimeout(TIMEOUT_DURATION) { response1.await() }

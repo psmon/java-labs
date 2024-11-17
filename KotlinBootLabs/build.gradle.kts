@@ -40,6 +40,7 @@ dependencies {
 
 	// Reactive
 	implementation("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
+	implementation("org.springframework.boot:spring-boot-starter-data-redis-reactive")
 
 	// Kafka
 	implementation("org.apache.kafka:kafka-streams:3.4.0")
