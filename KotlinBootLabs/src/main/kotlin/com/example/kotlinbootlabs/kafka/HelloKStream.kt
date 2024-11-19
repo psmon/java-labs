@@ -3,6 +3,8 @@ package com.example.kotlinbootlabs.kafka
 import com.example.kotlinbootlabs.kactor.HelloKTableState
 import com.example.kotlinbootlabs.kactor.HelloKTableStateDeserializer
 import com.example.kotlinbootlabs.kactor.HelloKTableStateSerializer
+import com.example.kotlinbootlabs.service.RedisService
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization.Serdes
@@ -25,7 +27,7 @@ data class HelloKStreamsResult(
     val helloKTable: KTable<String, HelloKTableState>
 )
 
-fun createHelloKStreams(): HelloKStreamsResult {
+fun createHelloKStreams( redisService: RedisService): HelloKStreamsResult {
     val props = Properties().apply {
         put("bootstrap.servers", "localhost:9092,localhost:9003,localhost:9004")
         put("application.id", "unique-hello-ktable-actor")
@@ -59,6 +61,9 @@ fun createHelloKStreams(): HelloKStreamsResult {
         )
     )
 
+    // Sync the KTable to Redis
+    syncHelloKTableToRedis(helloKTable, redisService)
+
     val streams = KafkaStreams(builder.build(), props)
 
     streams.setUncaughtExceptionHandler { exception ->
@@ -78,6 +83,15 @@ fun createKafkaProducer(): KafkaProducer<String, HelloKTableState> {
         put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, HelloKTableStateSerializer::class.java.name)
     }
     return KafkaProducer(props)
+}
+
+fun syncHelloKTableToRedis(helloKTable: KTable<String, HelloKTableState>, redisService: RedisService) {
+    helloKTable.toStream().foreach { key, value ->
+        if (value != null) {
+            println("Syncing $key to Redis - syncHelloKTableToRedis")
+            redisService.setValue("hello-state-store", key, ObjectMapper().writeValueAsString(value)).subscribe()
+        }
+    }
 }
 
 fun <K, V> getStateStoreWithRetries(
