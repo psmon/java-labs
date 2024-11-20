@@ -37,7 +37,7 @@ class HelloKStreamTest {
         val latch = CountDownLatch(1)
 
         kstreams.streams.setStateListener { newState, _ ->
-            if (newState == KafkaStreams.State.NOT_RUNNING) {
+            if (newState == KafkaStreams.State.RUNNING) {
                 latch.countDown()
             }
         }
@@ -65,10 +65,15 @@ class HelloKStreamTest {
     @Test
     fun testHelloCommand() {
 
-        var testPersistId = "test-persistence-id-02"
-        var curState = HelloKTableState(HelloKState.HAPPY, 0, 0)
-        producer.send(org.apache.kafka.clients.producer.ProducerRecord("hello-log-store", testPersistId, curState))
+        var testPersistId = "testid-01"
 
+        for(i in 1L..10L) {
+            val curState = HelloKTableState(HelloKState.HAPPY, i, i * 10)
+            producer.send(org.apache.kafka.clients.producer.ProducerRecord("hello-log-store", testPersistId, curState))
+        }
+
+        // Wait for the state store to be ready
+        Thread.sleep(5000)
     }
 
 }
