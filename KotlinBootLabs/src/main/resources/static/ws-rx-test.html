@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Client</title>
+</head>
+<body>
+<h1>WebSocket Test</h1>
+<button onclick="connectWebSocket()">Connect to WebSocket</button>
+<button onclick="disconnectWebSocket()">Disconnect WebSocket</button>
+<button onclick="sendMessage()">Send Hello</button>
+<button onclick="subscribeTopic()">Subscribe to Topic</button>
+<button onclick="unsubscribeTopic()">Unsubscribe from Topic</button>
+
+<script>
+    let socket;
+
+    function connectWebSocket() {
+        socket = new WebSocket("ws://localhost:8080/ws");
+
+        socket.onopen = function(event) {
+            console.log("WebSocket is open now.");
+        };
+
+        socket.onmessage = function(event) {
+            console.log("Received from server: " + event.data);
+        };
+
+        socket.onclose = function(event) {
+            console.log("WebSocket is closed now.");
+        };
+
+        socket.onerror = function(error) {
+            console.error("WebSocket error: " + error);
+        };
+    }
+
+    function disconnectWebSocket() {
+        if (socket) {
+            socket.close();
+            console.log("WebSocket is closed.");
+        } else {
+            console.log("WebSocket is not connected.");
+        }
+    }
+
+    function sendMessage() {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send("hello");
+            console.log("Sent: hello");
+        } else {
+            console.log("WebSocket is not open.");
+        }
+    }
+
+    function subscribeTopic() {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            const topic = prompt("Enter topic to subscribe:");
+            if (topic) {
+                socket.send("subscribe:" + topic);
+                console.log("Subscribed to topic: " + topic);
+            }
+        } else {
+            console.log("WebSocket is not open.");
+        }
+    }
+
+    function unsubscribeTopic() {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            const topic = prompt("Enter topic to unsubscribe:");
+            if (topic) {
+                socket.send("unsubscribe:" + topic);
+                console.log("Unsubscribed from topic: " + topic);
+            }
+        } else {
+            console.log("WebSocket is not open.");
+        }
+    }
+
+</script>
+</body>
+</html>

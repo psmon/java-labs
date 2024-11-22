@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession
+import reactor.core.publisher.Mono
+import org.springframework.web.reactive.socket.WebSocketSession as ReactiveWebSocketSession
 
 enum class MessageType {
     CHAT,               //For Chat
@@ -35,3 +37,11 @@ fun sendEventTextMessage(session: WebSocketSession, eventTextMessage: EventTextM
     val jsonPayload = objectMapper.writeValueAsString(eventTextMessage)
     session.sendMessage(TextMessage(jsonPayload))
 }
+
+fun sendReactiveEventTextMessage(session: ReactiveWebSocketSession, eventTextMessage: EventTextMessage) {
+    val objectMapper = jacksonObjectMapper()
+    val jsonPayload = objectMapper.writeValueAsString(eventTextMessage)
+    val message = session.textMessage(jsonPayload)
+    session.send(Mono.just(message)).subscribe()
+}
+

@@ -23,7 +23,6 @@ class WebSocketConfig(private val webSocketHandler: MyWebSocketHandler,
     fun webSocketHandler() = MyWebSocketHandler(sessionManager)
 
     override fun registerWebSocketHandlers(registry: WebSocketHandlerRegistry) {
-
         // Local WebSocket handler
         registry.addHandler(webSocketHandler, "/ws")
             .addInterceptors(HttpSessionHandshakeInterceptor())
@@ -43,6 +42,6 @@ class WebSocketConfig(private val webSocketHandler: MyWebSocketHandler,
         registry.addHandler(socketHandlerForCounselor, "/ws-counselor")
             .addInterceptors(HttpSessionHandshakeInterceptor())
             .setAllowedOrigins("*")
-
     }
 }
+
