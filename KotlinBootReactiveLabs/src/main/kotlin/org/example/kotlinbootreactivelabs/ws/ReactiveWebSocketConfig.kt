@@ -2,8 +2,9 @@ package org.example.kotlinbootreactivelabs.ws
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.web.reactive.HandlerMapping
 import org.springframework.web.reactive.config.EnableWebFlux
-import org.springframework.web.reactive.socket.WebSocketHandler
+import org.springframework.web.reactive.handler.SimpleUrlHandlerMapping
 import org.springframework.web.reactive.socket.server.support.WebSocketHandlerAdapter
 import org.springframework.web.reactive.socket.server.upgrade.ReactorNettyRequestUpgradeStrategy
 import org.springframework.web.reactive.socket.server.WebSocketService
@@ -11,20 +12,24 @@ import org.springframework.web.reactive.socket.server.support.HandshakeWebSocket
 
 @Configuration
 @EnableWebFlux
-open class ReactiveWebSocketConfig(private val reactiveSocketHandler: ReactiveSocketHandler) {
+class ReactiveWebSocketConfig(private val reactiveSocketHandler: ReactiveSocketHandler) {
 
     @Bean
-    open fun webSocketHandlerAdapter(): WebSocketHandlerAdapter {
+    fun webSocketHandlerAdapter(): WebSocketHandlerAdapter {
         return WebSocketHandlerAdapter(webSocketService())
     }
 
     @Bean
-    open fun webSocketService(): WebSocketService {
+    fun webSocketService(): WebSocketService {
         return HandshakeWebSocketService(ReactorNettyRequestUpgradeStrategy())
     }
 
     @Bean
-    open fun webSocketMapping(): Map<String, WebSocketHandler> {
-        return mapOf("/ws-reactive" to reactiveSocketHandler)
+    fun webSocketHandlerMapping(): HandlerMapping {
+        val map = mapOf("/ws-reactive" to reactiveSocketHandler)
+        val handlerMapping = SimpleUrlHandlerMapping()
+        handlerMapping.order = 1
+        handlerMapping.urlMap = map
+        return handlerMapping
     }
 }
