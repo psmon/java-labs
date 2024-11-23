@@ -2,8 +2,7 @@ package org.example.kotlinbootreactivelabs.ws.model
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import org.springframework.web.socket.TextMessage
-import org.springframework.web.socket.WebSocketSession
+import org.springframework.web.reactive.socket.WebSocketSession
 import reactor.core.publisher.Mono
 import org.springframework.web.reactive.socket.WebSocketSession as ReactiveWebSocketSession
 
@@ -31,12 +30,6 @@ class EventTextMessage(
     var id: String? = null,
     val jsondata: String? = null
 )
-
-fun sendEventTextMessage(session: WebSocketSession, eventTextMessage: EventTextMessage) {
-    val objectMapper = jacksonObjectMapper()
-    val jsonPayload = objectMapper.writeValueAsString(eventTextMessage)
-    session.sendMessage(TextMessage(jsonPayload))
-}
 
 fun sendReactiveEventTextMessage(session: ReactiveWebSocketSession, eventTextMessage: EventTextMessage) {
     val objectMapper = jacksonObjectMapper()

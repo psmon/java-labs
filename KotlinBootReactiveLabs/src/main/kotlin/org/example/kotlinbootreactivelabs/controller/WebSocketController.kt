@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Mono
 
 @RestController
+@RequestMapping("/api")
 class WebSocketController(private val sessionManager: WebSocketSessionManager) {
 
     @PostMapping("/send-to-session")
