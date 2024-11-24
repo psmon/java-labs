@@ -2,7 +2,6 @@ package org.example.kotlinbootreactivelabs.ws.model
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import org.springframework.web.reactive.socket.WebSocketSession
 import reactor.core.publisher.Mono
 import org.springframework.web.reactive.socket.WebSocketSession as ReactiveWebSocketSession
 

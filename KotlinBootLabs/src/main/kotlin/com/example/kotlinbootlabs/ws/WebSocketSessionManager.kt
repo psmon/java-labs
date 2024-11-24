@@ -17,6 +17,7 @@ import java.util.concurrent.ConcurrentHashMap
 class WebSocketSessionManager {
     private val logger = LoggerFactory.getLogger(WebSocketSessionManager::class.java)
 
+    // SpringBoot 는 MVC또는 Reactive 방식중 하나만 작동함으로 MVC Socket과 Reactive Socket을 동시에 사용할 수 없습니다.
     val sessions = ConcurrentHashMap<String, WebSocketSession>()
 
     val reactiveSessions = ConcurrentHashMap<String, ReactiveWebSocketSession>()
@@ -122,5 +123,4 @@ class WebSocketSessionManager {
             }
         }
     }
-
 }

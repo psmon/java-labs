@@ -24,10 +24,12 @@ Akka Streams, RxJava 등이 있으며, 이들은 Reactive Streams 표준을 따�
 이러한 기술들은 마이크로서비스 아키텍처, 데이터 집약적 애플리케이션에서 높은 성능과 반응성을 유지하며,
 확장 가능한 비동기 처리를 가능하게 합니다.
 
-Reactive Stream에서는 Spring Boot2가 제공하는 Reactive Stack만 활용해 다양한 비동기처리 문제를 해결시도합니다. 
+
+KotlinBootReactiveLabs 에서는 SpringBoot MVC모드가 아닌 WebFlux를 활용하여 Reactive Stream으로 작동합니다.
+Reactive Stream에서는 Spring Boot2가 제공하는 Reactive Stack만 활용해 다양한 비동기처리 문제 해결을 시도합니다.
 
 - [Reactive Streams With Webplux](https://github.com/psmon/java-labs/blob/master/KotlinBootLabs/REACTIVE.MD)
-
+- [KotlinBootReactiveLabs](https://github.com/psmon/java-labs/blob/master/KotlinBootReactiveLabs/README.MD)
 
 ## Akka
 
