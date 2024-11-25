@@ -93,6 +93,7 @@
 
         socket.onopen = function(event) {
             console.log("WebSocket is open now.");
+            displayMessage("WebSocket is open now.");
         };
 
         socket.onmessage = function(event) {
@@ -102,10 +103,12 @@
 
         socket.onclose = function(event) {
             console.log("WebSocket is closed now.");
+            displayMessage("WebSocket is closed now.");
         };
 
         socket.onerror = function(error) {
             console.error("WebSocket error: " + error);
+            displayMessage("WebSocket error: " + error);
         };
     }
 

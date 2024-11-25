@@ -33,8 +33,6 @@ class MyWebSocketHandler(private val sessionManager: WebSocketSessionManager) : 
                 sessionManager.unsubscribeFromTopic(session.id, topic)
             }
             else -> {
-                //session.sendMessage(TextMessage("Echo: $payload"))
-
                 sendEventTextMessage(session, EventTextMessage(
                     type = MessageType.CHAT,
                     message = "Echo: $payload",

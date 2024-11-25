@@ -20,7 +20,6 @@ class WebSocketSessionManager {
 
     val topicSubscriptions = ConcurrentHashMap<String, MutableSet<String>>()
 
-
     fun addSession(session: ReactiveWebSocketSession) {
         reactiveSessions[session.id] = session
         logger.info("[SessionManager] Connected: ${session.id}")
@@ -43,11 +42,35 @@ class WebSocketSessionManager {
     fun subscribeReactiveToTopic(sessionId: String, topic: String) {
         topicSubscriptions.computeIfAbsent(topic) { mutableSetOf() }.add(sessionId)
         logger.info("Session $sessionId subscribed to topic $topic")
+
+        reactiveSessions[sessionId]?.let {
+            sendReactiveEventTextMessage(
+                it, EventTextMessage(
+                    type = MessageType.PUSH,
+                    message = "You are subscribed to topic $topic",
+                    from = MessageFrom.SYSTEM,
+                    id = null,
+                    jsondata = null,
+                )
+            )
+        }
     }
 
     fun unsubscribeReactiveFromTopic(sessionId: String, topic: String) {
         topicSubscriptions[topic]?.remove(sessionId)
         logger.info("Session $sessionId unsubscribed from topic $topic")
+
+        reactiveSessions[sessionId]?.let {
+            sendReactiveEventTextMessage(
+                it, EventTextMessage(
+                    type = MessageType.PUSH,
+                    message = "You are unsubscribed to topic $topic",
+                    from = MessageFrom.SYSTEM,
+                    id = null,
+                    jsondata = null,
+                )
+            )
+        }
     }
 
     fun sendReactiveMessageToSession(sessionId: String, message: String) {
