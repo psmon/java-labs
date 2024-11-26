@@ -14,7 +14,7 @@ enum class MessageType {
 }
 
 enum class MessageFrom {
-    USER, COUNSELOR, SYSTEM
+    CUSTOM, COUNSELOR, SYSTEM
 }
 
 class EventTextMessage(
@@ -36,4 +36,3 @@ fun sendReactiveEventTextMessage(session: ReactiveWebSocketSession, eventTextMes
     val message = session.textMessage(jsonPayload)
     session.send(Mono.just(message)).subscribe()
 }
-

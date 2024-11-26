@@ -7,3 +7,8 @@ Spring Boot WebFlux를 활용한 Reactive Stream 학습 저장소 입니다.
 
 - http://localhost:8080/api-doc
 - http://localhost:8080/ws-rx-test.html
+
+## Reference Documentation
+
+- https://developers.jumper.ai/docs/chats-api/1/overview
+- 
