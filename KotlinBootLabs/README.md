@@ -1,11 +1,13 @@
+
 # KotlinBootLabs Reactive Stream
 
 Spring Boot 환경에서 Kotlin을 학습하는 저장공간 입니다. 
-
 우리는 이것을 코프링이라고 부르며, 코틀린과 스프링부트를 학습하는 공간입니다.
-
 CRUD가 대부분의 도메인 문제를 해결나겠지만 여기서는 CRUD보다는 단일지점 병목을 분산처리하는 이벤트 드리븐 방식을 활용하는 액터모델과 함께 Reactive Stream을 연구합니다.
 
+
+이 활동은 다음 저장공간으로 이동되었습니다.
+링크 : https://github.com/psmon/kopring-reactive-labs
 
 ## Reactive Stream
 
